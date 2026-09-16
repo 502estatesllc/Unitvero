@@ -23,7 +23,11 @@ export default function Dashboard() {
       .eq('id', user.id)
       .single();
 
-    setProfile(p);
+    setProfile(p || {
+  id: user.id,
+  full_name: user.user_metadata?.full_name || '',
+  role: user.user_metadata?.role || 'landlord'
+});
 
     if (p?.role === 'landlord') {
       const { data } = await s
