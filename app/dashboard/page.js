@@ -50,15 +50,22 @@ export default function Dashboard() {
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
 
-    await s.from('properties').insert({
-      landlord_id: user.id,
-      address,
-      city: 'Louisville',
-      state: 'KY',
-      zip_code: '40211',
-      monthly_rent: 0
-    });
+    const { error } = await s.from('properties').insert({
+  landlord_id: user.id,
+  address,
+  city: 'Louisville',
+  state: 'KY',
+  zip_code: '40211',
+  monthly_rent: 0
+});
 
+if (error) {
+  alert('Could not add property: ' + error.message);
+  return;
+}
+
+setAddress('');
+load();
     setAddress('');
     load();
   }
