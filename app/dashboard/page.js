@@ -1,3 +1,191 @@
 'use client';
-import {useEffect,useState} from 'react'; import {supabase} from '../../lib/supabase'; import {useRouter} from 'next/navigation';
-export default function Dashboard(){const [profile,setProfile]=useState(null),[props,setProps]=useState([]),[address,setAddress]=useState('');const r=useRouter();async function load(){let s=supabase(),{data:{user}}=await s.auth.getUser();if(!user)return r.push('/login');let {data:p}=await s.from('profiles').select('*').eq('id',user.id).single();setProfile(p);if(p?.role==='landlord'){let {data}=await s.from('properties').select('*').eq('landlord_id',user.id).order('created_at');setProps(data||[])}}useEffect(()=>{load()},[]);async function add(e){e.preventDefault();let s=supabase(),{data:{user}}=await s.auth.getUser();await s.from('properties').insert({landlord_id:user.id,address,city:'Louisville',state:'KY',zip_code:'40211',monthly_rent:0});setAddress('');load()}async function out(){await supabase().auth.signOut();r.push('/login')}return <div className="app"><aside><b className="logo">rent<span>wise</span></b><a className="active">Overview</a><a>Properties</a><a>Tenants</a><a>Rent</a><a>Leases</a><a>Maintenance</a><button onClick={out}>Sign out</button></aside><main className="dash"><div className="top"><div><small>{profile?.role||'Rentwise'} PORTAL</small><h1>Good to see you{profile?.full_name?' , '+profile.full_name.split(' ')[0]:''}.</h1></div></div><div className="stats"><article><span>Properties</span><b>{props.length}</b></article><article><span>Tenants</span><b>0</b></article><article><span>Rent collected</span><b>$0</b></article></div>{profile?.role==='landlord'&&<section className="panel"><div><h2>Your portfolio</h2><p>Add your first rental property.</p></div><form className="add" onSubmit={add}><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Street address" required/><button className="primary">Add property</button></form>{props.map(p=><div className="property" key={p.id}><b>{p.address}</b><span>{p.city}, {p.state} {p.zip_code}</span></div>)}</section>}</main></div>}
+
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/navigation';
+
+export default function Dashboard() {
+  const [profile, setProfile] = useState(null);
+  const [props, setProps] = useState([]);
+  const [address, setAddress] = useState('');
+  const [view, setView] = useState('overview');
+  const r = useRouter();
+
+  async function load() {
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+
+    if (!user) return r.push('/login');
+
+    const { data: p } = await s
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    setProfile(p);
+
+    if (p?.role === 'landlord') {
+      const { data } = await s
+        .from('properties')
+        .select('*')
+        .eq('landlord_id', user.id)
+        .order('created_at');
+
+      setProps(data || []);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function add(e) {
+    e.preventDefault();
+
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+
+    await s.from('properties').insert({
+      landlord_id: user.id,
+      address,
+      city: 'Louisville',
+      state: 'KY',
+      zip_code: '40211',
+      monthly_rent: 0
+    });
+
+    setAddress('');
+    load();
+  }
+
+  async function out() {
+    await supabase().auth.signOut();
+    r.push('/login');
+  }
+
+  return (
+    <div className="app">
+      <aside>
+        <b className="logo">rent<span>wise</span></b>
+
+        <a
+          className={view === 'overview' ? 'active' : ''}
+          onClick={() => setView('overview')}
+        >
+          Overview
+        </a>
+
+        <a
+          className={view === 'properties' ? 'active' : ''}
+          onClick={() => setView('properties')}
+        >
+          Properties
+        </a>
+
+        <a onClick={() => setView('tenants')}>Tenants</a>
+        <a onClick={() => setView('rent')}>Rent</a>
+        <a onClick={() => setView('leases')}>Leases</a>
+        <a onClick={() => setView('maintenance')}>Maintenance</a>
+
+        <button onClick={out}>Sign out</button>
+      </aside>
+
+      <main className="dash">
+        {view === 'overview' && (
+          <>
+            <div className="top">
+              <div>
+                <small>{profile?.role || 'Rentwise'} PORTAL</small>
+                <h1>
+                  Good to see you
+                  {profile?.full_name
+                    ? ', ' + profile.full_name.split(' ')[0]
+                    : ''}.
+                </h1>
+              </div>
+            </div>
+
+            <div className="stats">
+              <article>
+                <span>Properties</span>
+                <b>{props.length}</b>
+              </article>
+
+              <article>
+                <span>Tenants</span>
+                <b>0</b>
+              </article>
+
+              <article>
+                <span>Rent collected</span>
+                <b>$0</b>
+              </article>
+            </div>
+          </>
+        )}
+
+        {view === 'properties' && (
+          <section className="panel">
+            <div>
+              <small>PORTFOLIO</small>
+              <h1>Properties</h1>
+              <p>Add and manage your rental properties.</p>
+            </div>
+
+            {profile?.role === 'landlord' && (
+              <form className="add" onSubmit={add}>
+                <input
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  placeholder="Street address"
+                  required
+                />
+                <button className="primary">Add property</button>
+              </form>
+            )}
+
+            {props.length === 0 && <p>No properties added yet.</p>}
+
+            {props.map(p => (
+              <div className="property" key={p.id}>
+                <b>{p.address}</b>
+                <span>
+                  {p.city}, {p.state} {p.zip_code}
+                </span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {view === 'tenants' && (
+          <section className="panel">
+            <h1>Tenants</h1>
+            <p>Tenant management is coming next.</p>
+          </section>
+        )}
+
+        {view === 'rent' && (
+          <section className="panel">
+            <h1>Rent</h1>
+            <p>Rent collection and installment requests are coming next.</p>
+          </section>
+        )}
+
+        {view === 'leases' && (
+          <section className="panel">
+            <h1>Leases</h1>
+            <p>Lease management is coming next.</p>
+          </section>
+        )}
+
+        {view === 'maintenance' && (
+          <section className="panel">
+            <h1>Maintenance</h1>
+            <p>Maintenance requests are coming next.</p>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
