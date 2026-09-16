@@ -12,12 +12,30 @@ export default function Dashboard() {
   const r = useRouter();
 
   async function load() {
-    const s = supabase();
-    const { data, error: userError } = await s.auth.getUser();
+  const s = supabase();
 
-if (userError) {
-  alert('Auth error: ' + userError.message);
-  return;
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
+
+  if (userError || !user) {
+    alert('Auth error: ' + (userError?.message || 'No user found'));
+    return;
+  }
+
+  const { data, error } = await s
+    .from('properties')
+    .select('*')
+    .eq('landlord_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    alert('Could not load properties: ' + error.message);
+    return;
+  }
+
+  setProperties(data || []);
 }
 
 const user = data?.user;
