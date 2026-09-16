@@ -47,10 +47,12 @@ export default function Dashboard() {
   async function add(e) {
     e.preventDefault();
 alert('Add property button is working');
+alert('User ID: ' + user?.id);
     
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
-
+alert('User ID: ' + user?.id);
+    
     const { error } = await s.from('properties').insert({
   landlord_id: user.id,
   address,
