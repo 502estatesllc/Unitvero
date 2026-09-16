@@ -152,7 +152,7 @@ load();
                   placeholder="Street address"
                   required
                 />
-                <button className="primary">Add property</button>
+                <button type="submit" className="primary">Add property</button>
               </form>
             )}
 
