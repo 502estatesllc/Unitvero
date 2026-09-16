@@ -52,34 +52,39 @@ alert('User loaded: ' + (user ? 'YES' : 'NO'));
     load();
   }, []);
 
-  async function add(e) {
-    e.preventDefault();
-alert('Add property button is working');
+ async function add(e) {
+  e.preventDefault();
 
-    
-    const s = supabase();
-    const { data: { user } } = await s.auth.getUser();
-alert('User ID: ' + user?.id);
-    
-    const { error } = await s.from('properties').insert({
-  landlord_id: user.id,
-  address,
-  city: 'Louisville',
-  state: 'KY',
-  zip_code: '40211',
-  monthly_rent: 0
-});
+  const s = supabase();
 
-if (error) {
-  alert('Could not add property: ' + error.message);
-  return;
-}
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
 
-setAddress('');
-load();
-    setAddress('');
-    load();
+  if (userError || !user) {
+    alert('Authentication error: ' + (userError?.message || 'No user found'));
+    return;
   }
+
+  const { error } = await s.from('properties').insert({
+    landlord_id: user.id,
+    address: address,
+    city: 'Louisville',
+    state: 'KY',
+    zip_code: '40211',
+    monthly_rent: 0
+  });
+
+  if (error) {
+    alert('Could not add property: ' + error.message);
+    return;
+  }
+
+  alert('Property added successfully!');
+  setAddress('');
+  await load();
+}
 
   async function out() {
     await supabase().auth.signOut();
