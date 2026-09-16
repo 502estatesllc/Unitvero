@@ -13,7 +13,15 @@ export default function Dashboard() {
 
   async function load() {
     const s = supabase();
-    const { data: { user } } = await s.auth.getUser();
+    const { data, error: userError } = await s.auth.getUser();
+
+if (userError) {
+  alert('Auth error: ' + userError.message);
+  return;
+}
+
+const user = data?.user;
+alert('User loaded: ' + (user ? 'YES' : 'NO'));
 
     if (!user) return r.push('/login');
 
@@ -47,7 +55,7 @@ export default function Dashboard() {
   async function add(e) {
     e.preventDefault();
 alert('Add property button is working');
-alert('User ID: ' + user?.id);
+
     
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
