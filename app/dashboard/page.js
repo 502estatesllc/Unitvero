@@ -46,7 +46,8 @@ export default function Dashboard() {
 
   async function add(e) {
     e.preventDefault();
-
+alert('Add property button is working');
+    
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
 
