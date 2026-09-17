@@ -1645,6 +1645,11 @@ function isMultiFamily(property) {
             <div className="propertyUnitBody">
               <small>UNIT</small>
               <h3>{unit.unit_name}</h3>
+                {selectedUnit?.id === unit.id && (
+  <div className="selectedUnitLabel">
+    ✓ Selected Unit
+  </div>
+)}
 
               <div className="propertyUnitDetails">
                 <div>
