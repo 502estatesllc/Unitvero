@@ -94,6 +94,31 @@ export default function Dashboard() {
     await load();
   }
 
+  async function saveProperty() {
+  const rentInput = document.getElementById('editRent');
+  const monthlyRent = Number(rentInput.value);
+
+  const s = supabase();
+
+  const { data, error } = await s
+    .from('properties')
+    .update({
+      monthly_rent: monthlyRent
+    })
+    .eq('id', selectedProperty.id)
+    .select()
+    .single();
+
+  if (error) {
+    alert('Could not update property: ' + error.message);
+    return;
+  }
+
+  setSelectedProperty(data);
+  await load();
+  alert('Property updated successfully!');
+  setView('propertyDetails');
+}
   async function out() {
     await supabase().auth.signOut();
     r.push('/login');
@@ -217,6 +242,9 @@ export default function Dashboard() {
 
             <small>PROPERTY</small>
             <h1>{selectedProperty.address}</h1>
+             <button type="button" onClick={() => setView('editProperty')}>
+  Edit Property
+</button>   
 
             <p>
               {selectedProperty.city}, {selectedProperty.state}{' '}
@@ -242,7 +270,35 @@ export default function Dashboard() {
           </section>
         )}
 
-        {view === 'tenants' && (
+      {view === 'editProperty' && selectedProperty && (
+  <section className="panel">
+    <button
+      type="button"
+      onClick={() => setView('propertyDetails')}
+    >
+      ← Back
+    </button>
+
+    <small>EDIT PROPERTY</small>
+    <h1>{selectedProperty.address}</h1>
+
+    <p>Edit this property's information.</p>
+      <input
+  type="number"
+  placeholder="Monthly rent"
+  defaultValue={selectedProperty.monthly_rent || ''}
+  id="editRent"
+/>  
+    <button
+  type="button"
+  className="primary"
+>
+  Save Changes
+</button>
+      onClick={saveProperty}
+  </section>
+)}  
+{view === 'tenants' && (
           <section className="panel">
             <h1>Tenants</h1>
             <p>Tenant management is coming next.</p>
