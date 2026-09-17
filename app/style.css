@@ -4924,3 +4924,125 @@ textarea:focus-visible,
     text-align: left;
   }
 }
+
+/* PROPERTY COMMAND CENTER — LIVE LEDGER */
+
+.commandLedgerList {
+  margin-top: 18px;
+  border: 1px solid #e7edf4;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.commandLedgerRow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.commandLedgerRow:last-child {
+  border-bottom: 0;
+}
+
+.commandLedgerType {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.commandLedgerType.charge {
+  color: #a15c00;
+  background: #fff4dc;
+}
+
+.commandLedgerType.payment {
+  color: #147a52;
+  background: #e7f7ef;
+}
+
+.commandLedgerDescription {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.commandLedgerDescription b {
+  color: #172033;
+  font-size: 14px;
+}
+
+.commandLedgerDescription span {
+  color: #738096;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.commandLedgerStatus {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #f2f5f8;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.commandLedgerStatus.unpaid,
+.commandLedgerStatus.pending {
+  background: #fff4dc;
+  color: #9a5a00;
+}
+
+.commandLedgerStatus.partial {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.commandLedgerStatus.paid,
+.commandLedgerStatus.completed {
+  background: #e7f7ef;
+  color: #147a52;
+}
+
+.commandLedgerStatus.waived,
+.commandLedgerStatus.refunded {
+  background: #f2f5f8;
+  color: #64748b;
+}
+
+.commandLedgerStatus.failed {
+  background: #fdecec;
+  color: #b42318;
+}
+
+.commandLedgerAmount {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.commandLedgerAmount.charge {
+  color: #172033;
+}
+
+.commandLedgerAmount.payment {
+  color: #147a52;
+}
+
+@media (max-width: 720px) {
+  .commandLedgerRow {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+  }
+
+  .commandLedgerStatus {
+    display: none;
+  }
+}
