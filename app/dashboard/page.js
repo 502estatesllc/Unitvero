@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [view, setView] = useState('overview');
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedTenancy, setSelectedTenancy] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
   const [tenancies, setTenancies] = useState([]);
   const [editingTenancy, setEditingTenancy] = useState(null);
   const [applications, setApplications] = useState([]);
@@ -1618,10 +1619,14 @@ function isMultiFamily(property) {
         );
 
         return (
-          <article
-            className="propertyUnitCard"
-            key={unit.id}
-          >
+         <article
+  className="propertyUnitCard"
+  key={unit.id}
+  onClick={() => {
+    setSelectedUnit(unit);
+    setSelectedTenancy(unitTenancy || null);
+  }}
+>
             <div className="propertyUnitTop">
               <div className="propertyUnitIcon">⌂</div>
 
