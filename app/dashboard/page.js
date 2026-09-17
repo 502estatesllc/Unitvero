@@ -296,7 +296,7 @@ onClick={saveProperty}
 >
   Save Changes
 </button>
-    
+    onClick={saveProperty}
   </section>
 )}  
 {view === 'tenants' && (
