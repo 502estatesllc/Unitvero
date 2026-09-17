@@ -5727,6 +5727,10 @@ return (
     payment => payment.status === 'completed'
   );
 
+  const returnedPayments = rentPayments.filter(
+    payment => payment.status === 'returned'
+  );
+
   const completedPaymentIds = new Set(
     completedPayments.map(payment => payment.id)
   );
@@ -5773,6 +5777,64 @@ return (
         )
       : 0;
 
+  const settings = rentSettings || {
+    allow_partial_payments: true,
+    late_fee_enabled: true,
+    late_fee_amount: 50,
+    late_fee_grace_days: 5,
+    nsf_fee_enabled: true,
+    nsf_fee_amount: 35,
+    auto_monthly_charges: true,
+    auto_late_fees: true
+  };
+
+  async function runRentAutomation() {
+    const confirmed = window.confirm(
+      'Run Rentwise rent automation now? This will create any missing monthly rent charges and eligible late fees. Duplicate charges are protected.'
+    );
+
+    if (!confirmed) return;
+
+    const s = supabase();
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data: monthlyCount, error: monthlyError } =
+      await s.rpc('generate_monthly_rent_charges', {
+        p_run_date: today
+      });
+
+    if (monthlyError) {
+      alert(
+        'Could not generate monthly rent charges: ' +
+          monthlyError.message
+      );
+      return;
+    }
+
+    const { data: lateCount, error: lateError } =
+      await s.rpc('apply_automatic_late_fees', {
+        p_run_date: today
+      });
+
+    if (lateError) {
+      alert(
+        'Monthly charges ran, but late fees failed: ' +
+          lateError.message
+      );
+
+      await load();
+      return;
+    }
+
+    await load();
+
+    alert(
+      `Rent automation complete!\n\n` +
+        `${monthlyCount || 0} monthly rent charge(s) created.\n` +
+        `${lateCount || 0} late fee(s) created.`
+    );
+  }
+
   return (
     <section className="panel">
       <div
@@ -5781,112 +5843,79 @@ return (
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           gap: '20px',
-          marginBottom: '28px'
+          marginBottom: '28px',
+          flexWrap: 'wrap'
         }}
       >
         <div>
           <small>RENT COLLECTION</small>
           <h1>Rent & Payments</h1>
           <p>
-            Track charges, balances and tenant payments across
-            your portfolio.
+            Manage rent charges, payments, late fees and returned
+            payments across your portfolio.
           </p>
         </div>
 
         <div
-  style={{
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'center'
-  }}
->
-  <button
-    type="button"
-    className="commandSecondaryButton"
-    onClick={async () => {
-      const today = new Date();
+          style={{
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            type="button"
+            className="commandSecondaryButton"
+            onClick={() =>
+              setShowRentSettings(current => !current)
+            }
+          >
+            ⚙ Rent Settings
+          </button>
 
-      const dueDate =
-        today.getFullYear() +
-        '-' +
-        String(today.getMonth() + 1).padStart(2, '0') +
-        '-01';
+          <button
+            type="button"
+            className="commandSecondaryButton"
+            onClick={runRentAutomation}
+          >
+            Run Rent Automation
+          </button>
 
-      const confirmed = window.confirm(
-        `Generate monthly rent charges for ${today.toLocaleString(
-          'default',
-          { month: 'long', year: 'numeric' }
-        )}?`
-      );
-
-      if (!confirmed) return;
-
-      const s = supabase();
-
-      const { data, error } = await s.rpc(
-        'generate_monthly_rent_charges',
-        {
-          p_due_date: dueDate
-        }
-      );
-
-      if (error) {
-        alert(
-          'Could not generate rent charges: ' +
-            error.message
-        );
-        return;
-      }
-
-      await load();
-
-      if (data === 0) {
-        alert(
-          'No new charges were created. This month may already be generated.'
-        );
-      } else {
-        alert(
-          `${data} monthly rent ${
-            data === 1 ? 'charge' : 'charges'
-          } created successfully!`
-        );
-      }
-    }}
-  >
-    Generate Monthly Charges
-  </button>
-
-  <button
-    type="button"
-    className="primary"
-    onClick={() => setShowRecordPayment(true)}
-  >
-    + Record Payment
-  </button>
-</div>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setShowRecordPayment(true)}
+          >
+            + Record Payment
+          </button>
+        </div>
       </div>
 
       <div className="commandStats">
         <article>
           <div className="commandStatIcon">$</div>
+
           <div>
             <span>Total Charges</span>
             <b>${totalCharges.toLocaleString()}</b>
-            <small>RENT CHARGED</small>
+            <small>RENT + FEES</small>
           </div>
         </article>
 
         <article>
           <div className="commandStatIcon">✓</div>
+
           <div>
             <span>Collected</span>
             <b>${totalCollected.toLocaleString()}</b>
-            <small>PAYMENTS RECEIVED</small>
+            <small>COMPLETED PAYMENTS</small>
           </div>
         </article>
 
         <article>
           <div className="commandStatIcon">◎</div>
+
           <div>
             <span>Outstanding</span>
             <b>${totalOutstanding.toLocaleString()}</b>
@@ -5896,6 +5925,7 @@ return (
 
         <article>
           <div className="commandStatIcon">%</div>
+
           <div>
             <span>Collection Rate</span>
             <b>{collectionRate}%</b>
@@ -5903,6 +5933,327 @@ return (
           </div>
         </article>
       </div>
+
+      {showRentSettings && (
+        <section
+          className="commandCard"
+          style={{
+            marginTop: '28px',
+            marginBottom: '28px'
+          }}
+        >
+          <div className="commandCardHeader">
+            <div>
+              <span className="commandSectionIcon">⚙</span>
+
+              <div>
+                <h2>Rent Settings</h2>
+                <p>
+                  Control automatic charges, late fees, partial
+                  payments and returned-payment fees.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="commandTextButton"
+              onClick={() => setShowRentSettings(false)}
+            >
+              Close
+            </button>
+          </div>
+
+          <form
+            className="addTenantForm"
+            onSubmit={async e => {
+              e.preventDefault();
+
+              const form = e.currentTarget;
+              const s = supabase();
+
+              const {
+                data: { user },
+                error: userError
+              } = await s.auth.getUser();
+
+              if (userError || !user) {
+                alert('Could not verify your account.');
+                return;
+              }
+
+              const updatedSettings = {
+                landlord_id: user.id,
+
+                allow_partial_payments:
+                  form.allowPartialPayments.checked,
+
+                late_fee_enabled:
+                  form.lateFeeEnabled.checked,
+
+                late_fee_amount:
+                  Number(form.lateFeeAmount.value || 0),
+
+                late_fee_grace_days:
+                  Number(form.lateFeeGraceDays.value || 0),
+
+                nsf_fee_enabled:
+                  form.nsfFeeEnabled.checked,
+
+                nsf_fee_amount:
+                  Number(form.nsfFeeAmount.value || 0),
+
+                auto_monthly_charges:
+                  form.autoMonthlyCharges.checked,
+
+                auto_late_fees:
+                  form.autoLateFees.checked,
+
+                updated_at: new Date().toISOString()
+              };
+
+              const { data, error } = await s
+                .from('rent_settings')
+                .upsert(updatedSettings, {
+                  onConflict: 'landlord_id'
+                })
+                .select()
+                .single();
+
+              if (error) {
+                alert(
+                  'Could not save rent settings: ' +
+                    error.message
+                );
+                return;
+              }
+
+              setRentSettings(data);
+              alert('Rent settings saved!');
+            }}
+          >
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="autoMonthlyCharges"
+                type="checkbox"
+                defaultChecked={
+                  settings.auto_monthly_charges
+                }
+                style={{ width: 'auto' }}
+              />
+
+              Automatically create monthly rent charges
+            </label>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="allowPartialPayments"
+                type="checkbox"
+                defaultChecked={
+                  settings.allow_partial_payments
+                }
+                style={{ width: 'auto' }}
+              />
+
+              Allow partial payments
+            </label>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="lateFeeEnabled"
+                type="checkbox"
+                defaultChecked={settings.late_fee_enabled}
+                style={{ width: 'auto' }}
+              />
+
+              Enable late fees
+            </label>
+
+            <label>
+              Late Fee Amount
+              <input
+                name="lateFeeAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={
+                  settings.late_fee_amount ?? 50
+                }
+              />
+            </label>
+
+            <label>
+              Grace Period
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+              >
+                <input
+                  name="lateFeeGraceDays"
+                  type="number"
+                  min="0"
+                  step="1"
+                  defaultValue={
+                    settings.late_fee_grace_days ?? 5
+                  }
+                />
+
+                <span>days after rent is due</span>
+              </div>
+            </label>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="autoLateFees"
+                type="checkbox"
+                defaultChecked={settings.auto_late_fees}
+                style={{ width: 'auto' }}
+              />
+
+              Automatically apply eligible late fees
+            </label>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              <input
+                name="nsfFeeEnabled"
+                type="checkbox"
+                defaultChecked={settings.nsf_fee_enabled}
+                style={{ width: 'auto' }}
+              />
+
+              Automatically charge returned / NSF fee
+            </label>
+
+            <label>
+              Returned / NSF Fee
+              <input
+                name="nsfFeeAmount"
+                type="number"
+                min="0"
+                step="0.01"
+                defaultValue={
+                  settings.nsf_fee_amount ?? 35
+                }
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="primary"
+            >
+              Save Rent Settings
+            </button>
+          </form>
+        </section>
+      )}
+
+      <section
+        className="commandCard"
+        style={{
+          marginTop: '28px',
+          marginBottom: '28px'
+        }}
+      >
+        <div className="commandCardHeader">
+          <div>
+            <span className="commandSectionIcon">⚡</span>
+
+            <div>
+              <h2>Automation Status</h2>
+              <p>
+                Current rules Rentwise uses for rent collection.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="commandLeaseGrid">
+          <div>
+            <small>MONTHLY RENT</small>
+
+            <b
+              className={
+                settings.auto_monthly_charges
+                  ? 'commandActiveText'
+                  : ''
+              }
+            >
+              {settings.auto_monthly_charges
+                ? '● Automatic'
+                : 'Manual'}
+            </b>
+          </div>
+
+          <div>
+            <small>PARTIAL PAYMENTS</small>
+
+            <b>
+              {settings.allow_partial_payments
+                ? 'Allowed'
+                : 'Blocked'}
+            </b>
+          </div>
+
+          <div>
+            <small>LATE FEE</small>
+
+            <b>
+              {settings.late_fee_enabled
+                ? `$${Number(
+                    settings.late_fee_amount || 0
+                  ).toLocaleString()} after ${
+                    settings.late_fee_grace_days || 0
+                  } day(s)`
+                : 'Disabled'}
+            </b>
+          </div>
+
+          <div>
+            <small>RETURNED / NSF FEE</small>
+
+            <b>
+              {settings.nsf_fee_enabled
+                ? `$${Number(
+                    settings.nsf_fee_amount || 0
+                  ).toLocaleString()}`
+                : 'Disabled'}
+            </b>
+          </div>
+        </div>
+      </section>
 
       {unallocatedCredit > 0 && (
         <section
@@ -5912,11 +6263,13 @@ return (
           <div className="commandCardHeader">
             <div>
               <span className="commandSectionIcon">+</span>
+
               <div>
                 <h2>Unallocated Credit</h2>
+
                 <p>
-                  Payments received that have not been applied
-                  to a rent charge.
+                  Completed payments not currently applied to a
+                  charge.
                 </p>
               </div>
             </div>
@@ -5940,9 +6293,9 @@ return (
 
               <div>
                 <h2>Record Payment</h2>
+
                 <p>
-                  Record a payment received from an active
-                  tenant.
+                  Record a payment received from an active tenant.
                 </p>
               </div>
             </div>
@@ -5955,6 +6308,24 @@ return (
               Cancel
             </button>
           </div>
+
+          {!settings.allow_partial_payments && (
+            <div
+              style={{
+                padding: '14px 16px',
+                marginBottom: '18px',
+                borderRadius: '10px',
+                background: '#fff8e8'
+              }}
+            >
+              <b>Partial payments are blocked.</b>
+
+              <div>
+                Rentwise will require the tenant&apos;s full
+                outstanding balance.
+              </div>
+            </div>
+          )}
 
           <form
             className="addTenantForm"
@@ -5970,7 +6341,8 @@ return (
                 form.paymentMethod.value;
               const reference =
                 form.reference.value.trim();
-              const notes = form.notes.value.trim();
+              const notes =
+                form.notes.value.trim();
 
               const tenancy = tenancies.find(
                 item => item.id === tenancyId
@@ -6035,6 +6407,7 @@ return (
           >
             <label>
               Tenant
+
               <select
                 name="tenancyId"
                 required
@@ -6120,6 +6493,7 @@ return (
 
             <label>
               Amount
+
               <input
                 name="amount"
                 type="number"
@@ -6132,6 +6506,7 @@ return (
 
             <label>
               Payment Date
+
               <input
                 name="paymentDate"
                 type="date"
@@ -6146,6 +6521,7 @@ return (
 
             <label>
               Payment Method
+
               <select
                 name="paymentMethod"
                 defaultValue="cash"
@@ -6153,16 +6529,21 @@ return (
               >
                 <option value="cash">Cash</option>
                 <option value="check">Check</option>
+
                 <option value="ach">
                   ACH / Bank Transfer
                 </option>
+
                 <option value="card">Card</option>
+
                 <option value="money_order">
                   Money Order
                 </option>
+
                 <option value="cash_app">
                   Cash App
                 </option>
+
                 <option value="zelle">Zelle</option>
                 <option value="other">Other</option>
               </select>
@@ -6170,6 +6551,7 @@ return (
 
             <label>
               Reference / Confirmation
+
               <input
                 name="reference"
                 type="text"
@@ -6179,6 +6561,7 @@ return (
 
             <label>
               Notes
+
               <textarea
                 name="notes"
                 placeholder="Optional payment notes"
@@ -6206,8 +6589,9 @@ return (
 
             <div>
               <h2>Rent Charges</h2>
+
               <p>
-                Current rent charges and remaining tenant
+                Rent, late fees, NSF fees and remaining tenant
                 balances.
               </p>
             </div>
@@ -6225,6 +6609,7 @@ return (
           <div className="featureEmpty">
             <div className="featureEmptyIcon">$</div>
             <b>No rent charges</b>
+
             <span>
               Rent charges will appear here when they are
               created.
@@ -6273,6 +6658,14 @@ return (
                     ? 'Partial'
                     : 'Unpaid';
 
+              const chargeLabel =
+                charge.charge_type === 'late_fee'
+                  ? 'Late Fee'
+                  : charge.charge_type === 'nsf_fee'
+                    ? 'Returned / NSF Fee'
+                    : charge.description ||
+                      'Rent Charge';
+
               return (
                 <article
                   className="commandLedgerRow"
@@ -6284,10 +6677,7 @@ return (
                   }}
                 >
                   <div>
-                    <b>
-                      {charge.description ||
-                        'Rent Charge'}
-                    </b>
+                    <b>{chargeLabel}</b>
 
                     <span>
                       {tenancy?.tenant_name ||
@@ -6312,6 +6702,12 @@ return (
                           ).toLocaleDateString()
                         : '—'}
                     </small>
+
+                    {charge.source === 'automatic' && (
+                      <small>
+                        Automatic Rentwise charge
+                      </small>
+                    )}
                   </div>
 
                   <div
@@ -6336,8 +6732,7 @@ return (
                         marginTop: '6px'
                       }}
                     >
-                      $
-                      {remaining.toLocaleString()}
+                      ${remaining.toLocaleString()}
                       {' remaining'}
                     </b>
 
@@ -6369,32 +6764,33 @@ return (
 
             <div>
               <h2>Payment History</h2>
+
               <p>
-                Completed tenant payments and transaction
-                details.
+                Completed and returned tenant payments.
               </p>
             </div>
           </div>
 
           <span>
-            {completedPayments.length}{' '}
-            {completedPayments.length === 1
+            {rentPayments.length}{' '}
+            {rentPayments.length === 1
               ? 'payment'
               : 'payments'}
           </span>
         </div>
 
-        {completedPayments.length === 0 ? (
+        {rentPayments.length === 0 ? (
           <div className="featureEmpty">
             <div className="featureEmptyIcon">$</div>
             <b>No payments recorded</b>
+
             <span>
               Recorded tenant payments will appear here.
             </span>
           </div>
         ) : (
           <div className="commandLedgerPreview">
-            {completedPayments.map(payment => {
+            {rentPayments.map(payment => {
               const property = props.find(
                 item => item.id === payment.property_id
               );
@@ -6407,28 +6803,34 @@ return (
                 item => item.id === payment.tenancy_id
               );
 
-              const paymentAllocated =
-                validAllocations
-                  .filter(
-                    allocation =>
-                      allocation.payment_id ===
-                      payment.id
-                  )
-                  .reduce(
-                    (total, allocation) =>
-                      total +
-                      Number(allocation.amount || 0),
-                    0
-                  );
+              const isReturned =
+                payment.status === 'returned';
+
+              const paymentAllocated = isReturned
+                ? 0
+                : validAllocations
+                    .filter(
+                      allocation =>
+                        allocation.payment_id ===
+                        payment.id
+                    )
+                    .reduce(
+                      (total, allocation) =>
+                        total +
+                        Number(allocation.amount || 0),
+                      0
+                    );
 
               const paymentAmount = Number(
                 payment.amount || 0
               );
 
-              const paymentCredit = Math.max(
-                paymentAmount - paymentAllocated,
-                0
-              );
+              const paymentCredit = isReturned
+                ? 0
+                : Math.max(
+                    paymentAmount - paymentAllocated,
+                    0
+                  );
 
               return (
                 <article
@@ -6474,17 +6876,24 @@ return (
                         Notes: {payment.notes}
                       </small>
                     )}
+
+                    {isReturned && (
+                      <small>
+                        Returned:{' '}
+                        {payment.return_reason ||
+                          'Insufficient funds'}
+                      </small>
+                    )}
                   </div>
 
                   <div
                     style={{
                       textAlign: 'right',
-                      minWidth: '180px'
+                      minWidth: '210px'
                     }}
                   >
                     <b>
-                      $
-                      {paymentAmount.toLocaleString()}
+                      ${paymentAmount.toLocaleString()}
                     </b>
 
                     <span
@@ -6507,8 +6916,9 @@ return (
                         marginTop: '4px'
                       }}
                     >
-                      ${paymentAllocated.toLocaleString()}{' '}
-                      applied
+                      {isReturned
+                        ? 'RETURNED'
+                        : `$${paymentAllocated.toLocaleString()} applied`}
                     </small>
 
                     {paymentCredit > 0 && (
@@ -6522,6 +6932,51 @@ return (
                         credit
                       </small>
                     )}
+
+                    {!isReturned && (
+                      <button
+                        type="button"
+                        className="commandTextButton"
+                        style={{
+                          marginTop: '8px'
+                        }}
+                        onClick={async () => {
+                          const confirmed =
+                            window.confirm(
+                              `Mark this $${paymentAmount.toLocaleString()} payment as returned / insufficient funds?\n\nThe payment will be removed from the tenant balance and the configured NSF fee will be added automatically.`
+                            );
+
+                          if (!confirmed) return;
+
+                          const s = supabase();
+
+                          const { error } = await s.rpc(
+                            'mark_payment_returned',
+                            {
+                              p_payment_id: payment.id,
+                              p_reason:
+                                'Insufficient funds'
+                            }
+                          );
+
+                          if (error) {
+                            alert(
+                              'Could not mark payment returned: ' +
+                                error.message
+                            );
+                            return;
+                          }
+
+                          await load();
+
+                          alert(
+                            'Payment marked returned. The tenant balance and NSF fee have been updated.'
+                          );
+                        }}
+                      >
+                        Mark Returned / NSF
+                      </button>
+                    )}
                   </div>
                 </article>
               );
@@ -6529,6 +6984,31 @@ return (
           </div>
         )}
       </section>
+
+      {returnedPayments.length > 0 && (
+        <section
+          className="commandCard"
+          style={{ marginTop: '28px' }}
+        >
+          <div className="commandCardHeader">
+            <div>
+              <span className="commandSectionIcon">!</span>
+
+              <div>
+                <h2>Returned Payments</h2>
+
+                <p>
+                  {returnedPayments.length}{' '}
+                  {returnedPayments.length === 1
+                    ? 'payment has'
+                    : 'payments have'}{' '}
+                  been returned.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </section>
   );
 })()}
