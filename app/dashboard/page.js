@@ -28,6 +28,10 @@ const [paymentAllocations, setPaymentAllocations] = useState([]);
   const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [rentSettings, setRentSettings] = useState(null);
 const [showRentSettings, setShowRentSettings] = useState(false);
+  const [paymentAccount, setPaymentAccount] = useState(null);
+const [onlineTransactions, setOnlineTransactions] = useState([]);
+const [landlordPayouts, setLandlordPayouts] = useState([]);
+const [paymentSettings, setPaymentSettings] = useState(null);
   const [conversations, setConversations] = useState([]);
 const [messages, setMessages] = useState([]);
 const [announcements, setAnnouncements] = useState([]);
@@ -167,7 +171,74 @@ if (rentSettingsError) {
 } else {
   setRentSettings(rentSettingsData || null);
 }
-        // Load landlord conversations
+    // =========================================================
+// UNITVERO PAYMENTS + PAYOUTS
+// =========================================================
+
+const { data: paymentAccountData, error: paymentAccountError } =
+  await s
+    .from('landlord_payment_accounts')
+    .select('*')
+    .eq('landlord_id', user.id)
+    .maybeSingle();
+
+if (paymentAccountError) {
+  console.error(
+    'Could not load payment account:',
+    paymentAccountError
+  );
+} else {
+  setPaymentAccount(paymentAccountData || null);
+}
+
+
+const { data: onlineTransactionData, error: onlineTransactionError } =
+  await s
+    .from('online_rent_transactions')
+    .select('*')
+    .eq('landlord_id', user.id)
+    .order('created_at', { ascending: false });
+
+if (onlineTransactionError) {
+  console.error(
+    'Could not load online transactions:',
+    onlineTransactionError
+  );
+} else {
+  setOnlineTransactions(onlineTransactionData || []);
+}
+
+
+const { data: payoutData, error: payoutError } =
+  await s
+    .from('landlord_payouts')
+    .select('*')
+    .eq('landlord_id', user.id)
+    .order('created_at', { ascending: false });
+
+if (payoutError) {
+  console.error('Could not load payouts:', payoutError);
+} else {
+  setLandlordPayouts(payoutData || []);
+}
+
+
+const { data: paymentSettingsData, error: paymentSettingsError } =
+  await s
+    .from('payment_settings')
+    .select('*')
+    .eq('landlord_id', user.id)
+    .maybeSingle();
+
+if (paymentSettingsError) {
+  console.error(
+    'Could not load payment settings:',
+    paymentSettingsError
+  );
+} else {
+  setPaymentSettings(paymentSettingsData || null);
+} 
+    // Load landlord conversations
     const { data: conversationData, error: conversationError } = await s
       .from('conversations')
       .select('*')
@@ -863,6 +934,13 @@ function isMultiFamily(property) {
             <span className="navIcon">$</span>
             <span>Rent</span>
           </a>
+            <a
+  className={view === 'payments' ? 'active' : ''}
+  onClick={() => setView('payments')}
+>
+  <span className="navIcon">↗</span>
+  <span>Payments & Payouts</span>
+</a>
 
           <span className="navSection navSectionSecond">
             MANAGEMENT
@@ -7239,7 +7317,630 @@ return (
     </section>
   );
 })()}
-        {view === 'maintenance' && (
+  {view === 'payments' && (() => {
+  const successfulTransactions = onlineTransactions.filter(
+    transaction =>
+      transaction.status === 'succeeded' ||
+      transaction.status === 'completed' ||
+      transaction.status === 'paid'
+  );
+
+  const grossCollected = successfulTransactions.reduce(
+    (total, transaction) =>
+      total + Number(transaction.amount || 0),
+    0
+  );
+
+  const totalFees = successfulTransactions.reduce(
+    (total, transaction) =>
+      total +
+      Number(transaction.processing_fee || 0) +
+      Number(transaction.platform_fee || 0),
+    0
+  );
+
+  const netCollected = successfulTransactions.reduce(
+    (total, transaction) => {
+      const storedNet = Number(transaction.net_amount || 0);
+
+      if (storedNet > 0) {
+        return total + storedNet;
+      }
+
+      return (
+        total +
+        Number(transaction.amount || 0) -
+        Number(transaction.processing_fee || 0) -
+        Number(transaction.platform_fee || 0)
+      );
+    },
+    0
+  );
+
+  const pendingPayouts = landlordPayouts
+    .filter(
+      payout =>
+        payout.status === 'pending' ||
+        payout.status === 'in_transit'
+    )
+    .reduce(
+      (total, payout) =>
+        total + Number(payout.amount || 0),
+      0
+    );
+
+  const paidOut = landlordPayouts
+    .filter(payout => payout.status === 'paid')
+    .reduce(
+      (total, payout) =>
+        total + Number(payout.amount || 0),
+      0
+    );
+
+  const bankConnected =
+    paymentAccount?.onboarding_complete &&
+    paymentAccount?.payouts_enabled;
+
+  return (
+    <section className="panel paymentsPayoutsPage">
+
+      <small>PAYMENT PROCESSING</small>
+
+      <h1>Payments & Payouts</h1>
+
+      <p>
+        Accept online rent payments, manage payment methods,
+        and track deposits to your bank account.
+      </p>
+
+
+      <div
+        className="overviewStats overviewStatsEnhanced"
+        style={{ marginTop: '28px' }}
+      >
+
+        <article className="overviewStatCard">
+          <small>GROSS RENT</small>
+
+          <b>
+            ${grossCollected.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </b>
+
+          <span>Online payments collected</span>
+        </article>
+
+
+        <article className="overviewStatCard">
+          <small>PROCESSING + PLATFORM FEES</small>
+
+          <b>
+            ${totalFees.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </b>
+
+          <span>Total payment fees</span>
+        </article>
+
+
+        <article className="overviewStatCard">
+          <small>NET COLLECTED</small>
+
+          <b>
+            ${netCollected.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </b>
+
+          <span>After recorded fees</span>
+        </article>
+
+
+        <article className="overviewStatCard">
+          <small>UPCOMING PAYOUT</small>
+
+          <b>
+            ${pendingPayouts.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </b>
+
+          <span>Pending bank deposits</span>
+        </article>
+
+      </div>
+
+
+      <div
+        className="commandMainGrid"
+        style={{ marginTop: '28px' }}
+      >
+
+        <section className="commandCard">
+
+          <div className="commandCardHeader">
+
+            <div>
+
+              <span className="commandSectionIcon">
+                $
+              </span>
+
+              <div>
+                <h2>Bank Account & Payouts</h2>
+
+                <p>
+                  Connect the account where Unitvero rent
+                  deposits will be sent.
+                </p>
+              </div>
+
+            </div>
+
+            <span
+              className={
+                bankConnected
+                  ? 'commandOccupancy occupied'
+                  : 'commandOccupancy vacant'
+              }
+            >
+              {bankConnected
+                ? 'CONNECTED'
+                : 'NOT CONNECTED'}
+            </span>
+
+          </div>
+
+
+          {!bankConnected ? (
+
+            <div className="featureEmpty">
+
+              <div className="featureEmptyIcon">
+                $
+              </div>
+
+              <b>Connect your payout account</b>
+
+              <span>
+                Complete secure payment onboarding before
+                accepting online tenant payments.
+              </span>
+
+              <button
+                type="button"
+                className="primary"
+                style={{ marginTop: '16px' }}
+                onClick={() => {
+                  alert(
+                    'Secure Stripe onboarding will be connected in the next step.'
+                  );
+                }}
+              >
+                Connect Bank Account
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div className="commandRentSummary">
+
+              <div>
+                <small>PAYMENTS</small>
+                <b>
+                  {paymentAccount?.charges_enabled
+                    ? 'Enabled'
+                    : 'Pending'}
+                </b>
+              </div>
+
+              <div>
+                <small>PAYOUTS</small>
+                <b>
+                  {paymentAccount?.payouts_enabled
+                    ? 'Enabled'
+                    : 'Pending'}
+                </b>
+              </div>
+
+              <div>
+                <small>ACCOUNT</small>
+                <b>Connected</b>
+              </div>
+
+            </div>
+
+          )}
+
+        </section>
+
+
+        <section className="commandCard">
+
+          <div className="commandCardHeader">
+
+            <div>
+
+              <span className="commandSectionIcon">
+                ↗
+              </span>
+
+              <div>
+                <h2>Payout Summary</h2>
+
+                <p>
+                  Track money moving from tenant payments
+                  to your bank.
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="commandRentSummary">
+
+            <div>
+              <small>UPCOMING</small>
+
+              <b>
+                ${pendingPayouts.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </b>
+            </div>
+
+
+            <div>
+              <small>PAID OUT</small>
+
+              <b>
+                ${paidOut.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </b>
+            </div>
+
+
+            <div>
+              <small>PAYOUT STATUS</small>
+
+              <b>
+                {bankConnected
+                  ? 'Active'
+                  : 'Setup Required'}
+              </b>
+            </div>
+
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <section
+        className="commandCard"
+        style={{ marginTop: '28px' }}
+      >
+
+        <div className="commandCardHeader">
+
+          <div>
+
+            <span className="commandSectionIcon">
+              ⚙
+            </span>
+
+            <div>
+              <h2>Accepted Payment Methods</h2>
+
+              <p>
+                Control how tenants can pay rent through
+                Unitvero.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div className="commandRentSummary">
+
+          <div>
+            <small>ACH / BANK</small>
+
+            <b>
+              {paymentSettings?.ach_enabled !== false
+                ? 'Enabled'
+                : 'Disabled'}
+            </b>
+          </div>
+
+
+          <div>
+            <small>CREDIT / DEBIT CARD</small>
+
+            <b>
+              {paymentSettings?.card_enabled !== false
+                ? 'Enabled'
+                : 'Disabled'}
+            </b>
+          </div>
+
+
+          <div>
+            <small>AUTOPAY</small>
+
+            <b>
+              {paymentSettings?.autopay_enabled !== false
+                ? 'Enabled'
+                : 'Disabled'}
+            </b>
+          </div>
+
+
+          <div>
+            <small>PARTIAL PAYMENTS</small>
+
+            <b>
+              {paymentSettings?.allow_partial_payments !== false
+                ? 'Allowed'
+                : 'Disabled'}
+            </b>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section
+        className="commandCard"
+        style={{ marginTop: '28px' }}
+      >
+
+        <div className="commandCardHeader">
+
+          <div>
+
+            <span className="commandSectionIcon">
+              $
+            </span>
+
+            <div>
+              <h2>Online Payment Activity</h2>
+
+              <p>
+                Tenant payments processed through Unitvero
+                will appear here.
+              </p>
+            </div>
+
+          </div>
+
+          <span>
+            {onlineTransactions.length}{' '}
+            {onlineTransactions.length === 1
+              ? 'transaction'
+              : 'transactions'}
+          </span>
+
+        </div>
+
+
+        {onlineTransactions.length === 0 ? (
+
+          <div className="featureEmpty">
+
+            <div className="featureEmptyIcon">
+              $
+            </div>
+
+            <b>No online payments yet</b>
+
+            <span>
+              Once tenants begin paying through Unitvero,
+              transactions and deposit information will
+              appear here.
+            </span>
+
+          </div>
+
+        ) : (
+
+          <div className="commandLedgerPreview">
+
+            {onlineTransactions.map(transaction => {
+
+              const property = props.find(
+                item =>
+                  item.id === transaction.property_id
+              );
+
+              const unit = units.find(
+                item =>
+                  item.id === transaction.unit_id
+              );
+
+              return (
+
+                <article
+                  className="commandLedgerRow"
+                  key={transaction.id}
+                >
+
+                  <div>
+
+                    <b>
+                      {property?.address ||
+                        'Online Rent Payment'}
+                    </b>
+
+                    <span>
+                      {unit
+                        ? unit.unit_name
+                        : 'Rental payment'}
+                    </span>
+
+                    <small>
+                      {(transaction.payment_method ||
+                        'payment')
+                        .replaceAll('_', ' ')
+                        .toUpperCase()}
+                    </small>
+
+                  </div>
+
+
+                  <div>
+
+                    <b>
+                      $
+                      {Number(
+                        transaction.amount || 0
+                      ).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </b>
+
+                    <small>
+                      {(transaction.status || 'pending')
+                        .replaceAll('_', ' ')
+                        .toUpperCase()}
+                    </small>
+
+                  </div>
+
+                </article>
+
+              );
+            })}
+
+          </div>
+
+        )}
+
+      </section>
+
+
+      <section
+        className="commandCard"
+        style={{ marginTop: '28px' }}
+      >
+
+        <div className="commandCardHeader">
+
+          <div>
+
+            <span className="commandSectionIcon">
+              ↗
+            </span>
+
+            <div>
+              <h2>Payout History</h2>
+
+              <p>
+                Completed and pending deposits to your
+                connected bank account.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {landlordPayouts.length === 0 ? (
+
+          <div className="featureEmpty">
+
+            <div className="featureEmptyIcon">
+              ↗
+            </div>
+
+            <b>No payouts yet</b>
+
+            <span>
+              Bank deposits will appear here after online
+              rent payments are processed.
+            </span>
+
+          </div>
+
+        ) : (
+
+          <div className="commandLedgerPreview">
+
+            {landlordPayouts.map(payout => (
+
+              <article
+                className="commandLedgerRow"
+                key={payout.id}
+              >
+
+                <div>
+
+                  <b>Bank Payout</b>
+
+                  <span>
+                    {payout.arrival_date
+                      ? `Expected ${new Date(
+                          payout.arrival_date +
+                            'T00:00:00'
+                        ).toLocaleDateString()}`
+                      : 'Arrival date pending'}
+                  </span>
+
+                </div>
+
+
+                <div>
+
+                  <b>
+                    $
+                    {Number(
+                      payout.amount || 0
+                    ).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                  </b>
+
+                  <small>
+                    {(payout.status || 'pending')
+                      .replaceAll('_', ' ')
+                      .toUpperCase()}
+                  </small>
+
+                </div>
+
+              </article>
+
+            ))}
+
+          </div>
+
+        )}
+
+      </section>
+
+    </section>
+  );
+})()}    
+  {view === 'maintenance' && (
           <section className="panel">
             <small>PROPERTY OPERATIONS</small>
             <h1>Maintenance</h1>
