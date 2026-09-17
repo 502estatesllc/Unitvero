@@ -17,6 +17,9 @@ export default function Dashboard() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
 
+  const [propertySearch, setPropertySearch] = useState('');
+  const [propertyFilter, setPropertyFilter] = useState('all');
+
   const r = useRouter();
 
   async function load() {
@@ -231,6 +234,53 @@ export default function Dashboard() {
     r.push('/login');
   }
 
+  function activeTenancyForProperty(propertyId) {
+    return tenancies.find(
+      tenancy =>
+        tenancy.property_id === propertyId &&
+        tenancy.status === 'active'
+    );
+  }
+
+  const occupiedPropertyCount = props.filter(property =>
+    activeTenancyForProperty(property.id)
+  ).length;
+
+  const vacantPropertyCount =
+    props.length - occupiedPropertyCount;
+
+  const portfolioMonthlyRent = props.reduce(
+    (total, property) =>
+      total + Number(property.monthly_rent || 0),
+    0
+  );
+
+  const filteredProperties = props.filter(property => {
+    const tenancy = activeTenancyForProperty(property.id);
+    const occupied = Boolean(tenancy);
+
+    const searchText = propertySearch
+      .trim()
+      .toLowerCase();
+
+    const propertyText = `
+      ${property.address || ''}
+      ${property.city || ''}
+      ${property.state || ''}
+      ${property.zip_code || ''}
+    `.toLowerCase();
+
+    const matchesSearch =
+      !searchText || propertyText.includes(searchText);
+
+    const matchesFilter =
+      propertyFilter === 'all' ||
+      (propertyFilter === 'occupied' && occupied) ||
+      (propertyFilter === 'vacant' && !occupied);
+
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -353,6 +403,7 @@ export default function Dashboard() {
             <div className="dashboardHeader">
               <div>
                 <small>LANDLORD DASHBOARD</small>
+
                 <h1>
                   Good to see you
                   {profile?.full_name
@@ -384,27 +435,14 @@ export default function Dashboard() {
 
               <article>
                 <span>Occupied Units</span>
-                <b>
-                  {
-                    tenancies.filter(
-                      tenancy => tenancy.status === 'active'
-                    ).length
-                  }
-                </b>
+                <b>{occupiedPropertyCount}</b>
                 <small>TENANTS</small>
               </article>
 
               <article>
                 <span>Monthly Rent</span>
                 <b>
-                  $
-                  {props
-                    .reduce(
-                      (total, property) =>
-                        total + Number(property.monthly_rent || 0),
-                      0
-                    )
-                    .toLocaleString()}
+                  ${portfolioMonthlyRent.toLocaleString()}
                 </b>
                 <small>EXPECTED</small>
               </article>
@@ -425,145 +463,126 @@ export default function Dashboard() {
                   </div>
 
                   <div className="portfolioPreviewActions">
-  <span className="portfolioPropertyCount">
-    Showing {Math.min(props.length, 4)} of {props.length}
-  </span>
+                    <span className="portfolioPropertyCount">
+                      Showing {Math.min(props.length, 4)} of{' '}
+                      {props.length}
+                    </span>
 
-  <button
-    type="button"
-    className="viewAllButton"
-    onClick={() => setView('properties')}
-  >
-    View All Properties →
-  </button>
-</div>
+                    <button
+                      type="button"
+                      className="viewAllButton"
+                      onClick={() => setView('properties')}
+                    >
+                      View All Properties →
+                    </button>
+                  </div>
                 </div>
 
-                <div className="dashboardProperties">
+                <div className="dashboardProperties propertyIdentityGrid">
                   {props.length === 0 && (
                     <div className="noProperties">
-                      <div className="propertyPlaceholderIcon">⌂</div>
+                      <div className="propertyPlaceholderIcon">
+                        ⌂
+                      </div>
+
                       <b>No properties yet</b>
-                      <span>Add your first property to get started.</span>
+
+                      <span>
+                        Add your first property to get started.
+                      </span>
                     </div>
                   )}
 
-                  {props.slice(0, 4).map(p => (
-                    <article
-                      className="dashboardPropertyCard"
-                      key={p.id}
-                      onClick={() => {
-                        setSelectedProperty(p);
-                        loadTenancy(p.id);
-                        setView('propertyDetails');
-                      }}
-                    >
-                      <div className="propertyPhoto">
-                        {p.image_url ? (
-                          <img src={p.image_url} alt={p.address} />
-                        ) : (
-                          <div className="propertyPhotoPlaceholder">
-                            <span>⌂</span>
-                            <small>ADD PROPERTY PHOTO</small>
-                          </div>
-                        )}
+                  {props.slice(0, 4).map(property => {
+                    const tenancy =
+                      activeTenancyForProperty(property.id);
 
-                        <label
-                          className="photoUploadButton"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          {p.image_url ? 'Change Photo' : '+ Add Photo'}
+                    const occupied = Boolean(tenancy);
 
-                          <input
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            onChange={async e => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-
-                              const s = supabase();
-
-                              const filePath =
-                                `${p.id}/${Date.now()}-${file.name.replace(
-                                  /\s+/g,
-                                  '-'
-                                )}`;
-
-                              const { error: uploadError } =
-                                await s.storage
-                                  .from('property-images')
-                                  .upload(filePath, file, {
-                                    cacheControl: '3600',
-                                    upsert: false
-                                  });
-
-                              if (uploadError) {
-                                alert(
-                                  'Could not upload photo: ' +
-                                    uploadError.message
-                                );
-                                return;
-                              }
-
-                              const { data: publicData } = s.storage
-                                .from('property-images')
-                                .getPublicUrl(filePath);
-
-                              const imageUrl = publicData.publicUrl;
-
-                              const { error: updateError } = await s
-                                .from('properties')
-                                .update({ image_url: imageUrl })
-                                .eq('id', p.id);
-
-                              if (updateError) {
-                                alert(
-                                  'Photo uploaded, but could not save it: ' +
-                                    updateError.message
-                                );
-                                return;
-                              }
-
-                              await load();
-
-                              alert(
-                                'Property photo updated successfully!'
-                              );
-                            }}
-                          />
-                        </label>
-
-                        <span className="occupancyBadge">Active</span>
-                      </div>
-
-                      <div className="propertyCardBody">
-                        <div className="propertyCardTop">
-                          <div>
-                            <h3>{p.address}</h3>
-                            <p>
-                              {p.city}, {p.state} {p.zip_code}
-                            </p>
+                    return (
+                      <article
+                        className="dashboardPropertyCard identityPropertyCard"
+                        key={property.id}
+                        onClick={() => {
+                          setSelectedProperty(property);
+                          loadTenancy(property.id);
+                          setView('propertyDetails');
+                        }}
+                      >
+                        <div className="propertyIdentityPanel">
+                          <div className="propertyBuildingIcon">
+                            ⌂
                           </div>
 
-                          <span className="propertyMenu">•••</span>
+                          <span
+                            className={
+                              occupied
+                                ? 'portfolioOccupancy occupied'
+                                : 'portfolioOccupancy vacant'
+                            }
+                          >
+                            <i></i>
+                            {occupied ? 'Occupied' : 'Vacant'}
+                          </span>
                         </div>
 
-                        <div className="propertyRent">
-                          $
-                          {Number(
-                            p.monthly_rent || 0
-                          ).toLocaleString()}
-                          <span>/mo</span>
-                        </div>
+                        <div className="propertyCardBody">
+                          <div className="propertyCardTop">
+                            <div>
+                              <small>RENTAL PROPERTY</small>
 
-                        <div className="propertyMeta">
-                          <span>Rental Property</span>
-                          <span>View details →</span>
+                              <h3>{property.address}</h3>
+
+                              <p>
+                                {property.city},{' '}
+                                {property.state}{' '}
+                                {property.zip_code}
+                              </p>
+                            </div>
+
+                            <span className="propertyArrow">
+                              →
+                            </span>
+                          </div>
+
+                          <div className="propertyCardDetails">
+                            <div>
+                              <span>MONTHLY RENT</span>
+
+                              <b>
+                                $
+                                {Number(
+                                  property.monthly_rent || 0
+                                ).toLocaleString()}
+                              </b>
+                            </div>
+
+                            <div>
+                              <span>TENANT</span>
+
+                              <b>
+                                {tenancy
+                                  ? tenancy.tenant_name ||
+                                    tenancy.tenant_email ||
+                                    'Active tenant'
+                                  : 'No tenant'}
+                              </b>
+                            </div>
+                          </div>
+
+                          <div className="propertyCardFooter">
+                            <span>
+                              {occupied
+                                ? 'Active tenancy'
+                                : 'Ready for tenant'}
+                            </span>
+
+                            <b>View Property →</b>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -578,33 +597,43 @@ export default function Dashboard() {
                 <div className="activityList">
                   <div className="activityRow">
                     <div className="activityTypeIcon">$</div>
+
                     <div>
                       <b>Rent collection</b>
                       <span>Payments will appear here</span>
                     </div>
+
                     <small>Current</small>
                   </div>
 
                   <div className="activityRow">
                     <div className="activityTypeIcon">⌂</div>
+
                     <div>
                       <b>{props.length} properties</b>
                       <span>Currently in your portfolio</span>
                     </div>
+
                     <small>Portfolio</small>
                   </div>
 
                   <div className="activityRow">
                     <div className="activityTypeIcon">✓</div>
+
                     <div>
-                      <b>Account active</b>
-                      <span>Your Rentwise workspace is ready</span>
+                      <b>{occupiedPropertyCount} occupied</b>
+
+                      <span>
+                        {vacantPropertyCount} currently vacant
+                      </span>
                     </div>
-                    <small>Active</small>
+
+                    <small>Occupancy</small>
                   </div>
                 </div>
               </section>
             </div>
+
             <div className="dashboardBottomGrid">
               <section className="dashboardFeatureCard">
                 <div className="featureCardHeader">
@@ -632,16 +661,9 @@ export default function Dashboard() {
                     <div>
                       <span className="legendDot pending"></span>
                       <span>Expected</span>
+
                       <b>
-                        $
-                        {props
-                          .reduce(
-                            (total, property) =>
-                              total +
-                              Number(property.monthly_rent || 0),
-                            0
-                          )
-                          .toLocaleString()}
+                        ${portfolioMonthlyRent.toLocaleString()}
                       </b>
                     </div>
                   </div>
@@ -659,6 +681,7 @@ export default function Dashboard() {
                 <div className="featureEmpty">
                   <div className="featureEmptyIcon">▤</div>
                   <b>No renewals scheduled</b>
+
                   <span>
                     Upcoming lease renewals will appear here.
                   </span>
@@ -687,6 +710,7 @@ export default function Dashboard() {
 
                 <div>
                   <h2>Grow Your Portfolio</h2>
+
                   <p>
                     Add another property and keep building your
                     rental business.
@@ -706,50 +730,313 @@ export default function Dashboard() {
         )}
 
         {view === 'properties' && (
-          <section className="panel">
-            <div>
-              <small>PORTFOLIO</small>
-              <h1>Properties</h1>
-              <p>Add and manage your rental properties.</p>
+          <section className="portfolioPage">
+            <div className="portfolioPageHeader">
+              <div>
+                <small>PROPERTY PORTFOLIO</small>
+                <h1>Properties</h1>
+
+                <p>
+                  Manage your rental portfolio, occupancy and
+                  monthly rent.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  document
+                    .getElementById('portfolioAddProperty')
+                    ?.scrollIntoView({
+                      behavior: 'smooth',
+                      block: 'center'
+                    });
+                }}
+              >
+                + Add Property
+              </button>
             </div>
 
-            {profile?.role === 'landlord' && (
-              <form className="add" onSubmit={add}>
-                <input
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  placeholder="Street address"
-                  required
-                />
+            <div className="portfolioStats">
+              <article>
+                <span className="portfolioStatIcon">▦</span>
 
-                <button type="submit" className="primary">
-                  Add property
-                </button>
-              </form>
-            )}
+                <div>
+                  <small>TOTAL PROPERTIES</small>
+                  <b>{props.length}</b>
+                  <p>Entire portfolio</p>
+                </div>
+              </article>
 
-            {props.length === 0 && (
-              <p>No properties added yet.</p>
-            )}
-
-            {props.map(p => (
-              <div
-                className="property"
-                key={p.id}
-                onClick={() => {
-                  setSelectedProperty(p);
-                  loadTenancy(p.id);
-                  setView('propertyDetails');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <b>{p.address}</b>
-
-                <span>
-                  {p.city}, {p.state} {p.zip_code}
+              <article>
+                <span className="portfolioStatIcon occupied">
+                  ✓
                 </span>
+
+                <div>
+                  <small>OCCUPIED</small>
+                  <b>{occupiedPropertyCount}</b>
+                  <p>Active tenants</p>
+                </div>
+              </article>
+
+              <article>
+                <span className="portfolioStatIcon vacant">
+                  ⌂
+                </span>
+
+                <div>
+                  <small>VACANT</small>
+                  <b>{vacantPropertyCount}</b>
+                  <p>Available units</p>
+                </div>
+              </article>
+
+              <article>
+                <span className="portfolioStatIcon rent">
+                  $
+                </span>
+
+                <div>
+                  <small>MONTHLY RENT</small>
+
+                  <b>
+                    ${portfolioMonthlyRent.toLocaleString()}
+                  </b>
+
+                  <p>Expected portfolio rent</p>
+                </div>
+              </article>
+            </div>
+
+            <div className="portfolioToolbar">
+              <div className="portfolioSearch">
+                <span>⌕</span>
+
+                <input
+                  type="search"
+                  value={propertySearch}
+                  onChange={e =>
+                    setPropertySearch(e.target.value)
+                  }
+                  placeholder="Search by address, city or ZIP..."
+                />
               </div>
-            ))}
+
+              <div className="portfolioFilters">
+                <button
+                  type="button"
+                  className={
+                    propertyFilter === 'all' ? 'active' : ''
+                  }
+                  onClick={() => setPropertyFilter('all')}
+                >
+                  All
+                  <span>{props.length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={
+                    propertyFilter === 'occupied'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setPropertyFilter('occupied')
+                  }
+                >
+                  Occupied
+                  <span>{occupiedPropertyCount}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={
+                    propertyFilter === 'vacant'
+                      ? 'active'
+                      : ''
+                  }
+                  onClick={() =>
+                    setPropertyFilter('vacant')
+                  }
+                >
+                  Vacant
+                  <span>{vacantPropertyCount}</span>
+                </button>
+              </div>
+
+              <span className="portfolioResultCount">
+                {filteredProperties.length}{' '}
+                {filteredProperties.length === 1
+                  ? 'property'
+                  : 'properties'}
+              </span>
+            </div>
+
+            {filteredProperties.length === 0 ? (
+              <div className="portfolioEmpty">
+                <div>⌂</div>
+
+                <h2>
+                  {props.length === 0
+                    ? 'Add your first property'
+                    : 'No properties found'}
+                </h2>
+
+                <p>
+                  {props.length === 0
+                    ? 'Start building your Rentwise portfolio below.'
+                    : 'Try changing your search or property filter.'}
+                </p>
+              </div>
+            ) : (
+              <div className="portfolioPropertyGrid">
+                {filteredProperties.map(property => {
+                  const tenancy =
+                    activeTenancyForProperty(property.id);
+
+                  const occupied = Boolean(tenancy);
+
+                  return (
+                    <article
+                      className="portfolioPropertyCard"
+                      key={property.id}
+                      onClick={() => {
+                        setSelectedProperty(property);
+                        loadTenancy(property.id);
+                        setView('propertyDetails');
+                      }}
+                    >
+                      <div className="portfolioCardAccent">
+                        <div className="portfolioHouseIcon">
+                          ⌂
+                        </div>
+
+                        <span
+                          className={
+                            occupied
+                              ? 'portfolioOccupancy occupied'
+                              : 'portfolioOccupancy vacant'
+                          }
+                        >
+                          <i></i>
+                          {occupied ? 'Occupied' : 'Vacant'}
+                        </span>
+                      </div>
+
+                      <div className="portfolioCardContent">
+                        <div className="portfolioCardAddress">
+                          <small>RENTAL PROPERTY</small>
+                          <h2>{property.address}</h2>
+
+                          <p>
+                            {property.city},{' '}
+                            {property.state}{' '}
+                            {property.zip_code}
+                          </p>
+                        </div>
+
+                        <div className="portfolioRentAmount">
+                          <small>MONTHLY RENT</small>
+
+                          <b>
+                            $
+                            {Number(
+                              property.monthly_rent || 0
+                            ).toLocaleString()}
+                          </b>
+
+                          <span>/ month</span>
+                        </div>
+
+                        <div className="portfolioCardDetails">
+                          <div>
+                            <small>TENANT</small>
+
+                            <b>
+                              {tenancy
+                                ? tenancy.tenant_name ||
+                                  tenancy.tenant_email ||
+                                  'Active tenant'
+                                : 'No tenant'}
+                            </b>
+                          </div>
+
+                          <div>
+                            <small>LEASE</small>
+
+                            <b>
+                              {tenancy
+                                ? tenancy.end_date
+                                  ? new Date(
+                                      tenancy.end_date +
+                                        'T00:00:00'
+                                    ).toLocaleDateString()
+                                  : 'Open ended'
+                                : '—'}
+                            </b>
+                          </div>
+                        </div>
+
+                        <div className="portfolioCardFooter">
+                          <span>
+                            {occupied
+                              ? 'Tenant assigned'
+                              : 'Ready for tenant'}
+                          </span>
+
+                          <button type="button">
+                            View Property →
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {profile?.role === 'landlord' && (
+              <section
+                className="portfolioAddProperty"
+                id="portfolioAddProperty"
+              >
+                <div className="portfolioAddIcon">+</div>
+
+                <div className="portfolioAddCopy">
+                  <small>GROW YOUR PORTFOLIO</small>
+                  <h2>Add a Property</h2>
+
+                  <p>
+                    Add another rental property to your
+                    Rentwise workspace.
+                  </p>
+                </div>
+
+                <form
+                  className="portfolioAddForm"
+                  onSubmit={add}
+                >
+                  <input
+                    value={address}
+                    onChange={e =>
+                      setAddress(e.target.value)
+                    }
+                    placeholder="Enter street address"
+                    required
+                  />
+
+                  <button
+                    type="submit"
+                    className="primary"
+                  >
+                    Add Property
+                  </button>
+                </form>
+              </section>
+            )}
           </section>
         )}
 
@@ -778,7 +1065,7 @@ export default function Dashboard() {
               </div>
 
               <div className="propertyDetailsInfo">
-                <span className="propertyDetailsLabel">
+                             <span className="propertyDetailsLabel">
                   RENTAL PROPERTY
                 </span>
 
@@ -791,7 +1078,7 @@ export default function Dashboard() {
                 </p>
 
                 <span className="propertyStatusBadge">
-                  ● Active
+                  ● {selectedTenancy ? 'Occupied' : 'Vacant'}
                 </span>
 
                 <button
@@ -820,17 +1107,21 @@ export default function Dashboard() {
 
               <article>
                 <span>Occupancy</span>
-                <b>{selectedTenancy ? 'Occupied' : 'Vacant'}</b>
+                <b>
+                  {selectedTenancy ? 'Occupied' : 'Vacant'}
+                </b>
                 <small>CURRENT STATUS</small>
               </article>
 
               <article>
                 <span>Tenant</span>
+
                 <b>
                   {selectedTenancy
                     ? selectedTenancy.tenant_name || 'Active'
                     : 'None'}
                 </b>
+
                 <small>
                   {selectedTenancy
                     ? 'ACTIVE LEASE'
@@ -885,7 +1176,9 @@ export default function Dashboard() {
                     <p>✉ {selectedTenancy.tenant_email}</p>
 
                     {selectedTenancy.tenant_phone && (
-                      <p>☎ {selectedTenancy.tenant_phone}</p>
+                      <p>
+                        ☎ {selectedTenancy.tenant_phone}
+                      </p>
                     )}
 
                     <p>
@@ -1031,7 +1324,9 @@ export default function Dashboard() {
                   form.monthlyRent.value
                 );
 
-                const startDate = form.startDate.value;
+                const startDate =
+                  form.startDate.value;
+
                 const endDate =
                   form.endDate.value || null;
 
@@ -1190,14 +1485,17 @@ export default function Dashboard() {
             </form>
           </section>
         )}
+
         {view === 'tenants' && (
           <section className="panel">
             <div className="dashboardHeader">
               <div>
                 <small>TENANT MANAGEMENT</small>
                 <h1>Tenants</h1>
+
                 <p className="dashboardSubtitle">
-                  Manage active tenants across your rental portfolio.
+                  Manage active tenants across your rental
+                  portfolio.
                 </p>
               </div>
             </div>
@@ -1205,10 +1503,15 @@ export default function Dashboard() {
             <div className="activityList">
               {tenancies.length === 0 && (
                 <div className="featureEmpty">
-                  <div className="featureEmptyIcon">♙</div>
+                  <div className="featureEmptyIcon">
+                    ♙
+                  </div>
+
                   <b>No tenants yet</b>
+
                   <span>
-                    Add a tenant from one of your property pages.
+                    Add a tenant from one of your property
+                    pages.
                   </span>
                 </div>
               )}
@@ -1219,8 +1522,13 @@ export default function Dashboard() {
                 );
 
                 return (
-                  <div className="activityRow" key={tenancy.id}>
-                    <div className="activityTypeIcon">♙</div>
+                  <div
+                    className="activityRow"
+                    key={tenancy.id}
+                  >
+                    <div className="activityTypeIcon">
+                      ♙
+                    </div>
 
                     <div>
                       <b>
@@ -1233,7 +1541,9 @@ export default function Dashboard() {
                         {property?.address || 'Property'}
                       </span>
 
-                      <span>{tenancy.tenant_email}</span>
+                      <span>
+                        {tenancy.tenant_email}
+                      </span>
 
                       <span>
                         $
@@ -1294,6 +1604,7 @@ export default function Dashboard() {
               <div className="tenantFormGrid">
                 <label>
                   Full Name
+
                   <input
                     name="tenantName"
                     type="text"
@@ -1306,6 +1617,7 @@ export default function Dashboard() {
 
                 <label>
                   Email Address
+
                   <input
                     name="tenantEmail"
                     type="email"
@@ -1318,6 +1630,7 @@ export default function Dashboard() {
 
                 <label>
                   Phone Number
+
                   <input
                     name="tenantPhone"
                     type="tel"
@@ -1329,6 +1642,7 @@ export default function Dashboard() {
 
                 <label>
                   Monthly Rent
+
                   <input
                     name="monthlyRent"
                     type="number"
@@ -1343,6 +1657,7 @@ export default function Dashboard() {
 
                 <label>
                   Lease Start Date
+
                   <input
                     name="startDate"
                     type="date"
@@ -1355,6 +1670,7 @@ export default function Dashboard() {
 
                 <label>
                   Lease End Date
+
                   <input
                     name="endDate"
                     type="date"
@@ -1390,8 +1706,10 @@ export default function Dashboard() {
               <div>
                 <small>LEASE MANAGEMENT</small>
                 <h1>Leases</h1>
+
                 <p className="dashboardSubtitle">
-                  Review active rental agreements and lease dates.
+                  Review active rental agreements and lease
+                  dates.
                 </p>
               </div>
             </div>
@@ -1399,11 +1717,15 @@ export default function Dashboard() {
             <div className="activityList">
               {tenancies.length === 0 && (
                 <div className="featureEmpty">
-                  <div className="featureEmptyIcon">▤</div>
+                  <div className="featureEmptyIcon">
+                    ▤
+                  </div>
+
                   <b>No active leases</b>
+
                   <span>
-                    Lease information will appear after a tenant is
-                    added.
+                    Lease information will appear after a
+                    tenant is added.
                   </span>
                 </div>
               )}
@@ -1418,7 +1740,9 @@ export default function Dashboard() {
                     className="activityRow"
                     key={tenancy.id}
                   >
-                    <div className="activityTypeIcon">▤</div>
+                    <div className="activityTypeIcon">
+                      ▤
+                    </div>
 
                     <div>
                       <b>
@@ -1475,8 +1799,8 @@ export default function Dashboard() {
                 <h1>Applications</h1>
 
                 <p className="dashboardSubtitle">
-                  Review applicants, request tenant screening and
-                  make leasing decisions.
+                  Review applicants, request tenant screening
+                  and make leasing decisions.
                 </p>
               </div>
 
@@ -1494,7 +1818,9 @@ export default function Dashboard() {
 
             <div className="applicationStats">
               <article>
-                <div className="applicationStatIcon">▣</div>
+                <div className="applicationStatIcon">
+                  ▣
+                </div>
 
                 <div>
                   <span>Total Applications</span>
@@ -1504,18 +1830,23 @@ export default function Dashboard() {
               </article>
 
               <article>
-                <div className="applicationStatIcon new">+</div>
+                <div className="applicationStatIcon new">
+                  +
+                </div>
 
                 <div>
                   <span>New</span>
+
                   <b>
                     {
                       applications.filter(
                         application =>
-                          application.application_status === 'new'
+                          application.application_status ===
+                          'new'
                       ).length
                     }
                   </b>
+
                   <small>NEEDS REVIEW</small>
                 </div>
               </article>
@@ -1527,6 +1858,7 @@ export default function Dashboard() {
 
                 <div>
                   <span>Screening</span>
+
                   <b>
                     {
                       applications.filter(
@@ -1536,6 +1868,7 @@ export default function Dashboard() {
                       ).length
                     }
                   </b>
+
                   <small>IN PROGRESS</small>
                 </div>
               </article>
@@ -1547,6 +1880,7 @@ export default function Dashboard() {
 
                 <div>
                   <span>Approved</span>
+
                   <b>
                     {
                       applications.filter(
@@ -1556,15 +1890,17 @@ export default function Dashboard() {
                       ).length
                     }
                   </b>
+
                   <small>READY FOR LEASE</small>
                 </div>
-              </article>
+              </article>     
             </div>
 
             <section className="applicationDirectory">
               <div className="applicationDirectoryHeader">
                 <div>
                   <h2>Rental Applications</h2>
+
                   <p>
                     Review applicant information and screening
                     progress.
@@ -1581,13 +1917,15 @@ export default function Dashboard() {
 
               {applications.length === 0 ? (
                 <div className="applicationEmpty">
-                  <div className="applicationEmptyIcon">▣</div>
+                  <div className="applicationEmptyIcon">
+                    ▣
+                  </div>
 
                   <h3>No applications yet</h3>
 
                   <p>
-                    Create an application to begin reviewing future
-                    tenants.
+                    Create an application to begin reviewing
+                    future tenants.
                   </p>
 
                   <button
@@ -1663,8 +2001,10 @@ export default function Dashboard() {
                         <span
                           className={`applicationStatusBadge screening-${screeningStatus}`}
                         >
-                          {screeningStatus
-                            .replaceAll('_', ' ')}
+                          {screeningStatus.replaceAll(
+                            '_',
+                            ' '
+                          )}
                         </span>
 
                         <span
@@ -1685,8 +2025,12 @@ export default function Dashboard() {
                           type="button"
                           className="applicationReviewButton"
                           onClick={() => {
-                            setSelectedApplication(application);
-                            setView('applicationDetails');
+                            setSelectedApplication(
+                              application
+                            );
+                            setView(
+                              'applicationDetails'
+                            );
                           }}
                         >
                           Review →
@@ -1718,9 +2062,9 @@ export default function Dashboard() {
               <h1>Create Application</h1>
 
               <p>
-                Enter the applicant&apos;s rental information. Tenant
-                screening can be requested after the application is
-                created.
+                Enter the applicant&apos;s rental information.
+                Tenant screening can be requested after the
+                application is created.
               </p>
             </div>
 
@@ -1751,6 +2095,7 @@ export default function Dashboard() {
 
                 const applicationRecord = {
                   landlord_id: user.id,
+
                   property_id:
                     form.propertyId.value || null,
 
@@ -1790,7 +2135,9 @@ export default function Dashboard() {
 
                   monthly_income:
                     form.monthlyIncome.value
-                      ? Number(form.monthlyIncome.value)
+                      ? Number(
+                          form.monthlyIncome.value
+                        )
                       : null,
 
                   current_landlord_name:
@@ -1811,7 +2158,9 @@ export default function Dashboard() {
                     null,
 
                   occupants_count:
-                    Number(form.occupantsCount.value || 1),
+                    Number(
+                      form.occupantsCount.value || 1
+                    ),
 
                   occupants_details:
                     form.occupantsDetails.value.trim() ||
@@ -1820,7 +2169,8 @@ export default function Dashboard() {
                   has_pets: petValue,
 
                   pets_details: petValue
-                    ? form.petsDetails.value.trim() || null
+                    ? form.petsDetails.value.trim() ||
+                      null
                     : null,
 
                   vehicles_details:
@@ -1866,8 +2216,10 @@ export default function Dashboard() {
 
                   <div>
                     <h2>Applicant Information</h2>
+
                     <p>
-                      Basic contact and current address information.
+                      Basic contact and current address
+                      information.
                     </p>
                   </div>
                 </div>
@@ -1875,6 +2227,7 @@ export default function Dashboard() {
                 <div className="applicationFormGrid">
                   <label>
                     Full Name *
+
                     <input
                       name="applicantName"
                       type="text"
@@ -1885,6 +2238,7 @@ export default function Dashboard() {
 
                   <label>
                     Email Address *
+
                     <input
                       name="applicantEmail"
                       type="email"
@@ -1895,6 +2249,7 @@ export default function Dashboard() {
 
                   <label>
                     Phone Number
+
                     <input
                       name="applicantPhone"
                       type="tel"
@@ -1904,6 +2259,7 @@ export default function Dashboard() {
 
                   <label>
                     Rental Property
+
                     <select name="propertyId">
                       <option value="">
                         Select property
@@ -1922,6 +2278,7 @@ export default function Dashboard() {
 
                   <label className="applicationWideField">
                     Current Street Address
+
                     <input
                       name="currentAddress"
                       type="text"
@@ -1931,6 +2288,7 @@ export default function Dashboard() {
 
                   <label>
                     City
+
                     <input
                       name="currentCity"
                       type="text"
@@ -1940,6 +2298,7 @@ export default function Dashboard() {
 
                   <label>
                     State
+
                     <input
                       name="currentState"
                       type="text"
@@ -1949,6 +2308,7 @@ export default function Dashboard() {
 
                   <label>
                     ZIP Code
+
                     <input
                       name="currentZip"
                       type="text"
@@ -1964,9 +2324,10 @@ export default function Dashboard() {
 
                   <div>
                     <h2>Employment & Income</h2>
+
                     <p>
-                      Employment details used during application
-                      review.
+                      Employment details used during
+                      application review.
                     </p>
                   </div>
                 </div>
@@ -1974,6 +2335,7 @@ export default function Dashboard() {
                 <div className="applicationFormGrid">
                   <label>
                     Employer
+
                     <input
                       name="employerName"
                       type="text"
@@ -1983,6 +2345,7 @@ export default function Dashboard() {
 
                   <label>
                     Job Title
+
                     <input
                       name="jobTitle"
                       type="text"
@@ -1992,6 +2355,7 @@ export default function Dashboard() {
 
                   <label>
                     Monthly Income
+
                     <input
                       name="monthlyIncome"
                       type="number"
@@ -2009,6 +2373,7 @@ export default function Dashboard() {
 
                   <div>
                     <h2>Rental History</h2>
+
                     <p>
                       Current landlord and previous housing
                       information.
@@ -2019,6 +2384,7 @@ export default function Dashboard() {
                 <div className="applicationFormGrid">
                   <label>
                     Current Landlord
+
                     <input
                       name="currentLandlordName"
                       type="text"
@@ -2028,6 +2394,7 @@ export default function Dashboard() {
 
                   <label>
                     Landlord Phone
+
                     <input
                       name="currentLandlordPhone"
                       type="tel"
@@ -2037,6 +2404,7 @@ export default function Dashboard() {
 
                   <label>
                     Current Monthly Rent
+
                     <input
                       name="currentRent"
                       type="number"
@@ -2048,6 +2416,7 @@ export default function Dashboard() {
 
                   <label className="applicationWideField">
                     Previous Address
+
                     <input
                       name="previousAddress"
                       type="text"
@@ -2063,6 +2432,7 @@ export default function Dashboard() {
 
                   <div>
                     <h2>Household</h2>
+
                     <p>
                       Occupants, pets and vehicle information.
                     </p>
@@ -2072,6 +2442,7 @@ export default function Dashboard() {
                 <div className="applicationFormGrid">
                   <label>
                     Number of Occupants
+
                     <input
                       name="occupantsCount"
                       type="number"
@@ -2082,6 +2453,7 @@ export default function Dashboard() {
 
                   <label>
                     Pets
+
                     <select
                       name="hasPets"
                       defaultValue="no"
@@ -2093,6 +2465,7 @@ export default function Dashboard() {
 
                   <label className="applicationWideField">
                     Occupant Details
+
                     <textarea
                       name="occupantsDetails"
                       rows="3"
@@ -2102,6 +2475,7 @@ export default function Dashboard() {
 
                   <label className="applicationWideField">
                     Pet Details
+
                     <textarea
                       name="petsDetails"
                       rows="3"
@@ -2111,6 +2485,7 @@ export default function Dashboard() {
 
                   <label className="applicationWideField">
                     Vehicles
+
                     <textarea
                       name="vehiclesDetails"
                       rows="3"
@@ -2121,13 +2496,15 @@ export default function Dashboard() {
               </section>
 
               <div className="screeningConsentNotice">
-                <b>Tenant screening is handled separately</b>
+                <b>
+                  Tenant screening is handled separately
+                </b>
 
                 <span>
-                  Do not enter Social Security numbers, credit card
-                  information or consumer report data in this form.
-                  Screening authorization will be handled by the
-                  screening provider.
+                  Do not enter Social Security numbers,
+                  credit card information or consumer report
+                  data in this form. Screening authorization
+                  will be handled by the screening provider.
                 </span>
               </div>
 
@@ -2152,6 +2529,7 @@ export default function Dashboard() {
             </form>
           </section>
         )}
+
         {view === 'applicationDetails' &&
           selectedApplication && (
             <section className="applicationDetailsPage">
@@ -2231,6 +2609,7 @@ export default function Dashboard() {
                     <div className="applicationDetailFields">
                       <div>
                         <span>Full Name</span>
+
                         <b>
                           {selectedApplication.applicant_name ||
                             'Not provided'}
@@ -2239,6 +2618,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Email Address</span>
+
                         <b>
                           {selectedApplication.applicant_email ||
                             'Not provided'}
@@ -2247,6 +2627,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Phone Number</span>
+
                         <b>
                           {selectedApplication.applicant_phone ||
                             'Not provided'}
@@ -2255,6 +2636,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Current Address</span>
+
                         <b>
                           {selectedApplication.current_address
                             ? `${selectedApplication.current_address}${
@@ -2289,6 +2671,7 @@ export default function Dashboard() {
                     <div className="applicationDetailFields">
                       <div>
                         <span>Employer</span>
+
                         <b>
                           {selectedApplication.employer_name ||
                             'Not provided'}
@@ -2297,6 +2680,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Job Title</span>
+
                         <b>
                           {selectedApplication.job_title ||
                             'Not provided'}
@@ -2305,6 +2689,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Monthly Income</span>
+
                         <b>
                           {selectedApplication.monthly_income
                             ? `$${Number(
@@ -2316,6 +2701,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Current Rent</span>
+
                         <b>
                           {selectedApplication.current_rent
                             ? `$${Number(
@@ -2338,8 +2724,9 @@ export default function Dashboard() {
                     </div>
 
                     <div className="applicationDetailFields">
-                      <div>
+                                                <div>
                         <span>Current Landlord</span>
+
                         <b>
                           {selectedApplication.current_landlord_name ||
                             'Not provided'}
@@ -2348,6 +2735,7 @@ export default function Dashboard() {
 
                       <div>
                         <span>Landlord Phone</span>
+
                         <b>
                           {selectedApplication.current_landlord_phone ||
                             'Not provided'}
@@ -2356,6 +2744,7 @@ export default function Dashboard() {
 
                       <div className="applicationDetailWide">
                         <span>Previous Address</span>
+
                         <b>
                           {selectedApplication.previous_address ||
                             'Not provided'}
@@ -2377,13 +2766,16 @@ export default function Dashboard() {
                     <div className="applicationDetailFields">
                       <div>
                         <span>Occupants</span>
+
                         <b>
-                          {selectedApplication.occupants_count || 1}
+                          {selectedApplication.occupants_count ||
+                            1}
                         </b>
                       </div>
 
                       <div>
                         <span>Pets</span>
+
                         <b>
                           {selectedApplication.has_pets
                             ? 'Yes'
@@ -2393,6 +2785,7 @@ export default function Dashboard() {
 
                       <div className="applicationDetailWide">
                         <span>Occupant Details</span>
+
                         <b>
                           {selectedApplication.occupants_details ||
                             'Not provided'}
@@ -2401,6 +2794,7 @@ export default function Dashboard() {
 
                       <div className="applicationDetailWide">
                         <span>Pet Details</span>
+
                         <b>
                           {selectedApplication.has_pets
                             ? selectedApplication.pets_details ||
@@ -2411,6 +2805,7 @@ export default function Dashboard() {
 
                       <div className="applicationDetailWide">
                         <span>Vehicles</span>
+
                         <b>
                           {selectedApplication.vehicles_details ||
                             'Not provided'}
@@ -2442,16 +2837,19 @@ export default function Dashboard() {
                     </div>
 
                     <p className="screeningCenterDescription">
-                      Request applicant screening through TransUnion
-                      SmartMove.
+                      Request applicant screening through
+                      TransUnion SmartMove.
                     </p>
 
                     <div className="screeningItems">
                       <div>
-                        <span className="screeningItemIcon">✓</span>
+                        <span className="screeningItemIcon">
+                          ✓
+                        </span>
 
                         <div>
                           <b>Identity Check</b>
+
                           <small>
                             {selectedApplication.screening_status ===
                             'completed'
@@ -2462,10 +2860,13 @@ export default function Dashboard() {
                       </div>
 
                       <div>
-                        <span className="screeningItemIcon">$</span>
+                        <span className="screeningItemIcon">
+                          $
+                        </span>
 
                         <div>
                           <b>Credit Report</b>
+
                           <small>
                             {selectedApplication.screening_status ===
                             'completed'
@@ -2476,10 +2877,13 @@ export default function Dashboard() {
                       </div>
 
                       <div>
-                        <span className="screeningItemIcon">◇</span>
+                        <span className="screeningItemIcon">
+                          ◇
+                        </span>
 
                         <div>
                           <b>Criminal Background</b>
+
                           <small>
                             {selectedApplication.screening_status ===
                             'completed'
@@ -2490,10 +2894,13 @@ export default function Dashboard() {
                       </div>
 
                       <div>
-                        <span className="screeningItemIcon">⌂</span>
+                        <span className="screeningItemIcon">
+                          ⌂
+                        </span>
 
                         <div>
                           <b>Eviction History</b>
+
                           <small>
                             {selectedApplication.screening_status ===
                             'completed'
@@ -2505,12 +2912,14 @@ export default function Dashboard() {
                     </div>
 
                     <div className="screeningConsentNotice">
-                      <b>Authorization handled by SmartMove</b>
+                      <b>
+                        Authorization handled by SmartMove
+                      </b>
 
                       <span>
-                        SmartMove will email the applicant and collect
-                        their authorization before releasing the
-                        screening reports.
+                        SmartMove will email the applicant and
+                        collect their authorization before
+                        releasing the screening reports.
                       </span>
                     </div>
 
@@ -2519,7 +2928,8 @@ export default function Dashboard() {
                       className="primary screeningButton"
                       onClick={async () => {
                         const s = supabase();
-                        const now = new Date().toISOString();
+                        const now =
+                          new Date().toISOString();
 
                         const { error } = await s
                           .from('rental_applications')
@@ -2527,7 +2937,8 @@ export default function Dashboard() {
                             screening_status:
                               'pending_consent',
                             screening_requested_at: now,
-                            application_status: 'screening',
+                            application_status:
+                              'screening',
                             updated_at: now
                           })
                           .eq(
@@ -2548,7 +2959,8 @@ export default function Dashboard() {
                           screening_status:
                             'pending_consent',
                           screening_requested_at: now,
-                          application_status: 'screening'
+                          application_status:
+                            'screening'
                         };
 
                         setSelectedApplication(
@@ -2598,8 +3010,8 @@ export default function Dashboard() {
                     <h2>Application Decision</h2>
 
                     <p>
-                      Update the application after completing your
-                      review.
+                      Update the application after completing
+                      your review.
                     </p>
 
                     <div className="applicationDecisionActions">
@@ -2643,11 +3055,12 @@ export default function Dashboard() {
                           );
 
                           setApplications(
-                            applications.map(application =>
-                              application.id ===
-                              selectedApplication.id
-                                ? updatedApplication
-                                : application
+                            applications.map(
+                              application =>
+                                application.id ===
+                                selectedApplication.id
+                                  ? updatedApplication
+                                  : application
                             )
                           );
 
@@ -2696,7 +3109,8 @@ export default function Dashboard() {
 
                           const updatedApplication = {
                             ...selectedApplication,
-                            application_status: 'denied',
+                            application_status:
+                              'denied',
                             updated_at: now
                           };
 
@@ -2705,11 +3119,12 @@ export default function Dashboard() {
                           );
 
                           setApplications(
-                            applications.map(application =>
-                              application.id ===
-                              selectedApplication.id
-                                ? updatedApplication
-                                : application
+                            applications.map(
+                              application =>
+                                application.id ===
+                                selectedApplication.id
+                                  ? updatedApplication
+                                  : application
                             )
                           );
 
@@ -2723,8 +3138,9 @@ export default function Dashboard() {
                     </div>
 
                     <small className="applicationDecisionNote">
-                      If a consumer report affects a leasing decision,
-                      follow applicable adverse-action requirements.
+                      If a consumer report affects a leasing
+                      decision, follow applicable
+                      adverse-action requirements.
                     </small>
                   </section>
 
@@ -2738,6 +3154,7 @@ export default function Dashboard() {
 
                         <div>
                           <b>Application created</b>
+
                           <small>
                             {selectedApplication.created_at
                               ? new Date(
@@ -2795,8 +3212,8 @@ export default function Dashboard() {
                 <h1>Documents</h1>
 
                 <p>
-                  Create, send, track, and prepare rental documents
-                  for eSignature.
+                  Create, send, track, and prepare rental
+                  documents for eSignature.
                 </p>
               </div>
 
@@ -2845,9 +3262,9 @@ export default function Dashboard() {
                   <h2>Template Library</h2>
 
                   <p>
-                    Start with a rental document and Rentwise will
-                    eventually auto-fill tenant and property
-                    information.
+                    Start with a rental document and Rentwise
+                    will eventually auto-fill tenant and
+                    property information.
                   </p>
                 </div>
 
@@ -2950,10 +3367,10 @@ export default function Dashboard() {
                 </h2>
 
                 <p>
-                  The document workflow is being structured for Draft
-                  → Sent → Viewed → Signed → Completed. Provider
-                  connection and real charges will be added before
-                  launch.
+                  The document workflow is being structured
+                  for Draft → Sent → Viewed → Signed →
+                  Completed. Provider connection and real
+                  charges will be added before launch.
                 </p>
               </div>
 
@@ -2968,8 +3385,8 @@ export default function Dashboard() {
             <h1>Rent</h1>
 
             <p>
-              Online rent collection and payment tracking is coming
-              next.
+              Online rent collection and payment tracking is
+              coming next.
             </p>
 
             <div className="featureEmpty">
@@ -2977,8 +3394,8 @@ export default function Dashboard() {
               <b>Rent collection</b>
 
               <span>
-                Payments, balances and transaction history will appear
-                here.
+                Payments, balances and transaction history
+                will appear here.
               </span>
             </div>
           </section>
@@ -2999,7 +3416,8 @@ export default function Dashboard() {
               <b>No maintenance requests</b>
 
               <span>
-                New tenant maintenance requests will appear here.
+                New tenant maintenance requests will appear
+                here.
               </span>
             </div>
           </section>
