@@ -1623,9 +1623,10 @@ function isMultiFamily(property) {
   className="propertyUnitCard"
   key={unit.id}
   onClick={() => {
-    setSelectedUnit(unit);
-    setSelectedTenancy(unitTenancy || null);
-  }}
+  setSelectedUnit(unit);
+  setSelectedTenancy(unitTenancy || null);
+  setView('unitDetails');
+}}
 >
             <div className="propertyUnitTop">
               <div className="propertyUnitIcon">⌂</div>
@@ -1682,7 +1683,8 @@ function isMultiFamily(property) {
     </div>
   </section>
 )}
-                    <div className="commandMainGrid">
+       
+<div className="commandMainGrid">
               <div className="commandMainColumn">
                 <section className="commandCard">
                   <div className="commandCardHeader">
@@ -2152,7 +2154,33 @@ selectedPropertyPayments.length === 0 ? (
           </section>
         )}
 
-        {view === 'editProperty' && selectedProperty && (
+      {view === 'unitDetails' && selectedUnit && selectedProperty && (
+  <section className="propertyCommandCenter">
+    <button
+      type="button"
+      className="propertyBackButton"
+      onClick={() => setView('propertyDetails')}
+    >
+      ← Back to Property
+    </button>
+
+    <div className="commandCard">
+      <small>UNIT DETAILS</small>
+
+      <h1>{selectedUnit.unit_name}</h1>
+
+      <p>{selectedProperty.address}</p>
+
+      <h3>
+        {selectedTenancy
+          ? selectedTenancy.tenant_name ||
+            selectedTenancy.tenant_email
+          : 'Vacant Unit'}
+      </h3>
+    </div>
+  </section>
+)}
+{view === 'editProperty' && selectedProperty && (
           <section className="panel">
             <button
               type="button"
