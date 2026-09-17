@@ -5709,316 +5709,615 @@ return (
             )}
           </section>
         )}   
-{view === 'rent' && (
-  <section className="panel">
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        gap: '20px',
-        marginBottom: '28px'
-      }}
-    >
-      <div>
-        <small>RENT COLLECTION</small>
-        <h1>Rent & Payments</h1>
-        <p>
-          Track rent charges, balances and payments across your
-          portfolio.
-        </p>
+{view === 'rent' && (() => {
+  const completedPayments = rentPayments.filter(
+    payment => payment.status === 'completed'
+  );
+
+  const completedPaymentIds = new Set(
+    completedPayments.map(payment => payment.id)
+  );
+
+  const activeCharges = rentCharges.filter(
+    charge => charge.status !== 'waived'
+  );
+
+  const validAllocations = paymentAllocations.filter(
+    allocation => completedPaymentIds.has(allocation.payment_id)
+  );
+
+  const totalCharges = activeCharges.reduce(
+    (total, charge) => total + Number(charge.amount || 0),
+    0
+  );
+
+  const totalCollected = completedPayments.reduce(
+    (total, payment) => total + Number(payment.amount || 0),
+    0
+  );
+
+  const totalAllocated = validAllocations.reduce(
+    (total, allocation) =>
+      total + Number(allocation.amount || 0),
+    0
+  );
+
+  const totalOutstanding = Math.max(
+    totalCharges - totalAllocated,
+    0
+  );
+
+  const unallocatedCredit = Math.max(
+    totalCollected - totalAllocated,
+    0
+  );
+
+  const collectionRate =
+    totalCharges > 0
+      ? Math.min(
+          Math.round((totalAllocated / totalCharges) * 100),
+          100
+        )
+      : 0;
+
+  return (
+    <section className="panel">
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '20px',
+          marginBottom: '28px'
+        }}
+      >
+        <div>
+          <small>RENT COLLECTION</small>
+          <h1>Rent & Payments</h1>
+          <p>
+            Track charges, balances and tenant payments across
+            your portfolio.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setShowRecordPayment(true)}
+        >
+          + Record Payment
+        </button>
       </div>
 
-      <button
-        type="button"
-        className="primary"
-        onClick={() => setShowRecordPayment(true)}
-      >
-        + Record Payment
-      </button>
-    </div>
+      <div className="commandStats">
+        <article>
+          <div className="commandStatIcon">$</div>
+          <div>
+            <span>Total Charges</span>
+            <b>${totalCharges.toLocaleString()}</b>
+            <small>RENT CHARGED</small>
+          </div>
+        </article>
 
-    <div className="commandStats">
-      <article>
-        <div className="commandStatIcon">$</div>
-        <div>
-          <span>Total Charges</span>
-          <b>
-            $
-            {rentCharges
-              .filter(charge => charge.status !== 'waived')
-              .reduce(
-                (total, charge) =>
-                  total + Number(charge.amount || 0),
-                0
-              )
-              .toLocaleString()}
-          </b>
-          <small>ALL RENT CHARGES</small>
-        </div>
-      </article>
+        <article>
+          <div className="commandStatIcon">✓</div>
+          <div>
+            <span>Collected</span>
+            <b>${totalCollected.toLocaleString()}</b>
+            <small>PAYMENTS RECEIVED</small>
+          </div>
+        </article>
 
-      <article>
-        <div className="commandStatIcon">✓</div>
-        <div>
-          <span>Collected</span>
-          <b>
-            $
-            {rentPayments
-              .filter(payment => payment.status === 'completed')
-              .reduce(
-                (total, payment) =>
-                  total + Number(payment.amount || 0),
-                0
-              )
-              .toLocaleString()}
-          </b>
-          <small>COMPLETED PAYMENTS</small>
-        </div>
-      </article>
+        <article>
+          <div className="commandStatIcon">◎</div>
+          <div>
+            <span>Outstanding</span>
+            <b>${totalOutstanding.toLocaleString()}</b>
+            <small>CURRENT BALANCE</small>
+          </div>
+        </article>
 
-      <article>
-        <div className="commandStatIcon">◎</div>
-        <div>
-          <span>Outstanding</span>
-          <b>
-            $
-            {Math.max(
-              rentCharges
-                .filter(charge => charge.status !== 'waived')
-                .reduce(
-                  (total, charge) =>
-                    total + Number(charge.amount || 0),
-                  0
-                ) -
-                paymentAllocations.reduce(
-                  (total, allocation) =>
-                    total + Number(allocation.amount || 0),
-                  0
-                ),
-              0
-            ).toLocaleString()}
-          </b>
-          <small>CURRENT BALANCE</small>
-        </div>
-      </article>
-    </div>
+        <article>
+          <div className="commandStatIcon">%</div>
+          <div>
+            <span>Collection Rate</span>
+            <b>{collectionRate}%</b>
+            <small>CHARGES COLLECTED</small>
+          </div>
+        </article>
+      </div>
 
-    {showRecordPayment && (
+      {unallocatedCredit > 0 && (
+        <section
+          className="commandCard"
+          style={{ marginTop: '24px' }}
+        >
+          <div className="commandCardHeader">
+            <div>
+              <span className="commandSectionIcon">+</span>
+              <div>
+                <h2>Unallocated Credit</h2>
+                <p>
+                  Payments received that have not been applied
+                  to a rent charge.
+                </p>
+              </div>
+            </div>
+
+            <b>${unallocatedCredit.toLocaleString()}</b>
+          </div>
+        </section>
+      )}
+
+      {showRecordPayment && (
+        <section
+          className="commandCard"
+          style={{
+            marginTop: '28px',
+            marginBottom: '28px'
+          }}
+        >
+          <div className="commandCardHeader">
+            <div>
+              <span className="commandSectionIcon">$</span>
+
+              <div>
+                <h2>Record Payment</h2>
+                <p>
+                  Record a payment received from an active
+                  tenant.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="commandTextButton"
+              onClick={() => setShowRecordPayment(false)}
+            >
+              Cancel
+            </button>
+          </div>
+
+          <form
+            className="addTenantForm"
+            onSubmit={async e => {
+              e.preventDefault();
+
+              const form = e.currentTarget;
+
+              const tenancyId = form.tenancyId.value;
+              const amount = Number(form.amount.value);
+              const paymentDate = form.paymentDate.value;
+              const paymentMethod =
+                form.paymentMethod.value;
+              const reference =
+                form.reference.value.trim();
+              const notes = form.notes.value.trim();
+
+              const tenancy = tenancies.find(
+                item => item.id === tenancyId
+              );
+
+              if (!tenancy) {
+                alert('Select a tenant.');
+                return;
+              }
+
+              if (!amount || amount <= 0) {
+                alert('Enter a valid payment amount.');
+                return;
+              }
+
+              const property = props.find(
+                item => item.id === tenancy.property_id
+              );
+
+              if (
+                property &&
+                isMultiFamily(property) &&
+                !tenancy.unit_id
+              ) {
+                alert(
+                  'This tenant must be assigned to a unit before recording a payment.'
+                );
+                return;
+              }
+
+              const s = supabase();
+
+              const { error } = await s.rpc(
+                'record_rent_payment',
+                {
+                  p_property_id: tenancy.property_id,
+                  p_unit_id: tenancy.unit_id || null,
+                  p_tenancy_id: tenancy.id,
+                  p_amount: amount,
+                  p_payment_date: paymentDate,
+                  p_payment_method: paymentMethod,
+                  p_reference: reference || null,
+                  p_notes: notes || null
+                }
+              );
+
+              if (error) {
+                alert(
+                  'Could not record payment: ' +
+                    error.message
+                );
+                return;
+              }
+
+              form.reset();
+              setShowRecordPayment(false);
+
+              await load();
+
+              alert('Payment recorded successfully!');
+            }}
+          >
+            <label>
+              Tenant
+              <select
+                name="tenancyId"
+                required
+                defaultValue=""
+              >
+                <option value="" disabled>
+                  Select tenant
+                </option>
+
+                {tenancies
+                  .filter(
+                    tenancy => tenancy.status === 'active'
+                  )
+                  .map(tenancy => {
+                    const property = props.find(
+                      item =>
+                        item.id === tenancy.property_id
+                    );
+
+                    const unit = units.find(
+                      item => item.id === tenancy.unit_id
+                    );
+
+                    const tenantCharges =
+                      rentCharges.filter(
+                        charge =>
+                          charge.tenancy_id === tenancy.id &&
+                          charge.status !== 'waived'
+                      );
+
+                    const tenantChargeIds = new Set(
+                      tenantCharges.map(
+                        charge => charge.id
+                      )
+                    );
+
+                    const tenantAllocated =
+                      validAllocations
+                        .filter(allocation =>
+                          tenantChargeIds.has(
+                            allocation.charge_id
+                          )
+                        )
+                        .reduce(
+                          (total, allocation) =>
+                            total +
+                            Number(
+                              allocation.amount || 0
+                            ),
+                          0
+                        );
+
+                    const tenantBalance = Math.max(
+                      tenantCharges.reduce(
+                        (total, charge) =>
+                          total +
+                          Number(charge.amount || 0),
+                        0
+                      ) - tenantAllocated,
+                      0
+                    );
+
+                    return (
+                      <option
+                        key={tenancy.id}
+                        value={tenancy.id}
+                      >
+                        {tenancy.tenant_name ||
+                          tenancy.tenant_email ||
+                          'Tenant'}
+                        {' — '}
+                        {property?.address ||
+                          'Property'}
+                        {unit
+                          ? ` • ${unit.unit_name}`
+                          : ''}
+                        {` • Balance $${tenantBalance.toLocaleString()}`}
+                      </option>
+                    );
+                  })}
+              </select>
+            </label>
+
+            <label>
+              Amount
+              <input
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="1000.00"
+                required
+              />
+            </label>
+
+            <label>
+              Payment Date
+              <input
+                name="paymentDate"
+                type="date"
+                defaultValue={
+                  new Date()
+                    .toISOString()
+                    .split('T')[0]
+                }
+                required
+              />
+            </label>
+
+            <label>
+              Payment Method
+              <select
+                name="paymentMethod"
+                defaultValue="cash"
+                required
+              >
+                <option value="cash">Cash</option>
+                <option value="check">Check</option>
+                <option value="ach">
+                  ACH / Bank Transfer
+                </option>
+                <option value="card">Card</option>
+                <option value="money_order">
+                  Money Order
+                </option>
+                <option value="cash_app">
+                  Cash App
+                </option>
+                <option value="zelle">Zelle</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              Reference / Confirmation
+              <input
+                name="reference"
+                type="text"
+                placeholder="Check number or confirmation number"
+              />
+            </label>
+
+            <label>
+              Notes
+              <textarea
+                name="notes"
+                placeholder="Optional payment notes"
+                rows="3"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="primary"
+            >
+              Record Payment
+            </button>
+          </form>
+        </section>
+      )}
+
       <section
         className="commandCard"
-        style={{ marginTop: '28px', marginBottom: '28px' }}
+        style={{ marginTop: '28px' }}
+      >
+        <div className="commandCardHeader">
+          <div>
+            <span className="commandSectionIcon">▤</span>
+
+            <div>
+              <h2>Rent Charges</h2>
+              <p>
+                Current rent charges and remaining tenant
+                balances.
+              </p>
+            </div>
+          </div>
+
+          <span>
+            {activeCharges.length}{' '}
+            {activeCharges.length === 1
+              ? 'charge'
+              : 'charges'}
+          </span>
+        </div>
+
+        {activeCharges.length === 0 ? (
+          <div className="featureEmpty">
+            <div className="featureEmptyIcon">$</div>
+            <b>No rent charges</b>
+            <span>
+              Rent charges will appear here when they are
+              created.
+            </span>
+          </div>
+        ) : (
+          <div className="commandLedgerPreview">
+            {activeCharges.map(charge => {
+              const property = props.find(
+                item => item.id === charge.property_id
+              );
+
+              const unit = units.find(
+                item => item.id === charge.unit_id
+              );
+
+              const tenancy = tenancies.find(
+                item => item.id === charge.tenancy_id
+              );
+
+              const chargePaid = validAllocations
+                .filter(
+                  allocation =>
+                    allocation.charge_id === charge.id
+                )
+                .reduce(
+                  (total, allocation) =>
+                    total +
+                    Number(allocation.amount || 0),
+                  0
+                );
+
+              const chargeAmount = Number(
+                charge.amount || 0
+              );
+
+              const remaining = Math.max(
+                chargeAmount - chargePaid,
+                0
+              );
+
+              const displayStatus =
+                remaining <= 0
+                  ? 'Paid'
+                  : chargePaid > 0
+                    ? 'Partial'
+                    : 'Unpaid';
+
+              return (
+                <article
+                  className="commandLedgerRow"
+                  key={charge.id}
+                  style={{
+                    alignItems: 'center',
+                    paddingTop: '18px',
+                    paddingBottom: '18px'
+                  }}
+                >
+                  <div>
+                    <b>
+                      {charge.description ||
+                        'Rent Charge'}
+                    </b>
+
+                    <span>
+                      {tenancy?.tenant_name ||
+                        tenancy?.tenant_email ||
+                        'Tenant'}
+                    </span>
+
+                    <span>
+                      {property?.address ||
+                        'Property'}
+                      {unit
+                        ? ` • ${unit.unit_name}`
+                        : ''}
+                    </span>
+
+                    <small>
+                      Due{' '}
+                      {charge.due_date
+                        ? new Date(
+                            charge.due_date +
+                              'T00:00:00'
+                          ).toLocaleDateString()
+                        : '—'}
+                    </small>
+                  </div>
+
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      minWidth: '190px'
+                    }}
+                  >
+                    <span
+                      className={
+                        displayStatus === 'Paid'
+                          ? 'commandActiveText'
+                          : ''
+                      }
+                    >
+                      {displayStatus}
+                    </span>
+
+                    <b
+                      style={{
+                        display: 'block',
+                        marginTop: '6px'
+                      }}
+                    >
+                      $
+                      {remaining.toLocaleString()}
+                      {' remaining'}
+                    </b>
+
+                    <small
+                      style={{
+                        display: 'block',
+                        marginTop: '4px'
+                      }}
+                    >
+                      ${chargePaid.toLocaleString()} paid
+                      {' of '}
+                      ${chargeAmount.toLocaleString()}
+                    </small>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section
+        className="commandCard"
+        style={{ marginTop: '28px' }}
       >
         <div className="commandCardHeader">
           <div>
             <span className="commandSectionIcon">$</span>
 
             <div>
-              <h2>Record Payment</h2>
-              <p>Enter a rent payment received from a tenant.</p>
+              <h2>Payment History</h2>
+              <p>
+                Completed tenant payments and transaction
+                details.
+              </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="commandTextButton"
-            onClick={() => setShowRecordPayment(false)}
-          >
-            Cancel
-          </button>
-        </div>
-
-        <form
-          className="addTenantForm"
-          onSubmit={async e => {
-            e.preventDefault();
-
-            const form = e.currentTarget;
-
-            const tenancyId = form.tenancyId.value;
-            const amount = Number(form.amount.value);
-            const paymentDate = form.paymentDate.value;
-            const paymentMethod = form.paymentMethod.value;
-            const reference = form.reference.value.trim();
-            const notes = form.notes.value.trim();
-
-            const tenancy = tenancies.find(
-              item => item.id === tenancyId
-            );
-
-            if (!tenancy) {
-              alert('Select a tenant.');
-              return;
-            }
-
-            if (!amount || amount <= 0) {
-              alert('Enter a valid payment amount.');
-              return;
-            }
-
-            const s = supabase();
-
-            const { error } = await s.rpc(
-              'record_rent_payment',
-              {
-                p_property_id: tenancy.property_id,
-                p_unit_id: tenancy.unit_id || null,
-                p_tenancy_id: tenancy.id,
-                p_amount: amount,
-                p_payment_date: paymentDate,
-                p_payment_method: paymentMethod,
-                p_reference: reference || null,
-                p_notes: notes || null
-              }
-            );
-
-            if (error) {
-              alert(
-                'Could not record payment: ' +
-                  error.message
-              );
-              return;
-            }
-
-            form.reset();
-            setShowRecordPayment(false);
-
-            await load();
-
-            alert('Payment recorded successfully!');
-          }}
-        >
-          <label>
-            Tenant
-            <select name="tenancyId" required defaultValue="">
-              <option value="" disabled>
-                Select tenant
-              </option>
-
-              {tenancies
-                .filter(tenancy => tenancy.status === 'active')
-                .map(tenancy => {
-                  const property = props.find(
-                    item => item.id === tenancy.property_id
-                  );
-
-                  const unit = units.find(
-                    item => item.id === tenancy.unit_id
-                  );
-
-                  return (
-                    <option
-                      key={tenancy.id}
-                      value={tenancy.id}
-                    >
-                      {tenancy.tenant_name ||
-                        tenancy.tenant_email ||
-                        'Tenant'}
-                      {' — '}
-                      {property?.address || 'Property'}
-                      {unit ? ` • ${unit.unit_name}` : ''}
-                    </option>
-                  );
-                })}
-            </select>
-          </label>
-
-          <label>
-            Amount
-            <input
-              name="amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="1000.00"
-              required
-            />
-          </label>
-
-          <label>
-            Payment Date
-            <input
-              name="paymentDate"
-              type="date"
-              defaultValue={
-                new Date().toISOString().split('T')[0]
-              }
-              required
-            />
-          </label>
-
-          <label>
-            Payment Method
-            <select
-              name="paymentMethod"
-              defaultValue="cash"
-              required
-            >
-              <option value="cash">Cash</option>
-              <option value="check">Check</option>
-              <option value="ach">ACH / Bank Transfer</option>
-              <option value="card">Card</option>
-              <option value="money_order">Money Order</option>
-              <option value="cash_app">Cash App</option>
-              <option value="zelle">Zelle</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-
-          <label>
-            Reference / Confirmation
-            <input
-              name="reference"
-              type="text"
-              placeholder="Check number or confirmation number"
-            />
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              name="notes"
-              placeholder="Optional payment notes"
-              rows="3"
-            />
-          </label>
-
-          <button type="submit" className="primary">
-            Record Payment
-          </button>
-        </form>
-      </section>
-    )}
-
-    <section className="commandCard">
-      <div className="commandCardHeader">
-        <div>
-          <span className="commandSectionIcon">$</span>
-
-          <div>
-            <h2>Payment History</h2>
-            <p>Completed rent payments.</p>
-          </div>
-        </div>
-      </div>
-
-      {rentPayments.filter(
-        payment => payment.status === 'completed'
-      ).length === 0 ? (
-        <div className="featureEmpty">
-          <div className="featureEmptyIcon">$</div>
-          <b>No payments recorded</b>
           <span>
-            Recorded tenant payments will appear here.
+            {completedPayments.length}{' '}
+            {completedPayments.length === 1
+              ? 'payment'
+              : 'payments'}
           </span>
         </div>
-      ) : (
-        <div className="commandLedgerPreview">
-          {rentPayments
-            .filter(
-              payment => payment.status === 'completed'
-            )
-            .map(payment => {
+
+        {completedPayments.length === 0 ? (
+          <div className="featureEmpty">
+            <div className="featureEmptyIcon">$</div>
+            <b>No payments recorded</b>
+            <span>
+              Recorded tenant payments will appear here.
+            </span>
+          </div>
+        ) : (
+          <div className="commandLedgerPreview">
+            {completedPayments.map(payment => {
               const property = props.find(
                 item => item.id === payment.property_id
               );
@@ -6031,33 +6330,92 @@ return (
                 item => item.id === payment.tenancy_id
               );
 
+              const paymentAllocated =
+                validAllocations
+                  .filter(
+                    allocation =>
+                      allocation.payment_id ===
+                      payment.id
+                  )
+                  .reduce(
+                    (total, allocation) =>
+                      total +
+                      Number(allocation.amount || 0),
+                    0
+                  );
+
+              const paymentAmount = Number(
+                payment.amount || 0
+              );
+
+              const paymentCredit = Math.max(
+                paymentAmount - paymentAllocated,
+                0
+              );
+
               return (
-                <div
+                <article
                   className="commandLedgerRow"
                   key={payment.id}
+                  style={{
+                    alignItems: 'center',
+                    paddingTop: '18px',
+                    paddingBottom: '18px'
+                  }}
                 >
                   <div>
                     <b>
                       {tenancy?.tenant_name ||
                         tenancy?.tenant_email ||
-                        'Tenant payment'}
+                        'Tenant Payment'}
                     </b>
 
                     <span>
-                      {property?.address || 'Property'}
-                      {unit ? ` • ${unit.unit_name}` : ''}
+                      {property?.address ||
+                        'Property'}
+                      {unit
+                        ? ` • ${unit.unit_name}`
+                        : ''}
                     </span>
+
+                    <span>
+                      {payment.payment_method
+                        ? payment.payment_method
+                            .replaceAll('_', ' ')
+                            .toUpperCase()
+                        : 'PAYMENT'}
+                    </span>
+
+                    {payment.reference && (
+                      <small>
+                        Reference: {payment.reference}
+                      </small>
+                    )}
+
+                    {payment.notes && (
+                      <small>
+                        Notes: {payment.notes}
+                      </small>
+                    )}
                   </div>
 
-                  <div>
+                  <div
+                    style={{
+                      textAlign: 'right',
+                      minWidth: '180px'
+                    }}
+                  >
                     <b>
                       $
-                      {Number(
-                        payment.amount || 0
-                      ).toLocaleString()}
+                      {paymentAmount.toLocaleString()}
                     </b>
 
-                    <span>
+                    <span
+                      style={{
+                        display: 'block',
+                        marginTop: '4px'
+                      }}
+                    >
                       {payment.payment_date
                         ? new Date(
                             payment.payment_date +
@@ -6065,15 +6423,38 @@ return (
                           ).toLocaleDateString()
                         : '—'}
                     </span>
+
+                    <small
+                      style={{
+                        display: 'block',
+                        marginTop: '4px'
+                      }}
+                    >
+                      ${paymentAllocated.toLocaleString()}{' '}
+                      applied
+                    </small>
+
+                    {paymentCredit > 0 && (
+                      <small
+                        style={{
+                          display: 'block',
+                          marginTop: '4px'
+                        }}
+                      >
+                        ${paymentCredit.toLocaleString()}{' '}
+                        credit
+                      </small>
+                    )}
                   </div>
-                </div>
+                </article>
               );
             })}
-        </div>
-      )}
+          </div>
+        )}
+      </section>
     </section>
-  </section>
-)}
+  );
+})()}
         {view === 'maintenance' && (
           <section className="panel">
             <small>PROPERTY OPERATIONS</small>
