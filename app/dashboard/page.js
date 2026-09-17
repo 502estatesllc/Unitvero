@@ -345,7 +345,7 @@ alert('Upload user: ' + (user ? user.id : 'NOT LOGGED IN'));
           .from('property-images')
           .upload(filePath, file, {
             cacheControl: '3600',
-            upsert: true
+            upsert: false
           });
 
         if (uploadError) {
