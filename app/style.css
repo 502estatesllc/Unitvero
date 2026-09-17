@@ -7872,3 +7872,430 @@ textarea:focus {
     border-top: 1px solid #e2e8f0 !important;
   }
 }
+
+/* =========================================================
+   UNITVERO — BRAND SYSTEM
+   Midnight Navy + Teal + Slate
+   ========================================================= */
+
+:root {
+  --uv-navy: #0b1727;
+  --uv-navy-2: #102238;
+  --uv-navy-3: #16314d;
+
+  --uv-teal: #0f9f8f;
+  --uv-teal-dark: #087f73;
+  --uv-teal-light: #ccfbf1;
+  --uv-teal-soft: #f0fdfa;
+
+  --uv-bg: #f4f7f9;
+  --uv-card: #ffffff;
+
+  --uv-text: #17212f;
+  --uv-heading: #0b1727;
+  --uv-muted: #64748b;
+
+  --uv-border: #dce4e9;
+}
+
+
+/* ---------- MAIN APP ---------- */
+
+html,
+body,
+.app {
+  background: var(--uv-bg) !important;
+}
+
+body {
+  color: var(--uv-text) !important;
+}
+
+
+/* ---------- SIDEBAR ---------- */
+
+.sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      #081522 0%,
+      #0b1c2d 48%,
+      #07131f 100%
+    ) !important;
+
+  border-right: 1px solid rgba(255,255,255,.06) !important;
+
+  box-shadow:
+    10px 0 35px rgba(11,23,39,.08) !important;
+}
+
+
+/* ---------- UNITVERO LOGO ---------- */
+
+.logo {
+  color: #ffffff !important;
+  font-size: 29px !important;
+  font-weight: 800 !important;
+  letter-spacing: -1.4px !important;
+}
+
+.logo span {
+  color: #2dd4bf !important;
+}
+
+.brandLabel {
+  color: #7890a5 !important;
+}
+
+
+/* ---------- SIDEBAR LABELS ---------- */
+
+.navSection {
+  color: #688096 !important;
+}
+
+
+/* ---------- SIDEBAR LINKS ---------- */
+
+.sidebarNav a {
+  color: #a9bac9 !important;
+  border: 1px solid transparent !important;
+}
+
+.sidebarNav a:hover {
+  color: #ffffff !important;
+  background: rgba(45,212,191,.07) !important;
+}
+
+.sidebarNav a.active {
+  color: #ffffff !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15,159,143,.23),
+      rgba(15,159,143,.11)
+    ) !important;
+
+  border-color: rgba(45,212,191,.18) !important;
+
+  box-shadow:
+    inset 3px 0 0 #2dd4bf !important;
+}
+
+.sidebarNav a.active .navIcon {
+  color: #5eead4 !important;
+}
+
+
+/* ---------- ACCOUNT AREA ---------- */
+
+.accountAvatar {
+  background: rgba(45,212,191,.14) !important;
+  color: #5eead4 !important;
+  border: 1px solid rgba(45,212,191,.18) !important;
+}
+
+
+/* =========================================================
+   HEADINGS
+   ========================================================= */
+
+h1,
+h2,
+h3 {
+  color: var(--uv-heading);
+}
+
+.dashboardHeader h1,
+.portfolioPageHeader h1,
+.panel > h1,
+.rentPage h1 {
+  color: var(--uv-heading) !important;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary {
+  background:
+    linear-gradient(
+      135deg,
+      #0f9f8f,
+      #087f73
+    ) !important;
+
+  border-color: #087f73 !important;
+  color: #ffffff !important;
+
+  box-shadow:
+    0 8px 20px rgba(15,159,143,.20) !important;
+}
+
+.primary:hover {
+  background:
+    linear-gradient(
+      135deg,
+      #0d9488,
+      #06756b
+    ) !important;
+
+  box-shadow:
+    0 11px 25px rgba(15,159,143,.27) !important;
+}
+
+
+/* ---------- SECONDARY BUTTONS ---------- */
+
+.viewAllButton,
+.commandSecondaryButton,
+.propertyBackButton {
+  border-color: #cbd8de !important;
+  color: #334155 !important;
+  background: #ffffff !important;
+}
+
+.viewAllButton:hover,
+.commandSecondaryButton:hover,
+.propertyBackButton:hover {
+  border-color: #5eead4 !important;
+  color: #087f73 !important;
+  background: #f0fdfa !important;
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.overviewStatCard,
+.rentwiseChartCard,
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard,
+.portfolioPropertyCard,
+.dashboardPropertyCard,
+.commandCard,
+.propertyUnitCard,
+.propertyDetailsCard {
+  border-color: var(--uv-border) !important;
+
+  box-shadow:
+    0 2px 5px rgba(11,23,39,.025),
+    0 12px 30px rgba(11,23,39,.055) !important;
+}
+
+
+/* =========================================================
+   STAT CARDS — PROFESSIONAL / LESS RAINBOW
+   ========================================================= */
+
+.overviewStatCard {
+  background: #ffffff !important;
+}
+
+.overviewStatCard::before {
+  background: #0f9f8f !important;
+}
+
+.statBlue,
+.statGreen,
+.statPurple,
+.statOrange {
+  border-color: #dce4e9 !important;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(204,251,241,.55),
+      transparent 46%
+    ),
+    #ffffff !important;
+}
+
+.statBlue::before,
+.statGreen::before,
+.statPurple::before,
+.statOrange::before {
+  background: #0f9f8f !important;
+}
+
+.statBlue > small,
+.statGreen > small,
+.statPurple > small,
+.statOrange > small {
+  color: #087f73 !important;
+}
+
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+
+.rentwiseChartCard:first-child,
+.rentwiseChartCard:nth-child(2),
+.rentwiseChartCard:nth-child(3) {
+  border-top-color: #0f9f8f !important;
+}
+
+.rentwiseChartHeader strong {
+  color: #087f73 !important;
+}
+
+
+/* COLLECTION DONUT */
+
+.collectionDonut {
+  background:
+    conic-gradient(
+      #0f9f8f 0deg var(--collection-rate),
+      #e2e8f0 var(--collection-rate) 360deg
+    ) !important;
+
+  box-shadow:
+    0 8px 24px rgba(15,159,143,.14) !important;
+}
+
+.legendCollected {
+  background: #0f9f8f !important;
+}
+
+
+/* OCCUPANCY */
+
+.occupancyTrack span {
+  background:
+    linear-gradient(
+      90deg,
+      #087f73,
+      #2dd4bf
+    ) !important;
+
+  box-shadow:
+    3px 0 10px rgba(15,159,143,.22) !important;
+}
+
+
+/* BAR CHART */
+
+.rentBarTrack span {
+  background:
+    linear-gradient(
+      180deg,
+      #5eead4,
+      #0f9f8f
+    ) !important;
+
+  box-shadow:
+    0 -5px 15px rgba(15,159,143,.17) !important;
+}
+
+
+/* =========================================================
+   PROPERTY CARDS
+   ========================================================= */
+
+.propertyIdentityPanel,
+.portfolioCardAccent {
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(45,212,191,.22),
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      #081522,
+      #10283b 55%,
+      #124a50
+    ) !important;
+}
+
+.dashboardPropertyCard:hover,
+.portfolioPropertyCard:hover {
+  border-color: #8bded4 !important;
+}
+
+.propertyCardFooter b {
+  color: #087f73 !important;
+}
+
+
+/* =========================================================
+   DASHBOARD SECTIONS
+   ========================================================= */
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard {
+  border-top-color: #0f9f8f !important;
+}
+
+
+/* =========================================================
+   ACTIVITY
+   ========================================================= */
+
+.activityTypeIcon {
+  border-color: #99f6e4 !important;
+  background: #ccfbf1 !important;
+  color: #087f73 !important;
+}
+
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2dd4bf !important;
+
+  box-shadow:
+    0 0 0 3px rgba(15,159,143,.11) !important;
+}
+
+
+/* =========================================================
+   LINKS / ACTION TEXT
+   ========================================================= */
+
+.commandTextButton,
+a:not(.sidebarNav a) {
+  accent-color: #0f9f8f;
+}
+
+
+/* =========================================================
+   RENT PAGE
+   ========================================================= */
+
+.rentAutomationCard {
+  border-left-color: #0f9f8f !important;
+}
+
+.rentPaymentCard {
+  border-left-color: #14b8a6 !important;
+}
+
+
+/* =========================================================
+   UNIT CARDS
+   ========================================================= */
+
+.propertyUnitCard {
+  border-left-color: #0f9f8f !important;
+}
+
+
+/* =========================================================
+   SELECTION / HIGHLIGHT
+   ========================================================= */
+
+::selection {
+  background: #99f6e4;
+  color: #0b1727;
+}
