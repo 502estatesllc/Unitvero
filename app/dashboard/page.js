@@ -2451,8 +2451,8 @@ selectedPropertyPayments.length === 0 ? (
                 <button
                   type="button"
                   onClick={() =>
-                    setView('propertyDetails')
-                  }
+  setView(selectedUnit ? 'unitDetails' : 'propertyDetails')
+}
                 >
                   Cancel
                 </button>
