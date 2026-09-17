@@ -45,15 +45,10 @@ export async function POST(request) {
             }
           },
           configuration: {
-  merchant: {
-    capabilities: {
-      card_payments: {
-        requested: true
-      }
-    }
-  }
-},
-                  }
+            merchant: {
+              capabilities: {
+                card_payments: {
+                  requested: true
                 }
               }
             }
