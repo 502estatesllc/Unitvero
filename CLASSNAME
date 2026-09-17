@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [props, setProps] = useState([]);
   const [address, setAddress] = useState('');
   const [view, setView] = useState('overview');
+  const [selectedProperty, setSelectedProperty] = useState(null);
   const r = useRouter();
 
   async function load() {
@@ -179,7 +180,15 @@ export default function Dashboard() {
             {props.length === 0 && <p>No properties added yet.</p>}
 
             {props.map(p => (
-              <div className="property" key={p.id}>
+              <div
+  className="property"
+  key={p.id}
+  onClick={() => {
+    setSelectedProperty(p);
+    setView('propertyDetails');
+  }}
+  style={{ cursor: 'pointer' }}
+>
                 <b>{p.address}</b>
                 <span>
                   {p.city}, {p.state} {p.zip_code}
@@ -189,7 +198,42 @@ export default function Dashboard() {
           </section>
         )}
 
-        {view === 'tenants' && (
+    {view === 'propertyDetails' && selectedProperty && (
+  <section className="panel">
+    <button
+      type="button"
+      onClick={() => setView('properties')}
+    >
+      ← Back to Properties
+    </button>
+
+    <small>PROPERTY</small>
+    <h1>{selectedProperty.address}</h1>
+
+    <p>
+      {selectedProperty.city}, {selectedProperty.state}{' '}
+      {selectedProperty.zip_code}
+    </p>
+
+    <div className="stats">
+      <article>
+        <span>Monthly Rent</span>
+        <b>${selectedProperty.monthly_rent || 0}</b>
+      </article>
+
+      <article>
+        <span>Tenants</span>
+        <b>0</b>
+      </article>
+
+      <article>
+        <span>Status</span>
+        <b>Active</b>
+      </article>
+    </div>
+  </section>
+)}    
+    {view === 'tenants' && (
           <section className="panel">
             <h1>Tenants</h1>
             <p>Tenant management is coming next.</p>
