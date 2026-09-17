@@ -8299,3 +8299,1289 @@ a:not(.sidebarNav a) {
   background: #99f6e4;
   color: #0b1727;
 }
+
+/* =========================================================
+   UNITVERO — COMPLETE MANAGEMENT UI MAKEOVER
+   Final override layer
+   ========================================================= */
+
+
+/* =========================================================
+   GLOBAL MANAGEMENT WORKSPACE
+   ========================================================= */
+
+.dash,
+.panel,
+.rentPage {
+  min-width: 0;
+  color: var(--uv-text) !important;
+}
+
+.dash {
+  padding: 34px 38px 52px !important;
+}
+
+.panel {
+  padding: 34px 38px 52px !important;
+}
+
+.dashboardHeader,
+.portfolioPageHeader {
+  margin-bottom: 26px !important;
+}
+
+.dashboardHeader h1,
+.portfolioPageHeader h1,
+.panel > h1,
+.rentPage h1 {
+  margin: 0 !important;
+  color: var(--uv-heading) !important;
+  font-size: clamp(28px, 3vw, 38px) !important;
+  line-height: 1.12 !important;
+  font-weight: 800 !important;
+  letter-spacing: -1.15px !important;
+}
+
+.dashboardSubtitle,
+.portfolioPageHeader p,
+.panel > p,
+.rentPage > p {
+  max-width: 760px;
+  margin-top: 8px !important;
+  color: var(--uv-muted) !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+
+/* =========================================================
+   GENERAL SECTION TITLES
+   ========================================================= */
+
+.showcaseHeader,
+.featureCardHeader,
+.rentwiseChartHeader {
+  gap: 16px !important;
+}
+
+.showcaseHeader h2,
+.featureCardHeader h3,
+.rentwiseChartHeader h3,
+.commandCard h2,
+.commandCard h3,
+.propertyDetailsCard h2,
+.propertyDetailsCard h3,
+.rentPage h2,
+.rentPage h3 {
+  color: var(--uv-heading) !important;
+  letter-spacing: -0.35px !important;
+}
+
+.showcaseHeader p,
+.featureCardHeader p,
+.commandCard p,
+.propertyDetailsCard p {
+  color: var(--uv-muted) !important;
+}
+
+
+/* =========================================================
+   UNIVERSAL CARD SYSTEM
+   ========================================================= */
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard,
+.rentwiseChartCard,
+.portfolioPropertyCard,
+.dashboardPropertyCard,
+.commandCard,
+.propertyDetailsCard,
+.propertyUnitCard,
+.rentLedgerCard,
+.rentPaymentCard,
+.rentAutomationCard {
+  border: 1px solid var(--uv-border) !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+
+  box-shadow:
+    0 1px 2px rgba(11, 23, 39, 0.02),
+    0 8px 24px rgba(11, 23, 39, 0.045) !important;
+}
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard,
+.rentwiseChartCard,
+.commandCard,
+.propertyDetailsCard {
+  overflow: hidden;
+}
+
+.commandCard,
+.propertyDetailsCard {
+  padding: 24px !important;
+}
+
+
+/* =========================================================
+   MANAGEMENT PAGE SECTION ACCENT
+   ========================================================= */
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard,
+.commandCard,
+.propertyDetailsCard,
+.rentwiseChartCard {
+  position: relative;
+}
+
+.propertiesShowcase::before,
+.activityShowcase::before,
+.dashboardFeatureCard::before,
+.commandCard::before,
+.propertyDetailsCard::before,
+.rentwiseChartCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--uv-teal),
+    #2dd4bf
+  );
+}
+
+
+/* =========================================================
+   BUTTON SYSTEM
+   ========================================================= */
+
+button,
+.primary,
+.viewAllButton,
+.commandSecondaryButton,
+.commandTextButton,
+.propertyBackButton {
+  font-family: inherit !important;
+}
+
+.primary {
+  min-height: 42px !important;
+  padding: 10px 17px !important;
+
+  border: 1px solid var(--uv-teal-dark) !important;
+  border-radius: 10px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--uv-teal),
+      var(--uv-teal-dark)
+    ) !important;
+
+  color: #ffffff !important;
+
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  font-weight: 750 !important;
+
+  box-shadow:
+    0 6px 16px rgba(15, 159, 143, 0.18) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    background .16s ease !important;
+}
+
+.primary:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 9px 20px rgba(15, 159, 143, 0.24) !important;
+}
+
+.primary:active {
+  transform: translateY(0);
+}
+
+.viewAllButton,
+.commandSecondaryButton,
+.propertyBackButton {
+  min-height: 40px !important;
+  padding: 9px 14px !important;
+
+  border: 1px solid #cfdce1 !important;
+  border-radius: 10px !important;
+
+  background: #ffffff !important;
+  color: #334155 !important;
+
+  font-size: 12px !important;
+  font-weight: 700 !important;
+
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, .03) !important;
+}
+
+.viewAllButton:hover,
+.commandSecondaryButton:hover,
+.propertyBackButton:hover {
+  border-color: #82d9cf !important;
+  background: var(--uv-teal-soft) !important;
+  color: var(--uv-teal-dark) !important;
+}
+
+.commandTextButton {
+  color: var(--uv-teal-dark) !important;
+  font-weight: 750 !important;
+}
+
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 43px;
+
+  border: 1px solid #cfdce1 !important;
+  border-radius: 10px !important;
+
+  background: #ffffff !important;
+  color: #17212f !important;
+
+  font-family: inherit !important;
+  font-size: 13px !important;
+
+  outline: none !important;
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease !important;
+}
+
+textarea {
+  min-height: 105px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #b8c9d0 !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--uv-teal) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(15, 159, 143, .10) !important;
+}
+
+label {
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+
+/* =========================================================
+   OVERVIEW STAT CARDS
+   ========================================================= */
+
+.overviewStatsEnhanced {
+  gap: 16px !important;
+}
+
+.overviewStatCard {
+  min-height: 128px !important;
+  padding: 21px !important;
+
+  border: 1px solid var(--uv-border) !important;
+  border-radius: 16px !important;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(45, 212, 191, .11),
+      transparent 44%
+    ),
+    #ffffff !important;
+
+  box-shadow:
+    0 6px 18px rgba(11, 23, 39, .04) !important;
+}
+
+.overviewStatCard::before {
+  width: 3px !important;
+  background: var(--uv-teal) !important;
+}
+
+.overviewStatCard small {
+  color: #64748b !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .7px !important;
+  text-transform: uppercase;
+}
+
+.overviewStatCard b {
+  color: var(--uv-heading) !important;
+  font-size: 27px !important;
+  letter-spacing: -.7px !important;
+}
+
+.overviewStatCard span {
+  color: var(--uv-muted) !important;
+}
+
+
+/* =========================================================
+   PROPERTIES MANAGEMENT
+   ========================================================= */
+
+.portfolioPropertyGrid,
+.dashboardProperties {
+  gap: 18px !important;
+}
+
+.portfolioPropertyCard,
+.dashboardPropertyCard {
+  overflow: hidden;
+
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease !important;
+}
+
+.portfolioPropertyCard:hover,
+.dashboardPropertyCard:hover {
+  transform: translateY(-3px) !important;
+  border-color: #9adfd7 !important;
+
+  box-shadow:
+    0 12px 30px rgba(11, 23, 39, .08) !important;
+}
+
+.propertyIdentityPanel,
+.portfolioCardAccent {
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgba(45, 212, 191, .20),
+      transparent 43%
+    ),
+    linear-gradient(
+      135deg,
+      #081522 0%,
+      #10283b 58%,
+      #12484d 100%
+    ) !important;
+}
+
+.propertyCardBody,
+.portfolioCardBody {
+  background: #ffffff !important;
+}
+
+.propertyCardTop h3,
+.portfolioCardAddress h2 {
+  color: var(--uv-heading) !important;
+  letter-spacing: -.4px !important;
+}
+
+.propertyCardTop p,
+.portfolioCardAddress p {
+  color: var(--uv-muted) !important;
+}
+
+.propertyCardDetails,
+.portfolioCardDetails,
+.portfolioCardMetrics {
+  gap: 12px !important;
+}
+
+.propertyCardDetails span,
+.portfolioCardDetails span,
+.portfolioCardMetrics span {
+  color: #7b8b99 !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .65px !important;
+  text-transform: uppercase;
+}
+
+.propertyCardDetails b,
+.portfolioCardDetails b,
+.portfolioCardMetrics b {
+  color: #263647 !important;
+}
+
+.propertyCardFooter {
+  border-top-color: #e8eef1 !important;
+}
+
+.propertyCardFooter b {
+  color: var(--uv-teal-dark) !important;
+}
+
+.propertyArrow {
+  border-color: #dce6e9 !important;
+  background: #f8fbfb !important;
+  color: #64748b !important;
+}
+
+.dashboardPropertyCard:hover .propertyArrow {
+  border-color: #99e1d8 !important;
+  background: var(--uv-teal-soft) !important;
+  color: var(--uv-teal-dark) !important;
+}
+
+
+/* =========================================================
+   PROPERTY / UNIT COMMAND CENTER
+   ========================================================= */
+
+.commandMainGrid {
+  gap: 20px !important;
+}
+
+.commandCard {
+  min-width: 0;
+}
+
+.commandCardHeader {
+  padding-bottom: 15px !important;
+  margin-bottom: 18px !important;
+  border-bottom: 1px solid #e8eef1 !important;
+}
+
+.commandCardHeader h2,
+.commandCardHeader h3 {
+  margin: 0 !important;
+}
+
+.commandRentSummary {
+  border: 1px solid #dce7e9 !important;
+  border-radius: 13px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fffd,
+      #f3f9f9
+    ) !important;
+}
+
+.commandRentSummary span {
+  color: #64748b !important;
+}
+
+.commandRentSummary b {
+  color: var(--uv-heading) !important;
+}
+
+.propertyUnitsGrid {
+  gap: 16px !important;
+}
+
+.propertyUnitCard {
+  overflow: hidden;
+
+  border: 1px solid var(--uv-border) !important;
+  border-left: 4px solid var(--uv-teal) !important;
+  border-radius: 15px !important;
+
+  background: #ffffff !important;
+
+  transition:
+    transform .17s ease,
+    border-color .17s ease,
+    box-shadow .17s ease !important;
+}
+
+.propertyUnitCard:hover {
+  transform: translateY(-2px);
+
+  border-color: #9adfd7 !important;
+
+  box-shadow:
+    0 10px 25px rgba(11, 23, 39, .07) !important;
+}
+
+.propertyUnitBody h3 {
+  color: var(--uv-heading) !important;
+}
+
+.propertyUnitDetails span {
+  color: #7b8b99 !important;
+}
+
+.propertyUnitDetails b {
+  color: #334155 !important;
+}
+
+
+/* =========================================================
+   OCCUPANCY / STATUS PILLS
+   ========================================================= */
+
+.portfolioOccupancy,
+.commandOccupancy {
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+
+  border-radius: 999px !important;
+
+  font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+
+  letter-spacing: .2px;
+  white-space: nowrap !important;
+}
+
+.portfolioOccupancy.occupied,
+.commandOccupancy.occupied {
+  border: 1px solid #a7e4c0 !important;
+  background: #ecfdf3 !important;
+  color: #18794e !important;
+}
+
+.portfolioOccupancy.vacant,
+.commandOccupancy.vacant {
+  border: 1px solid #f4cf9b !important;
+  background: #fff8eb !important;
+  color: #a65a16 !important;
+}
+
+
+/* =========================================================
+   RENT & PAYMENTS — COMPLETE CLEANUP
+   ========================================================= */
+
+.rentPage {
+  width: 100%;
+  max-width: none !important;
+}
+
+.rentPage h1 {
+  margin-bottom: 7px !important;
+}
+
+.rentLedgerCard,
+.rentPaymentCard,
+.rentAutomationCard {
+  min-width: 0 !important;
+
+  border: 1px solid var(--uv-border) !important;
+  border-radius: 16px !important;
+
+  background: #ffffff !important;
+
+  box-shadow:
+    0 5px 18px rgba(11, 23, 39, .045) !important;
+}
+
+.rentLedgerCard {
+  border-left: 4px solid #64748b !important;
+}
+
+.rentPaymentCard {
+  border-left: 4px solid var(--uv-teal) !important;
+}
+
+.rentAutomationCard {
+  border-left: 4px solid #0f766e !important;
+}
+
+
+/* IMPORTANT:
+   Undo old aggressive word splitting that caused
+   rent / tenant / address text to bunch together.
+*/
+
+.rentPage .rentLedgerCard b,
+.rentPage .rentLedgerCard p,
+.rentPage .rentLedgerCard span,
+.rentPage .rentLedgerCard small,
+.rentPage .rentPaymentCard b,
+.rentPage .rentPaymentCard p,
+.rentPage .rentPaymentCard span,
+.rentPage .rentPaymentCard small,
+.rentPage .rentAutomationCard b,
+.rentPage .rentAutomationCard p,
+.rentPage .rentAutomationCard span,
+.rentPage .rentAutomationCard small,
+.rentPage article.commandLedgerRow b,
+.rentPage article.commandLedgerRow p,
+.rentPage article.commandLedgerRow span,
+.rentPage article.commandLedgerRow small {
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+
+/* Ledger rows */
+
+.rentPage article.commandLedgerRow {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  display: grid !important;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    minmax(170px, auto) !important;
+
+  align-items: center !important;
+  gap: 24px !important;
+
+  padding: 18px 19px !important;
+
+  border: 1px solid #e1e9ec !important;
+  border-radius: 13px !important;
+
+  background: #ffffff !important;
+}
+
+.rentPage article.commandLedgerRow:hover {
+  border-color: #b7ddd8 !important;
+  background: #fbfefd !important;
+}
+
+.rentPage article.commandLedgerRow > div {
+  min-width: 0 !important;
+}
+
+.rentPage article.commandLedgerRow > div:first-child {
+  display: block !important;
+}
+
+.rentPage article.commandLedgerRow > div:first-child > b {
+  display: block !important;
+
+  color: var(--uv-heading) !important;
+
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+  font-weight: 800 !important;
+
+  white-space: normal !important;
+}
+
+.rentPage article.commandLedgerRow > div:first-child > span,
+.rentPage article.commandLedgerRow > div:first-child > small {
+  display: block !important;
+
+  margin-top: 4px !important;
+
+  color: #64748b !important;
+
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+
+  white-space: normal !important;
+}
+
+.rentPage article.commandLedgerRow > div:last-child {
+  min-width: 170px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: flex-end !important;
+  justify-content: center !important;
+
+  gap: 5px !important;
+
+  text-align: right !important;
+}
+
+.rentPage article.commandLedgerRow > div:last-child > b {
+  color: var(--uv-heading) !important;
+
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+
+  white-space: nowrap !important;
+}
+
+.rentPage article.commandLedgerRow > div:last-child > small {
+  color: #64748b !important;
+
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+
+  white-space: normal !important;
+}
+
+.commandLedgerPreview {
+  display: grid !important;
+  gap: 12px !important;
+}
+
+
+/* =========================================================
+   TENANT / APPLICANT / MANAGEMENT LISTS
+   ========================================================= */
+
+.panel article,
+.panel section {
+  min-width: 0;
+}
+
+.panel article:not(.portfolioPropertyCard):not(.propertyUnitCard):not(.commandLedgerRow) {
+  border-color: var(--uv-border);
+}
+
+.panel table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  border: 1px solid var(--uv-border);
+  border-radius: 14px;
+
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.panel th {
+  padding: 12px 14px;
+
+  border-bottom: 1px solid #dfe8eb;
+
+  background: #f7fafb;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .55px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.panel td {
+  padding: 14px;
+
+  border-bottom: 1px solid #edf2f4;
+
+  color: #334155;
+
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.panel tr:last-child td {
+  border-bottom: 0;
+}
+
+.panel tbody tr:hover td {
+  background: #fbfefd;
+}
+
+
+/* =========================================================
+   APPLICATIONS / SCREENING
+   ========================================================= */
+
+.panel .applicationCard,
+.panel .applicantCard {
+  border: 1px solid var(--uv-border) !important;
+  border-radius: 15px !important;
+
+  background: #ffffff !important;
+
+  box-shadow:
+    0 5px 18px rgba(11, 23, 39, .04) !important;
+}
+
+.panel .applicationCard:hover,
+.panel .applicantCard:hover {
+  border-color: #a5ddd6 !important;
+}
+
+
+/* =========================================================
+   COMMUNICATION / MESSAGES
+   ========================================================= */
+
+.communicationPage,
+.communicationCenter,
+.messagesPage {
+  min-width: 0 !important;
+}
+
+.communicationPage button,
+.communicationCenter button,
+.messagesPage button {
+  font-family: inherit !important;
+}
+
+.communicationPage input,
+.communicationPage textarea,
+.communicationCenter input,
+.communicationCenter textarea,
+.messagesPage input,
+.messagesPage textarea {
+  border-color: #d5e0e4 !important;
+}
+
+.communicationPage input:focus,
+.communicationPage textarea:focus,
+.communicationCenter input:focus,
+.communicationCenter textarea:focus,
+.messagesPage input:focus,
+.messagesPage textarea:focus {
+  border-color: var(--uv-teal) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(15,159,143,.10) !important;
+}
+
+
+/* Generic message/conversation panels */
+
+.conversationList,
+.messageThread,
+.messageComposer,
+.announcementCard,
+.communicationCard {
+  border-color: var(--uv-border) !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+
+  box-shadow:
+    0 5px 18px rgba(11,23,39,.04) !important;
+}
+
+.messageBubble {
+  border-radius: 14px !important;
+}
+
+.messageBubble.mine,
+.messageBubble.sent {
+  background: var(--uv-teal) !important;
+  color: #ffffff !important;
+}
+
+.messageBubble.theirs,
+.messageBubble.received {
+  background: #f1f5f7 !important;
+  color: #263647 !important;
+}
+
+
+/* =========================================================
+   DOCUMENTS / ESIGN
+   ========================================================= */
+
+.documentCard,
+.documentTemplateCard,
+.esignCard {
+  border: 1px solid var(--uv-border) !important;
+  border-radius: 15px !important;
+
+  background: #ffffff !important;
+
+  box-shadow:
+    0 5px 18px rgba(11,23,39,.04) !important;
+}
+
+.documentCard:hover,
+.documentTemplateCard:hover,
+.esignCard:hover {
+  border-color: #a6ddd7 !important;
+}
+
+
+/* =========================================================
+   EMPTY STATES
+   ========================================================= */
+
+.noProperties,
+.featureEmpty {
+  border: 1px dashed #cbdadd !important;
+  border-radius: 14px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fbfefd,
+      #f7fafb
+    ) !important;
+}
+
+.featureEmptyIcon {
+  border: 1px solid #bce7e1 !important;
+  background: var(--uv-teal-soft) !important;
+  color: var(--uv-teal-dark) !important;
+}
+
+.noProperties h3,
+.featureEmpty h3 {
+  color: var(--uv-heading) !important;
+}
+
+.noProperties p,
+.featureEmpty p {
+  color: var(--uv-muted) !important;
+}
+
+
+/* =========================================================
+   ACTIVITY
+   ========================================================= */
+
+.activityList {
+  gap: 10px !important;
+}
+
+.activityRow {
+  min-width: 0 !important;
+
+  padding: 14px !important;
+
+  border: 1px solid #e0e8eb !important;
+  border-radius: 12px !important;
+
+  background: #fafcfc !important;
+}
+
+.activityRow:hover {
+  border-color: #b9ddd8 !important;
+  background: #ffffff !important;
+}
+
+.activityTypeIcon {
+  border: 1px solid #bce9e3 !important;
+  background: var(--uv-teal-light) !important;
+  color: var(--uv-teal-dark) !important;
+}
+
+.activityRow b {
+  color: #263647 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+.activityRow span {
+  color: var(--uv-muted) !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+
+.rentwiseChartsGrid {
+  gap: 18px !important;
+}
+
+.rentwiseChartCard {
+  padding: 22px !important;
+}
+
+.rentwiseChartHeader strong {
+  color: var(--uv-teal-dark) !important;
+}
+
+.collectionDonut {
+  background:
+    conic-gradient(
+      var(--uv-teal) 0deg var(--collection-rate),
+      #e5ecef var(--collection-rate) 360deg
+    ) !important;
+
+  box-shadow:
+    0 7px 20px rgba(15,159,143,.12) !important;
+}
+
+.legendCollected {
+  background: var(--uv-teal) !important;
+}
+
+.occupancyTrack span {
+  background:
+    linear-gradient(
+      90deg,
+      var(--uv-teal-dark),
+      #2dd4bf
+    ) !important;
+}
+
+.rentBarTrack {
+  background: #edf3f4 !important;
+}
+
+.rentBarTrack span {
+  background:
+    linear-gradient(
+      180deg,
+      #5eead4,
+      var(--uv-teal)
+    ) !important;
+}
+
+
+/* =========================================================
+   PORTFOLIO BANNER
+   ========================================================= */
+
+.portfolioBanner {
+  border: 1px solid #cbe5e2 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fffd,
+      #eef9f7
+    ) !important;
+}
+
+.bannerIcon {
+  border-color: #afe2db !important;
+  background: var(--uv-teal-light) !important;
+  color: var(--uv-teal-dark) !important;
+}
+
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+
+.sidebar::-webkit-scrollbar,
+.dash::-webkit-scrollbar,
+.panel::-webkit-scrollbar {
+  width: 7px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .24);
+  border-radius: 999px;
+}
+
+.dash::-webkit-scrollbar-thumb,
+.panel::-webkit-scrollbar-thumb {
+  background: #cbd5da;
+  border-radius: 999px;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1150px) {
+  .dash,
+  .panel {
+    padding: 28px 26px 44px !important;
+  }
+
+  .overviewStatsEnhanced {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .commandMainGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .rentwiseChartsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rentwiseChartWide {
+    grid-column: auto !important;
+  }
+
+  .portfolioPropertyGrid,
+  .dashboardProperties,
+  .propertyUnitsGrid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .panel {
+    overflow-x: hidden;
+  }
+
+  .panel table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .dash,
+  .panel {
+    padding: 22px 16px 38px !important;
+  }
+
+  .dashboardHeader,
+  .portfolioPageHeader {
+    margin-bottom: 20px !important;
+  }
+
+  .dashboardHeader h1,
+  .portfolioPageHeader h1,
+  .panel > h1,
+  .rentPage h1 {
+    font-size: 28px !important;
+  }
+
+  .overviewStatsEnhanced {
+    grid-template-columns: 1fr !important;
+  }
+
+  .portfolioPropertyGrid,
+  .dashboardProperties,
+  .propertyUnitsGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .commandCard,
+  .propertyDetailsCard,
+  .rentwiseChartCard {
+    padding: 18px !important;
+  }
+
+  .showcaseHeader,
+  .featureCardHeader,
+  .commandCardHeader {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .primary,
+  .viewAllButton,
+  .commandSecondaryButton {
+    max-width: 100%;
+  }
+
+
+  /* RENT MOBILE */
+
+  .rentPage article.commandLedgerRow {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+    padding: 16px !important;
+  }
+
+  .rentPage article.commandLedgerRow > div:last-child {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    align-items: flex-start !important;
+
+    padding-top: 13px !important;
+
+    border-top: 1px solid #e5ecef !important;
+
+    text-align: left !important;
+  }
+
+  .rentPage article.commandLedgerRow > div:last-child > b {
+    white-space: normal !important;
+  }
+
+
+  /* PROPERTY DETAIL METRICS */
+
+  .propertyCardDetails,
+  .portfolioCardDetails,
+  .portfolioCardMetrics {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .dash,
+  .panel {
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+
+  .dashboardHeader h1,
+  .portfolioPageHeader h1,
+  .panel > h1,
+  .rentPage h1 {
+    font-size: 25px !important;
+  }
+
+  .overviewStatCard {
+    min-height: 112px !important;
+  }
+
+  .propertyCardDetails,
+  .portfolioCardDetails,
+  .portfolioCardMetrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .commandCard,
+  .propertyDetailsCard {
+    padding: 16px !important;
+  }
+}
+
+
+/* =========================================================
+   FINAL UNITVERO DETAILS
+   ========================================================= */
+
+::selection {
+  background: #99f6e4 !important;
+  color: var(--uv-navy) !important;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #2dd4bf !important;
+  outline-offset: 2px !important;
+}
