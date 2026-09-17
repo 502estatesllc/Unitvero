@@ -107,7 +107,7 @@ export default function Dashboard() {
     })
     .eq('id', selectedProperty.id)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     alert('Could not update property: ' + error.message);
