@@ -2454,6 +2454,546 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
           </section>
         )}      
+        {view === 'applicationDetails' && selectedApplication && (
+          <section className="applicationDetailsPage">
+
+            <button
+              type="button"
+              className="applicationBackButton"
+              onClick={() => setView('applications')}
+            >
+              ← Back to Applications
+            </button>
+
+            <div className="applicationDetailsHeader">
+              <div>
+                <small>APPLICATION REVIEW</small>
+                <h1>{selectedApplication.applicant_name}</h1>
+                <p>
+                  Review applicant information, screening status,
+                  and application details.
+                </p>
+              </div>
+
+              <div className="applicationDetailsHeaderActions">
+                <button
+                  type="button"
+                  onClick={() => setView('applications')}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div className="applicationDetailsGrid">
+
+              <section className="applicationDetailsMain">
+
+                <div className="applicationDetailCard">
+                  <div className="applicationDetailCardHeader">
+                    <div>
+                      <small>APPLICANT</small>
+                      <h2>Applicant Information</h2>
+                    </div>
+
+                    <span
+                      className={
+                        'applicationStatus ' +
+                        selectedApplication.application_status
+                      }
+                    >
+                      {selectedApplication.application_status
+                        .replaceAll('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="applicationDetailGrid">
+
+                    <div>
+                      <span>Full Name</span>
+                      <b>{selectedApplication.applicant_name}</b>
+                    </div>
+
+                    <div>
+                      <span>Email</span>
+                      <b>{selectedApplication.applicant_email}</b>
+                    </div>
+
+                    <div>
+                      <span>Phone</span>
+                      <b>
+                        {selectedApplication.applicant_phone ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Current Address</span>
+                      <b>
+                        {selectedApplication.current_address ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>City / State / ZIP</span>
+                      <b>
+                        {[
+                          selectedApplication.current_city,
+                          selectedApplication.current_state,
+                          selectedApplication.current_zip
+                        ]
+                          .filter(Boolean)
+                          .join(', ') || 'Not provided'}
+                      </b>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="applicationDetailCard">
+                  <div className="applicationDetailCardHeader">
+                    <div>
+                      <small>EMPLOYMENT</small>
+                      <h2>Employment & Income</h2>
+                    </div>
+                  </div>
+
+                  <div className="applicationDetailGrid">
+
+                    <div>
+                      <span>Employer</span>
+                      <b>
+                        {selectedApplication.employer_name ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Job Title</span>
+                      <b>
+                        {selectedApplication.job_title ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Monthly Income</span>
+                      <b>
+                        {selectedApplication.monthly_income
+                          ? '$' +
+                            Number(
+                              selectedApplication.monthly_income
+                            ).toLocaleString()
+                          : 'Not provided'}
+                      </b>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="applicationDetailCard">
+                  <div className="applicationDetailCardHeader">
+                    <div>
+                      <small>RENTAL HISTORY</small>
+                      <h2>Housing History</h2>
+                    </div>
+                  </div>
+
+                  <div className="applicationDetailGrid">
+
+                    <div>
+                      <span>Current Landlord</span>
+                      <b>
+                        {selectedApplication.current_landlord_name ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Landlord Phone</span>
+                      <b>
+                        {selectedApplication.current_landlord_phone ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Current Rent</span>
+                      <b>
+                        {selectedApplication.current_rent
+                          ? '$' +
+                            Number(
+                              selectedApplication.current_rent
+                            ).toLocaleString()
+                          : 'Not provided'}
+                      </b>
+                    </div>
+
+                    <div className="fullDetail">
+                      <span>Previous Address</span>
+                      <b>
+                        {selectedApplication.previous_address ||
+                          'Not provided'}
+                      </b>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="applicationDetailCard">
+                  <div className="applicationDetailCardHeader">
+                    <div>
+                      <small>HOUSEHOLD</small>
+                      <h2>Household Information</h2>
+                    </div>
+                  </div>
+
+                  <div className="applicationDetailGrid">
+
+                    <div>
+                      <span>Occupants</span>
+                      <b>
+                        {selectedApplication.occupants_count || 1}
+                      </b>
+                    </div>
+
+                    <div>
+                      <span>Pets</span>
+                      <b>
+                        {selectedApplication.has_pets
+                          ? 'Yes'
+                          : 'No'}
+                      </b>
+                    </div>
+
+                    <div className="fullDetail">
+                      <span>Occupant Details</span>
+                      <b>
+                        {selectedApplication.occupants_details ||
+                          'None provided'}
+                      </b>
+                    </div>
+
+                    <div className="fullDetail">
+                      <span>Pet Details</span>
+                      <b>
+                        {selectedApplication.pets_details ||
+                          'None provided'}
+                      </b>
+                    </div>
+
+                    <div className="fullDetail">
+                      <span>Vehicles</span>
+                      <b>
+                        {selectedApplication.vehicles_details ||
+                          'None provided'}
+                      </b>
+                    </div>
+
+                  </div>
+                </div>
+
+              </section>
+
+              <aside className="applicationDetailsSidebar">
+
+                <section className="screeningCard">
+
+                  <div className="screeningCardTop">
+                    <div>
+                      <small>SCREENING</small>
+                      <h2>Tenant Screening</h2>
+                    </div>
+
+                    <span
+                      className={
+                        'screeningStatus ' +
+                        selectedApplication.screening_status
+                      }
+                    >
+                      {selectedApplication.screening_status
+                        .replaceAll('_', ' ')}
+                    </span>
+                  </div>
+
+                  <p>
+                    Credit, background, eviction, and identity
+                    screening can be requested through an approved
+                    screening provider.
+                  </p>
+
+                  {!selectedApplication.screening_consent ? (
+                    <div className="screeningConsentNotice">
+                      <b>Applicant consent required</b>
+
+                      <span>
+                        Screening should only be requested after the
+                        applicant has provided the required authorization.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="screeningConsentNotice complete">
+                      <b>Screening consent received</b>
+
+                      <span>
+                        Applicant authorization has been recorded.
+                      </span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className="primary screeningButton"
+                    disabled={
+                      !selectedApplication.screening_consent
+                    }
+                    onClick={async () => {
+
+                      const s = supabase();
+
+                      const { error } = await s
+                        .from('rental_applications')
+                        .update({
+                          screening_status: 'requested',
+                          screening_requested_at:
+                            new Date().toISOString(),
+                          application_status: 'screening',
+                          updated_at:
+                            new Date().toISOString()
+                        })
+                        .eq(
+                          'id',
+                          selectedApplication.id
+                        );
+
+                      if (error) {
+                        alert(
+                          'Could not request screening: ' +
+                          error.message
+                        );
+                        return;
+                      }
+
+                      const updatedApplication = {
+                        ...selectedApplication,
+                        screening_status: 'requested',
+                        screening_requested_at:
+                          new Date().toISOString(),
+                        application_status: 'screening'
+                      };
+
+                      setSelectedApplication(
+                        updatedApplication
+                      );
+
+                      setApplications(
+                        applications.map(application =>
+                          application.id ===
+                          selectedApplication.id
+                            ? updatedApplication
+                            : application
+                        )
+                      );
+
+                      alert(
+                        'Screening request created. Connect your screening provider to complete the report.'
+                      );
+                    }}
+                  >
+                    Request Tenant Screening
+                  </button>
+
+                  <div className="screeningItems">
+
+                    <div>
+                      <span>Identity</span>
+                      <b>Pending</b>
+                    </div>
+
+                    <div>
+                      <span>Credit</span>
+                      <b>Pending</b>
+                    </div>
+
+                    <div>
+                      <span>Criminal Background</span>
+                      <b>Pending</b>
+                    </div>
+
+                    <div>
+                      <span>Eviction History</span>
+                      <b>Pending</b>
+                    </div>
+
+                  </div>
+
+                </section>
+
+                <section className="applicationDecisionCard">
+
+                  <small>APPLICATION DECISION</small>
+
+                  <h2>Review Decision</h2>
+
+                  <p>
+                    Record your application decision after reviewing
+                    the applicant information and screening results.
+                  </p>
+
+                  <div className="applicationDecisionActions">
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+
+                        const s = supabase();
+
+                        const { error } = await s
+                          .from('rental_applications')
+                          .update({
+                            application_status: 'approved',
+                            updated_at:
+                              new Date().toISOString()
+                          })
+                          .eq(
+                            'id',
+                            selectedApplication.id
+                          );
+
+                        if (error) {
+                          alert(
+                            'Could not approve application: ' +
+                            error.message
+                          );
+                          return;
+                        }
+
+                        const updatedApplication = {
+                          ...selectedApplication,
+                          application_status: 'approved'
+                        };
+
+                        setSelectedApplication(
+                          updatedApplication
+                        );
+
+                        setApplications(
+                          applications.map(application =>
+                            application.id ===
+                            selectedApplication.id
+                              ? updatedApplication
+                              : application
+                          )
+                        );
+
+                        alert('Application approved.');
+                      }}
+                    >
+                      Approve Application
+                    </button>
+
+                    <button
+                      type="button"
+                      className="dangerButton"
+                      onClick={async () => {
+
+                        const s = supabase();
+
+                        const { error } = await s
+                          .from('rental_applications')
+                          .update({
+                            application_status: 'denied',
+                            updated_at:
+                              new Date().toISOString()
+                          })
+                          .eq(
+                            'id',
+                            selectedApplication.id
+                          );
+
+                        if (error) {
+                          alert(
+                            'Could not update application: ' +
+                            error.message
+                          );
+                          return;
+                        }
+
+                        const updatedApplication = {
+                          ...selectedApplication,
+                          application_status: 'denied'
+                        };
+
+                        setSelectedApplication(
+                          updatedApplication
+                        );
+
+                        setApplications(
+                          applications.map(application =>
+                            application.id ===
+                            selectedApplication.id
+                              ? updatedApplication
+                              : application
+                          )
+                        );
+
+                        alert('Application marked as denied.');
+                      }}
+                    >
+                      Deny Application
+                    </button>
+
+                  </div>
+
+                </section>
+
+                <section className="applicationTimelineCard">
+
+                  <small>APPLICATION TIMELINE</small>
+
+                  <div className="timelineItem">
+                    <div className="timelineDot" />
+                    <div>
+                      <b>Application created</b>
+                      <span>
+                        {new Date(
+                          selectedApplication.created_at
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="timelineItem">
+                    <div className="timelineDot" />
+                    <div>
+                      <b>Screening</b>
+                      <span>
+                        {selectedApplication.screening_status
+                          .replaceAll('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="timelineItem">
+                    <div className="timelineDot" />
+                    <div>
+                      <b>Application status</b>
+                      <span>
+                        {selectedApplication.application_status
+                          .replaceAll('_', ' ')}
+                      </span>
+                    </div>
+                  </div>
+
+                </section>
+
+              </aside>
+
+            </div>
+
+          </section>
+        )}
 {view === 'maintenance' && (
           <section className="panel">
             <h1>Maintenance</h1>
