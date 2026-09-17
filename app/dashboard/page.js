@@ -575,44 +575,118 @@ export default function Dashboard() {
           </section>
         )}
 
-        {view === 'propertyDetails' && selectedProperty && (
-          <section className="panel">
-            <button
-              type="button"
-              onClick={() => setView('properties')}
-            >
-              ← Back to Properties
-            </button>
+      {view === 'propertyDetails' && selectedProperty && (
+  <section className="propertyDetailsPage">
+    <button
+      type="button"
+      className="propertyBackButton"
+      onClick={() => setView('properties')}
+    >
+      ← Back to Properties
+    </button>
 
-            <small>PROPERTY</small>
-            <h1>{selectedProperty.address}</h1>
-             <button type="button" onClick={() => setView('editProperty')}>
-  Edit Property
-</button>   
-
-            <p>
-              {selectedProperty.city}, {selectedProperty.state}{' '}
-              {selectedProperty.zip_code}
-            </p>
-
-            <div className="stats">
-              <article>
-                <span>Monthly Rent</span>
-                <b>${selectedProperty.monthly_rent || 0}</b>
-              </article>
-
-              <article>
-                <span>Tenants</span>
-                <b>0</b>
-              </article>
-
-              <article>
-                <span>Status</span>
-                <b>Active</b>
-              </article>
-            </div>
-          </section>
+    <div className="propertyDetailsHero">
+      <div className="propertyDetailsImage">
+        {selectedProperty.image_url ? (
+          <img
+            src={selectedProperty.image_url}
+            alt={selectedProperty.address}
+          />
+        ) : (
+          <div className="propertyDetailsPlaceholder">⌂</div>
         )}
+      </div>
+
+      <div className="propertyDetailsInfo">
+        <span className="propertyDetailsLabel">RENTAL PROPERTY</span>
+
+        <h1>{selectedProperty.address}</h1>
+
+        <p>
+          {selectedProperty.city}, {selectedProperty.state}{' '}
+          {selectedProperty.zip_code}
+        </p>
+
+        <span className="propertyStatusBadge">● Active</span>
+
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setView('editProperty')}
+        >
+          Edit Property
+        </button>
+      </div>
+    </div>
+
+    <div className="propertyDetailsStats">
+      <article>
+        <span>Monthly Rent</span>
+        <b>
+          ${Number(selectedProperty.monthly_rent || 0).toLocaleString()}
+        </b>
+        <small>EXPECTED PER MONTH</small>
+      </article>
+
+      <article>
+        <span>Occupancy</span>
+        <b>Vacant</b>
+        <small>NO TENANT ASSIGNED</small>
+      </article>
+
+      <article>
+        <span>Lease</span>
+        <b>—</b>
+        <small>NO ACTIVE LEASE</small>
+      </article>
+
+      <article>
+        <span>Maintenance</span>
+        <b>0</b>
+        <small>OPEN REQUESTS</small>
+      </article>
+    </div>
+
+    <div className="propertyDetailsGrid">
+      <section className="propertyDetailsCard">
+        <h2>Property Information</h2>
+
+        <div className="propertyInfoRow">
+          <span>Address</span>
+          <b>{selectedProperty.address}</b>
+        </div>
+
+        <div className="propertyInfoRow">
+          <span>City</span>
+          <b>{selectedProperty.city}</b>
+        </div>
+
+        <div className="propertyInfoRow">
+          <span>State</span>
+          <b>{selectedProperty.state}</b>
+        </div>
+
+        <div className="propertyInfoRow">
+          <span>ZIP Code</span>
+          <b>{selectedProperty.zip_code}</b>
+        </div>
+      </section>
+
+      <section className="propertyDetailsCard">
+        <h2>Current Tenant</h2>
+
+        <div className="propertyDetailsEmpty">
+          <span>♙</span>
+          <b>No tenant assigned</b>
+          <p>Add a tenant to begin tracking rent and lease information.</p>
+          <button type="button" className="viewAllButton">
+            + Add Tenant
+          </button>
+        </div>
+      </section>
+    </div>
+  </section>
+)}  
 
       {view === 'editProperty' && selectedProperty && (
   <section className="panel">
