@@ -18,9 +18,13 @@ export default function Dashboard() {
   const [selectedApplication, setSelectedApplication] = useState(null);
 
   const [propertySearch, setPropertySearch] = useState('');
-  const [propertyFilter, setPropertyFilter] = useState('all');
+const [propertyFilter, setPropertyFilter] = useState('all');
 
-  const r = useRouter();
+const [rentCharges, setRentCharges] = useState([]);
+const [rentPayments, setRentPayments] = useState([]);
+const [paymentAllocations, setPaymentAllocations] = useState([]);
+
+const r = useRouter();
 
   async function load() {
     const s = supabase();
@@ -74,7 +78,7 @@ export default function Dashboard() {
       setApplications(applicationData || []);
     }
 
-    const propertyIds = (properties || []).map(property => property.id);
+        const propertyIds = (properties || []).map(property => property.id);
 
     if (propertyIds.length === 0) {
       setTenancies([]);
@@ -90,9 +94,47 @@ export default function Dashboard() {
         setTenancies(tenancyData || []);
       }
     }
+
+    const { data: chargeData, error: chargeError } = await s
+      .from('rent_charges')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('due_date', { ascending: false });
+
+    if (chargeError) {
+      alert('Could not load rent charges: ' + chargeError.message);
+    } else {
+      setRentCharges(chargeData || []);
+    }
+
+    const { data: paymentData, error: paymentError } = await s
+      .from('rent_payments')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('payment_date', { ascending: false });
+
+    if (paymentError) {
+      alert('Could not load rent payments: ' + paymentError.message);
+    } else {
+      setRentPayments(paymentData || []);
+    }
+
+    const { data: allocationData, error: allocationError } = await s
+      .from('payment_allocations')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (allocationError) {
+      alert(
+        'Could not load payment allocations: ' +
+          allocationError.message
+      );
+    } else {
+      setPaymentAllocations(allocationData || []);
+    }
   }
 
-  useEffect(() => {
     load();
   }, []);
 
@@ -278,8 +320,58 @@ export default function Dashboard() {
       (propertyFilter === 'occupied' && occupied) ||
       (propertyFilter === 'vacant' && !occupied);
 
-    return matchesSearch && matchesFilter;
+        return matchesSearch && matchesFilter;
   });
+
+  const selectedPropertyCharges = selectedProperty
+    ? rentCharges.filter(
+        charge => charge.property_id === selectedProperty.id
+      )
+    : [];
+
+  const selectedPropertyPayments = selectedProperty
+    ? rentPayments.filter(
+        payment =>
+          payment.property_id === selectedProperty.id &&
+          payment.status === 'completed'
+      )
+    : [];
+
+  const selectedPropertyChargeIds = new Set(
+    selectedPropertyCharges.map(charge => charge.id)
+  );
+
+  const selectedPropertyAllocated = paymentAllocations
+    .filter(allocation =>
+      selectedPropertyChargeIds.has(allocation.charge_id)
+    )
+    .reduce(
+      (total, allocation) =>
+        total + Number(allocation.amount || 0),
+      0
+    );
+
+  const selectedPropertyTotalCharges =
+    selectedPropertyCharges
+      .filter(charge => charge.status !== 'waived')
+      .reduce(
+        (total, charge) =>
+          total + Number(charge.amount || 0),
+        0
+      );
+
+  const selectedPropertyTotalPayments =
+    selectedPropertyPayments.reduce(
+      (total, payment) =>
+        total + Number(payment.amount || 0),
+      0
+    );
+
+  const selectedPropertyOutstanding = Math.max(
+    selectedPropertyTotalCharges -
+      selectedPropertyAllocated,
+    0
+  );
 
   return (
     <div className="app">
@@ -1126,7 +1218,7 @@ export default function Dashboard() {
 
                 <div>
                   <span>Outstanding Balance</span>
-                  <b>$0</b>
+                  <b>${selectedPropertyOutstanding.toLocaleString()}</b>
                   <small>CURRENT BALANCE</small>
                 </div>
               </article>
@@ -1373,12 +1465,12 @@ export default function Dashboard() {
 
                     <div>
                       <small>COLLECTED</small>
-                      <b>$0</b>
+                      <b>${selectedPropertyTotalPayments.toLocaleString()}</b>
                     </div>
 
                     <div>
                       <small>BALANCE</small>
-                      <b>$0</b>
+                      <b>${selectedPropertyOutstanding.toLocaleString()}</b>
                     </div>
                   </div>
 
