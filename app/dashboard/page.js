@@ -25,7 +25,7 @@ const [propertyFilter, setPropertyFilter] = useState('all');
 const [rentCharges, setRentCharges] = useState([]);
 const [rentPayments, setRentPayments] = useState([]);
 const [paymentAllocations, setPaymentAllocations] = useState([]);
-  
+  const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [conversations, setConversations] = useState([]);
 const [messages, setMessages] = useState([]);
 const [announcements, setAnnouncements] = useState([]);
