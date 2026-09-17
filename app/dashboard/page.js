@@ -780,6 +780,10 @@ export default function Dashboard() {
         const monthlyRent = Number(form.monthlyRent.value);
         const startDate = form.startDate.value;
         const endDate = form.endDate.value || null;
+        if (endDate && endDate < startDate) {
+  alert('Lease end date cannot be before the lease start date.');
+  return;
+}
 
         const { error: tenancyError } = await s
           .from('tenancies')
