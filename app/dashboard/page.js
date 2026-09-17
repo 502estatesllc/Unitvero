@@ -1476,73 +1476,618 @@ return (
           </section>
         )}
 
-        {view === 'propertyDetails' && selectedProperty && (
-          <section className="propertyCommandCenter">
-            <button
-              type="button"
-              className="propertyBackButton"
-              onClick={() => setView('properties')}
+       {view === 'propertyDetails' && selectedProperty && (
+  <section className="propertyCommandCenter">
+    <button
+      type="button"
+      className="propertyBackButton"
+      onClick={() => {
+        setSelectedUnit(null);
+        setSelectedTenancy(null);
+        setView('properties');
+      }}
+    >
+      ← Back to Properties
+    </button>
+
+    <div className="commandPropertyHeader">
+      <div className="commandPropertyIdentity">
+        <div className="commandPropertyIcon">⌂</div>
+
+        <div>
+          <div className="commandPropertyEyebrow">
+            <span>PROPERTY COMMAND CENTER</span>
+
+            <span
+              className={
+                isMultiFamily(selectedProperty)
+                  ? 'commandOccupancy occupied'
+                  : selectedTenancy
+                    ? 'commandOccupancy occupied'
+                    : 'commandOccupancy vacant'
+              }
             >
-              ← Back to Properties
-            </button>
+              <i></i>
+              {isMultiFamily(selectedProperty)
+                ? `${unitsForProperty(selectedProperty.id).length} Units`
+                : selectedTenancy
+                  ? 'Occupied'
+                  : 'Vacant'}
+            </span>
+          </div>
 
-            <div className="commandPropertyHeader">
-              <div className="commandPropertyIdentity">
-                <div className="commandPropertyIcon">⌂</div>
+          <h1>{selectedProperty.address}</h1>
 
-                <div>
-                  <div className="commandPropertyEyebrow">
-                    <span>PROPERTY COMMAND CENTER</span>
+          <p>
+            {selectedProperty.city},{' '}
+            {selectedProperty.state}{' '}
+            {selectedProperty.zip_code}
+          </p>
+        </div>
+      </div>
 
-                    <span
-                      className={
-                        selectedTenancy
-                          ? 'commandOccupancy occupied'
-                          : 'commandOccupancy vacant'
-                      }
-                    >
-                      <i></i>
-                      {selectedTenancy ? 'Occupied' : 'Vacant'}
-                    </span>
-                  </div>
+      <div className="commandHeaderActions">
+        {!isMultiFamily(selectedProperty) && !selectedTenancy && (
+          <button
+            type="button"
+            className="commandSecondaryButton"
+            onClick={() => {
+              setSelectedUnit(null);
+              setView('addTenant');
+            }}
+          >
+            + Add Tenant
+          </button>
+        )}
 
-                  <h1>{selectedProperty.address}</h1>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => setView('editProperty')}
+        >
+          Edit Property
+        </button>
+      </div>
+    </div>
 
-                  <p>
-                    {selectedProperty.city},{' '}
-                    {selectedProperty.state}{' '}
-                    {selectedProperty.zip_code}
-                  </p>
-                </div>
-              </div>
+    {isMultiFamily(selectedProperty) ? (
+      <>
+        <div className="commandStats">
+          <article>
+            <div className="commandStatIcon">▦</div>
+            <div>
+              <span>Total Units</span>
+              <b>{selectedProperty.total_units || 0}</b>
+              <small>PROPERTY UNITS</small>
+            </div>
+          </article>
 
-              <div className="commandHeaderActions">
-               {!isMultiFamily(selectedProperty) && !selectedTenancy && (
-  <button
-    type="button"
-    className="commandSecondaryButton"
-    onClick={() => setView('addTenant')}
-  >
-    + Add Tenant
-  </button>
-)}
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => setView('editProperty')}
-                >
-                  Edit Property
-                </button>
+          <article>
+            <div className="commandStatIcon">⌂</div>
+            <div>
+              <span>Occupied</span>
+              <b>
+                {
+                  unitsForProperty(selectedProperty.id).filter(unit =>
+                    tenancies.some(
+                      tenancy =>
+                        tenancy.unit_id === unit.id &&
+                        tenancy.status === 'active'
+                    )
+                  ).length
+                }
+              </b>
+              <small>OCCUPIED UNITS</small>
+            </div>
+          </article>
+
+          <article>
+            <div className="commandStatIcon">◇</div>
+            <div>
+              <span>Vacant</span>
+              <b>
+                {
+                  unitsForProperty(selectedProperty.id).filter(
+                    unit =>
+                      !tenancies.some(
+                        tenancy =>
+                          tenancy.unit_id === unit.id &&
+                          tenancy.status === 'active'
+                      )
+                  ).length
+                }
+              </b>
+              <small>AVAILABLE UNITS</small>
+            </div>
+          </article>
+
+          <article>
+            <div className="commandStatIcon">$</div>
+            <div>
+              <span>Scheduled Rent</span>
+              <b>
+                $
+                {unitsForProperty(selectedProperty.id)
+                  .reduce((total, unit) => {
+                    const tenancy = tenancies.find(
+                      item =>
+                        item.unit_id === unit.id &&
+                        item.status === 'active'
+                    );
+
+                    return (
+                      total +
+                      Number(
+                        tenancy?.monthly_rent ||
+                          unit.market_rent ||
+                          0
+                      )
+                    );
+                  }, 0)
+                  .toLocaleString()}
+              </b>
+              <small>MONTHLY</small>
+            </div>
+          </article>
+        </div>
+
+        <section className="commandCard propertyUnitsCard">
+          <div className="commandCardHeader">
+            <div>
+              <span className="commandSectionIcon">▦</span>
+
+              <div>
+                <h2>Units</h2>
+                <p>
+                  Select a unit to manage its tenant, lease,
+                  rent and activity.
+                </p>
               </div>
             </div>
 
-            <div className="commandStats">
-              <article>
-                <div className="commandStatIcon">$</div>
+            <span className="commandOccupancy occupied">
+              <i></i>
+              {unitsForProperty(selectedProperty.id).length} Units
+            </span>
+          </div>
+
+          <div className="propertyUnitsGrid">
+            {unitsForProperty(selectedProperty.id).map(unit => {
+              const unitTenancy = tenancies.find(
+                tenancy =>
+                  tenancy.unit_id === unit.id &&
+                  tenancy.status === 'active'
+              );
+
+              return (
+                <article
+                  className="propertyUnitCard"
+                  key={unit.id}
+                  onClick={() => {
+                    setSelectedUnit(unit);
+                    setSelectedTenancy(unitTenancy || null);
+                    setView('unitDetails');
+                  }}
+                >
+                  <div className="propertyUnitTop">
+                    <div className="propertyUnitIcon">⌂</div>
+
+                    <span
+                      className={
+                        unitTenancy
+                          ? 'portfolioOccupancy occupied'
+                          : 'portfolioOccupancy vacant'
+                      }
+                    >
+                      <i></i>
+                      {unitTenancy ? 'Occupied' : 'Vacant'}
+                    </span>
+                  </div>
+
+                  <div className="propertyUnitBody">
+                    <small>UNIT</small>
+                    <h3>{unit.unit_name}</h3>
+
+                    <div className="propertyUnitDetails">
+                      <div>
+                        <span>MONTHLY RENT</span>
+                        <b>
+                          $
+                          {Number(
+                            unitTenancy?.monthly_rent ||
+                              unit.market_rent ||
+                              0
+                          ).toLocaleString()}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>TENANT</span>
+                        <b>
+                          {unitTenancy
+                            ? unitTenancy.tenant_name ||
+                              unitTenancy.tenant_email ||
+                              'Active tenant'
+                            : 'No tenant'}
+                        </b>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="commandTextButton"
+                      onClick={event => {
+                        event.stopPropagation();
+                        setSelectedUnit(unit);
+                        setSelectedTenancy(unitTenancy || null);
+                        setView('unitDetails');
+                      }}
+                    >
+                      Manage Unit →
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <div className="commandMainGrid">
+          <div className="commandMainColumn">
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">$</span>
+                  <div>
+                    <h2>Property Financials</h2>
+                    <p>
+                      Rent activity across the entire property
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('rent')}
+                >
+                  View Rent →
+                </button>
+              </div>
+
+              <div className="commandRentSummary">
+                <div>
+                  <small>COLLECTED</small>
+                  <b>
+                    ${selectedPropertyTotalPayments.toLocaleString()}
+                  </b>
+                </div>
 
                 <div>
-                  <span>Monthly Rent</span>
+                  <small>OUTSTANDING</small>
+                  <b>
+                    ${selectedPropertyOutstanding.toLocaleString()}
+                  </b>
+                </div>
 
+                <div>
+                  <small>UNITS</small>
+                  <b>
+                    {unitsForProperty(selectedProperty.id).length}
+                  </b>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div className="commandSideColumn">
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">⌂</span>
+                  <div>
+                    <h2>Property Information</h2>
+                    <p>Building details</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('editProperty')}
+                >
+                  Edit →
+                </button>
+              </div>
+
+              <div className="commandPropertyInfo">
+                <div>
+                  <span>Street Address</span>
+                  <b>{selectedProperty.address}</b>
+                </div>
+
+                <div>
+                  <span>City</span>
+                  <b>{selectedProperty.city}</b>
+                </div>
+
+                <div>
+                  <span>State</span>
+                  <b>{selectedProperty.state}</b>
+                </div>
+
+                <div>
+                  <span>ZIP Code</span>
+                  <b>{selectedProperty.zip_code}</b>
+                </div>
+
+                <div>
+                  <span>Property Type</span>
+                  <b>
+                    {selectedProperty.property_type
+                      ? selectedProperty.property_type
+                          .replaceAll('_', ' ')
+                      : 'Multi family'}
+                  </b>
+                </div>
+
+                <div>
+                  <span>Total Units</span>
+                  <b>{selectedProperty.total_units || 1}</b>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="commandStats">
+          <article>
+            <div className="commandStatIcon">$</div>
+            <div>
+              <span>Monthly Rent</span>
+              <b>
+                $
+                {Number(
+                  selectedTenancy?.monthly_rent ||
+                    selectedProperty.monthly_rent ||
+                    0
+                ).toLocaleString()}
+              </b>
+              <small>EXPECTED PER MONTH</small>
+            </div>
+          </article>
+
+          <article>
+            <div className="commandStatIcon">◎</div>
+            <div>
+              <span>Outstanding Balance</span>
+              <b>
+                ${selectedPropertyOutstanding.toLocaleString()}
+              </b>
+              <small>CURRENT BALANCE</small>
+            </div>
+          </article>
+
+          <article>
+            <div className="commandStatIcon">▤</div>
+            <div>
+              <span>Lease</span>
+              <b>
+                {selectedTenancy
+                  ? selectedTenancy.end_date
+                    ? new Date(
+                        selectedTenancy.end_date + 'T00:00:00'
+                      ).toLocaleDateString()
+                    : 'Open ended'
+                  : 'No lease'}
+              </b>
+              <small>
+                {selectedTenancy
+                  ? 'LEASE END'
+                  : 'NO ACTIVE TENANCY'}
+              </small>
+            </div>
+          </article>
+
+          <article>
+            <div className="commandStatIcon">◇</div>
+            <div>
+              <span>Maintenance</span>
+              <b>0</b>
+              <small>OPEN REQUESTS</small>
+            </div>
+          </article>
+        </div>
+
+        <div className="commandMainGrid">
+          <div className="commandMainColumn">
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">♙</span>
+                  <div>
+                    <h2>Current Tenant</h2>
+                    <p>Resident and contact information</p>
+                  </div>
+                </div>
+
+                {selectedTenancy && (
+                  <button
+                    type="button"
+                    className="commandTextButton"
+                    onClick={() => {
+                      setEditingTenancy(selectedTenancy);
+                      setView('editTenant');
+                    }}
+                  >
+                    Edit Tenant →
+                  </button>
+                )}
+              </div>
+
+              {selectedTenancy ? (
+                <div className="commandTenant">
+                  <div className="commandTenantAvatar">
+                    {(selectedTenancy.tenant_name ||
+                      selectedTenancy.tenant_email ||
+                      'T')
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+
+                  <div className="commandTenantIdentity">
+                    <b>
+                      {selectedTenancy.tenant_name ||
+                        selectedTenancy.tenant_email}
+                    </b>
+                    <span>Active tenant</span>
+                  </div>
+
+                  <div className="commandTenantContact">
+                    <div>
+                      <small>EMAIL</small>
+                      <b>
+                        {selectedTenancy.tenant_email || '—'}
+                      </b>
+                    </div>
+
+                    <div>
+                      <small>PHONE</small>
+                      <b>
+                        {selectedTenancy.tenant_phone ||
+                          'Not provided'}
+                      </b>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="commandEmptyState">
+                  <div className="commandEmptyIcon">♙</div>
+                  <b>No tenant assigned</b>
+                  <p>
+                    Add a tenant to begin tracking the lease,
+                    rent and resident information.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => {
+                      setSelectedUnit(null);
+                      setView('addTenant');
+                    }}
+                  >
+                    + Add Tenant
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">▤</span>
+                  <div>
+                    <h2>Lease</h2>
+                    <p>Current rental agreement</p>
+                  </div>
+                </div>
+
+                {selectedTenancy && (
+                  <button
+                    type="button"
+                    className="commandTextButton"
+                    onClick={() => {
+                      setEditingTenancy(selectedTenancy);
+                      setView('editTenant');
+                    }}
+                  >
+                    Manage Lease →
+                  </button>
+                )}
+              </div>
+
+              {selectedTenancy ? (
+                <div className="commandLeaseGrid">
+                  <div>
+                    <small>LEASE STATUS</small>
+                    <b className="commandActiveText">
+                      ● Active
+                    </b>
+                  </div>
+
+                  <div>
+                    <small>START DATE</small>
+                    <b>
+                      {selectedTenancy.start_date
+                        ? new Date(
+                            selectedTenancy.start_date +
+                              'T00:00:00'
+                          ).toLocaleDateString()
+                        : '—'}
+                    </b>
+                  </div>
+
+                  <div>
+                    <small>END DATE</small>
+                    <b>
+                      {selectedTenancy.end_date
+                        ? new Date(
+                            selectedTenancy.end_date +
+                              'T00:00:00'
+                          ).toLocaleDateString()
+                        : 'Open ended'}
+                    </b>
+                  </div>
+
+                  <div>
+                    <small>MONTHLY RENT</small>
+                    <b>
+                      $
+                      {Number(
+                        selectedTenancy.monthly_rent || 0
+                      ).toLocaleString()}
+                    </b>
+                  </div>
+                </div>
+              ) : (
+                <div className="commandEmptyState compact">
+                  <div className="commandEmptyIcon">▤</div>
+                  <b>No active lease</b>
+                  <p>
+                    Lease information will appear when a tenant
+                    is assigned.
+                  </p>
+                </div>
+              )}
+            </section>
+
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">$</span>
+                  <div>
+                    <h2>Rent & Ledger</h2>
+                    <p>
+                      Charges, payments and property balance
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('rent')}
+                >
+                  View Rent →
+                </button>
+              </div>
+
+              <div className="commandRentSummary">
+                <div>
+                  <small>MONTHLY RENT</small>
                   <b>
                     $
                     {Number(
@@ -1551,699 +2096,706 @@ return (
                         0
                     ).toLocaleString()}
                   </b>
-
-                  <small>EXPECTED PER MONTH</small>
                 </div>
-              </article>
-
-              <article>
-                <div className="commandStatIcon">◎</div>
 
                 <div>
-                  <span>Outstanding Balance</span>
-                  <b>${selectedPropertyOutstanding.toLocaleString()}</b>
-                  <small>CURRENT BALANCE</small>
-                </div>
-              </article>
-
-              <article>
-                <div className="commandStatIcon">▤</div>
-
-                <div>
-                  <span>Lease</span>
-
+                  <small>COLLECTED</small>
                   <b>
-                    {selectedTenancy
-                      ? selectedTenancy.end_date
-                        ? new Date(
-                            selectedTenancy.end_date +
-                              'T00:00:00'
-                          ).toLocaleDateString()
-                        : 'Open ended'
-                      : 'No lease'}
-                  </b>
-
-                  <small>
-                    {selectedTenancy
-                      ? 'LEASE END'
-                      : 'NO ACTIVE TENANCY'}
-                  </small>
-                </div>
-              </article>
-
-              <article>
-                <div className="commandStatIcon">◇</div>
-
-                <div>
-                  <span>Maintenance</span>
-                  <b>0</b>
-                  <small>OPEN REQUESTS</small>
-                </div>
-              </article>
-            </div>
-
-            {isMultiFamily(selectedProperty) && (
-  <section className="commandCard propertyUnitsCard">
-    <div className="commandCardHeader">
-      <div>
-        <span className="commandSectionIcon">▦</span>
-
-        <div>
-          <h2>Units</h2>
-          <p>
-            {selectedProperty.total_units} units at this property
-          </p>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        className="commandSecondaryButton"
-      >
-        + Add Unit
-      </button>
-    </div>
-
-    <div className="propertyUnitsGrid">
-      {unitsForProperty(selectedProperty.id).map(unit => {
-        const unitTenancy = tenancies.find(
-          tenancy =>
-            tenancy.unit_id === unit.id &&
-            tenancy.status === 'active'
-        );
-
-        return (
-         <article
-  className="propertyUnitCard"
-  key={unit.id}
-  onClick={() => {
-  setSelectedUnit(unit);
-  setSelectedTenancy(unitTenancy || null);
-  setView('unitDetails');
-}}
->
-            <div className="propertyUnitTop">
-              <div className="propertyUnitIcon">⌂</div>
-
-              <span
-                className={
-                  unitTenancy
-                    ? 'portfolioOccupancy occupied'
-                    : 'portfolioOccupancy vacant'
-                }
-              >
-                <i></i>
-                {unitTenancy ? 'Occupied' : 'Vacant'}
-              </span>
-            </div>
-
-            <div className="propertyUnitBody">
-              <small>UNIT</small>
-              <h3>{unit.unit_name}</h3>
-                {selectedUnit?.id === unit.id && (
-  <div className="selectedUnitLabel">
-    ✓ Selected Unit
-  </div>
-)}
-
-              <div className="propertyUnitDetails">
-                <div>
-                  <span>MONTHLY RENT</span>
-                  <b>
-                    $
-                    {Number(
-                      unitTenancy?.monthly_rent ||
-                        unit.market_rent ||
-                        0
-                    ).toLocaleString()}
+                    ${selectedPropertyTotalPayments.toLocaleString()}
                   </b>
                 </div>
 
                 <div>
-                  <span>TENANT</span>
+                  <small>BALANCE</small>
                   <b>
-                    {unitTenancy
-                      ? unitTenancy.tenant_name ||
-                        unitTenancy.tenant_email ||
-                        'Active tenant'
-                      : 'No tenant'}
+                    ${selectedPropertyOutstanding.toLocaleString()}
                   </b>
                 </div>
               </div>
-            </div>
-          </article>
-        );
-      })}
-    </div>
-  </section>
-)}
-       
-<div className="commandMainGrid">
-              <div className="commandMainColumn">
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">♙</span>
 
-                      <div>
-                        <h2>Current Tenant</h2>
-                        <p>Resident and contact information</p>
-                      </div>
-                    </div>
-
-                    {selectedTenancy && (
-                      <button
-                        type="button"
-                        className="commandTextButton"
-                        onClick={() => {
-                          setEditingTenancy(selectedTenancy);
-                          setView('editTenant');
-                        }}
-                      >
-                        Edit Tenant →
-                      </button>
-                    )}
+              {selectedPropertyCharges.length === 0 &&
+              selectedPropertyPayments.length === 0 ? (
+                <div className="commandLedgerEmpty">
+                  <span>$</span>
+                  <div>
+                    <b>No ledger activity yet</b>
+                    <p>
+                      Charges and rent payments will appear here
+                      as activity is recorded.
+                    </p>
                   </div>
-
-                  {selectedTenancy ? (
-                    <div className="commandTenant">
-                      <div className="commandTenantAvatar">
-                        {(selectedTenancy.tenant_name ||
-                          selectedTenancy.tenant_email ||
-                          'T')
-                          .charAt(0)
-                          .toUpperCase()}
-                      </div>
-
-                      <div className="commandTenantIdentity">
-                        <b>
-                          {selectedTenancy.tenant_name ||
-                            selectedTenancy.tenant_email}
-                        </b>
-
-                        <span>Active tenant</span>
-                      </div>
-
-                      <div className="commandTenantContact">
-                        <div>
-                          <small>EMAIL</small>
-                          <b>
-                            {selectedTenancy.tenant_email || '—'}
-                          </b>
-                        </div>
-
-                        <div>
-                          <small>PHONE</small>
-                          <b>
-                            {selectedTenancy.tenant_phone ||
-                              'Not provided'}
-                          </b>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    
-                     <div className="commandEmptyState">
-  <div className="commandEmptyIcon">♙</div>
-  <b>No tenant assigned</b>
-
-  {isMultiFamily(selectedProperty) ? (
-    <p>
-      Select a unit above to add or manage a tenant.
-    </p>
-  ) : (
-    <>
-      <p>
-        Add a tenant to begin tracking the lease,
-        rent and resident information for this
-        property.
-      </p>
-
-      <button
-        type="button"
-        className="primary"
-        onClick={() => setView('addTenant')}
-      >
-        + Add Tenant
-      </button>    </>
-  )}
-</div>
-  )}        
-</section>
-
-<section className="commandCard">
-  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">▤</span>
-
-                      <div>
-                        <h2>Lease</h2>
-                        <p>Current rental agreement</p>
-                      </div>
-                    </div>
-
-                    {selectedTenancy && (
-                      <button
-                        type="button"
-                        className="commandTextButton"
-                        onClick={() => {
-                          setEditingTenancy(selectedTenancy);
-                          setView('editTenant');
-                        }}
-                      >
-                        Manage Lease →
-                      </button>
-                    )}
-                  </div>
-
-                  {selectedTenancy ? (
-                    <div className="commandLeaseGrid">
-                      <div>
-                        <small>LEASE STATUS</small>
-                        <b className="commandActiveText">
-                          ● Active
-                        </b>
-                      </div>
-
-                      <div>
-                        <small>START DATE</small>
-
-                        <b>
-                          {selectedTenancy.start_date
-                            ? new Date(
-                                selectedTenancy.start_date +
-                                  'T00:00:00'
-                              ).toLocaleDateString()
-                            : '—'}
-                        </b>
-                      </div>
-
-                      <div>
-                        <small>END DATE</small>
-
-                        <b>
-                          {selectedTenancy.end_date
-                            ? new Date(
-                                selectedTenancy.end_date +
-                                  'T00:00:00'
-                              ).toLocaleDateString()
-                            : 'Open ended'}
-                        </b>
-                      </div>
-
-                      <div>
-                        <small>MONTHLY RENT</small>
-
-                        <b>
-                          $
-                          {Number(
-                            selectedTenancy.monthly_rent || 0
-                          ).toLocaleString()}
-                        </b>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="commandEmptyState compact">
-                      <div className="commandEmptyIcon">▤</div>
-                      <b>No active lease</b>
-                      <p>
-                        Lease information will appear when a
-                        tenant is assigned to this property.
-                      </p>
-                    </div>
-                  )}
-                </section>
-
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">$</span>
-
-                      <div>
-                        <h2>Rent & Ledger</h2>
-                        <p>
-                          Charges, payments and property balance
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="commandTextButton"
-                      onClick={() => setView('rent')}
+                </div>
+              ) : (
+                <div className="commandLedgerList">
+                  {selectedPropertyCharges.map(charge => (
+                    <div
+                      className="commandLedgerRow"
+                      key={`charge-${charge.id}`}
                     >
-                      View Rent →
-                    </button>
-                  </div>
+                      <div className="commandLedgerType charge">
+                        $
+                      </div>
 
-                  <div className="commandRentSummary">
-                    <div>
-                      <small>MONTHLY RENT</small>
+                      <div className="commandLedgerDescription">
+                        <b>
+                          {charge.description || 'Rent charge'}
+                        </b>
+                        <span>
+                          Due{' '}
+                          {new Date(
+                            charge.due_date + 'T00:00:00'
+                          ).toLocaleDateString()}
+                        </span>
+                      </div>
 
-                      <b>
+                      <span
+                        className={`commandLedgerStatus ${charge.status}`}
+                      >
+                        {charge.status}
+                      </span>
+
+                      <b className="commandLedgerAmount charge">
                         $
                         {Number(
-                          selectedTenancy?.monthly_rent ||
-                            selectedProperty.monthly_rent ||
-                            0
+                          charge.amount || 0
                         ).toLocaleString()}
                       </b>
                     </div>
+                  ))}
 
-                    <div>
-                      <small>COLLECTED</small>
-                      <b>${selectedPropertyTotalPayments.toLocaleString()}</b>
-                    </div>
-
-                    <div>
-                      <small>BALANCE</small>
-                      <b>${selectedPropertyOutstanding.toLocaleString()}</b>
-                    </div>
-                  </div>
-
-                  {selectedPropertyCharges.length === 0 &&
-selectedPropertyPayments.length === 0 ? (
-  <div className="commandLedgerEmpty">
-    <span>$</span>
-
-    <div>
-      <b>No ledger activity yet</b>
-
-      <p>
-        Charges and rent payments will appear here
-        as activity is recorded.
-      </p>
-    </div>
-  </div>
-) : (
-  <div className="commandLedgerList">
-    {selectedPropertyCharges.map(charge => (
-      <div
-        className="commandLedgerRow"
-        key={`charge-${charge.id}`}
-      >
-        <div className="commandLedgerType charge">$</div>
-
-        <div className="commandLedgerDescription">
-          <b>{charge.description || 'Rent charge'}</b>
-
-          <span>
-            Due{' '}
-            {new Date(
-              charge.due_date + 'T00:00:00'
-            ).toLocaleDateString()}
-          </span>
-        </div>
-
-        <span
-          className={`commandLedgerStatus ${charge.status}`}
-        >
-          {charge.status}
-        </span>
-
-        <b className="commandLedgerAmount charge">
-          ${Number(charge.amount || 0).toLocaleString()}
-        </b>
-      </div>
-    ))}
-
-    {selectedPropertyPayments.map(payment => (
-      <div
-        className="commandLedgerRow"
-        key={`payment-${payment.id}`}
-      >
-        <div className="commandLedgerType payment">✓</div>
-
-        <div className="commandLedgerDescription">
-          <b>Rent payment</b>
-
-          <span>
-            {new Date(
-              payment.payment_date + 'T00:00:00'
-            ).toLocaleDateString()}
-            {' · '}
-            {payment.payment_method || 'manual'}
-          </span>
-        </div>
-
-        <span
-          className={`commandLedgerStatus ${payment.status}`}
-        >
-          {payment.status}
-        </span>
-
-        <b className="commandLedgerAmount payment">
-          -${Number(payment.amount || 0).toLocaleString()}
-        </b>
-      </div>
-    ))}
-  </div>
-)}
-                </section>
-              </div>
-
-              <div className="commandSideColumn">
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">◇</span>
-
-                      <div>
-                        <h2>Maintenance</h2>
-                        <p>Repair requests</p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="commandTextButton"
-                      onClick={() => setView('maintenance')}
+                  {selectedPropertyPayments.map(payment => (
+                    <div
+                      className="commandLedgerRow"
+                      key={`payment-${payment.id}`}
                     >
-                      View All →
-                    </button>
-                  </div>
-
-                  <div className="commandMiniEmpty">
-                    <div className="commandMiniIcon">✓</div>
-                    <b>0 Open Requests</b>
-                    <span>No maintenance issues reported.</span>
-                  </div>
-                </section>
-
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">▧</span>
-
-                      <div>
-                        <h2>Documents</h2>
-                        <p>Property files and agreements</p>
+                      <div className="commandLedgerType payment">
+                        ✓
                       </div>
-                    </div>
 
-                    <button
-                      type="button"
-                      className="commandTextButton"
-                      onClick={() => setView('documents')}
-                    >
-                      View All →
-                    </button>
-                  </div>
-
-                  <div className="commandMiniEmpty">
-                    <div className="commandMiniIcon">▧</div>
-                    <b>No property documents</b>
-
-                    <span>
-                      Leases, notices, receipts and other files
-                      will appear here.
-                    </span>
-                  </div>
-                </section>
-
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">⌂</span>
-
-                      <div>
-                        <h2>Property Information</h2>
-                        <p>Property details</p>
+                      <div className="commandLedgerDescription">
+                        <b>Rent payment</b>
+                        <span>
+                          {new Date(
+                            payment.payment_date + 'T00:00:00'
+                          ).toLocaleDateString()}
+                          {' · '}
+                          {payment.payment_method || 'manual'}
+                        </span>
                       </div>
-                    </div>
 
-                    <button
-                      type="button"
-                      className="commandTextButton"
-                      onClick={() => setView('editProperty')}
-                    >
-                      Edit →
-                    </button>
-                  </div>
+                      <span
+                        className={`commandLedgerStatus ${payment.status}`}
+                      >
+                        {payment.status}
+                      </span>
 
-                  <div className="commandPropertyInfo">
-                    <div>
-                      <span>Street Address</span>
-                      <b>{selectedProperty.address}</b>
-                    </div>
-
-                    <div>
-                      <span>City</span>
-                      <b>{selectedProperty.city}</b>
-                    </div>
-
-                    <div>
-                      <span>State</span>
-                      <b>{selectedProperty.state}</b>
-                    </div>
-
-                    <div>
-                      <span>ZIP Code</span>
-                      <b>{selectedProperty.zip_code}</b>
-                    </div>
-
-                    <div>
-                      <span>Occupancy</span>
-
-                      <b>
-                        {selectedTenancy ? 'Occupied' : 'Vacant'}
+                      <b className="commandLedgerAmount payment">
+                        -$
+                        {Number(
+                          payment.amount || 0
+                        ).toLocaleString()}
                       </b>
                     </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+
+          <div className="commandSideColumn">
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">◇</span>
+                  <div>
+                    <h2>Maintenance</h2>
+                    <p>Repair requests</p>
                   </div>
-                </section>
+                </div>
 
-                <section className="commandCard">
-                  <div className="commandCardHeader">
-                    <div>
-                      <span className="commandSectionIcon">↻</span>
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('maintenance')}
+                >
+                  View All →
+                </button>
+              </div>
 
-                      <div>
-                        <h2>Recent Activity</h2>
-                        <p>Latest property updates</p>
-                      </div>
-                    </div>
+              <div className="commandMiniEmpty">
+                <div className="commandMiniIcon">✓</div>
+                <b>0 Open Requests</b>
+                <span>No maintenance issues reported.</span>
+              </div>
+            </section>
+
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">▧</span>
+                  <div>
+                    <h2>Documents</h2>
+                    <p>Property files and agreements</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('documents')}
+                >
+                  View All →
+                </button>
+              </div>
+
+              <div className="commandMiniEmpty">
+                <div className="commandMiniIcon">▧</div>
+                <b>No property documents</b>
+                <span>
+                  Leases, notices, receipts and other files will
+                  appear here.
+                </span>
+              </div>
+            </section>
+
+            <section className="commandCard">
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">⌂</span>
+                  <div>
+                    <h2>Property Information</h2>
+                    <p>Property details</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => setView('editProperty')}
+                >
+                  Edit →
+                </button>
+              </div>
+
+              <div className="commandPropertyInfo">
+                <div>
+                  <span>Street Address</span>
+                  <b>{selectedProperty.address}</b>
+                </div>
+
+                <div>
+                  <span>City</span>
+                  <b>{selectedProperty.city}</b>
+                </div>
+
+                <div>
+                  <span>State</span>
+                  <b>{selectedProperty.state}</b>
+                </div>
+
+                <div>
+                  <span>ZIP Code</span>
+                  <b>{selectedProperty.zip_code}</b>
+                </div>
+
+                <div>
+                  <span>Occupancy</span>
+                  <b>
+                    {selectedTenancy ? 'Occupied' : 'Vacant'}
+                  </b>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </>
+    )}
+  </section>
+)}
+
+{view === 'unitDetails' &&
+  selectedUnit &&
+  selectedProperty && (
+    <section className="propertyCommandCenter">
+      <button
+        type="button"
+        className="propertyBackButton"
+        onClick={() => {
+          setSelectedUnit(null);
+          setSelectedTenancy(null);
+          setView('propertyDetails');
+        }}
+      >
+        ← Back to {selectedProperty.address}
+      </button>
+
+      <div className="commandPropertyHeader">
+        <div className="commandPropertyIdentity">
+          <div className="commandPropertyIcon">⌂</div>
+
+          <div>
+            <div className="commandPropertyEyebrow">
+              <span>UNIT COMMAND CENTER</span>
+
+              <span
+                className={
+                  selectedTenancy
+                    ? 'commandOccupancy occupied'
+                    : 'commandOccupancy vacant'
+                }
+              >
+                <i></i>
+                {selectedTenancy ? 'Occupied' : 'Vacant'}
+              </span>
+            </div>
+
+            <h1>{selectedUnit.unit_name}</h1>
+
+            <p>
+              {selectedProperty.address}
+              {selectedProperty.city
+                ? ` • ${selectedProperty.city}, ${selectedProperty.state || ''} ${selectedProperty.zip_code || ''}`
+                : ''}
+            </p>
+          </div>
+        </div>
+
+        <div className="commandHeaderActions">
+          {!selectedTenancy ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => setView('addTenant')}
+            >
+              + Add Tenant
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                setEditingTenancy(selectedTenancy);
+                setView('editTenant');
+              }}
+            >
+              Manage Tenant
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="commandStats">
+        <article>
+          <div className="commandStatIcon">$</div>
+          <div>
+            <span>Monthly Rent</span>
+            <b>
+              $
+              {Number(
+                selectedTenancy?.monthly_rent ||
+                  selectedUnit.market_rent ||
+                  0
+              ).toLocaleString()}
+            </b>
+            <small>EXPECTED PER MONTH</small>
+          </div>
+        </article>
+
+        <article>
+          <div className="commandStatIcon">♙</div>
+          <div>
+            <span>Tenant</span>
+            <b>
+              {selectedTenancy
+                ? selectedTenancy.tenant_name ||
+                  selectedTenancy.tenant_email ||
+                  'Active tenant'
+                : 'Vacant'}
+            </b>
+            <small>UNIT OCCUPANCY</small>
+          </div>
+        </article>
+
+        <article>
+          <div className="commandStatIcon">▤</div>
+          <div>
+            <span>Lease</span>
+            <b>
+              {selectedTenancy
+                ? selectedTenancy.end_date
+                  ? new Date(
+                      selectedTenancy.end_date + 'T00:00:00'
+                    ).toLocaleDateString()
+                  : 'Open ended'
+                : 'No lease'}
+            </b>
+            <small>
+              {selectedTenancy
+                ? 'LEASE END'
+                : 'NO ACTIVE LEASE'}
+            </small>
+          </div>
+        </article>
+
+        <article>
+          <div className="commandStatIcon">◇</div>
+          <div>
+            <span>Maintenance</span>
+            <b>0</b>
+            <small>OPEN REQUESTS</small>
+          </div>
+        </article>
+      </div>
+
+      <div className="commandMainGrid">
+        <div className="commandMainColumn">
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">♙</span>
+                <div>
+                  <h2>Current Tenant</h2>
+                  <p>Resident assigned to this unit</p>
+                </div>
+              </div>
+
+              {selectedTenancy && (
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => {
+                    setEditingTenancy(selectedTenancy);
+                    setView('editTenant');
+                  }}
+                >
+                  Edit Tenant →
+                </button>
+              )}
+            </div>
+
+            {selectedTenancy ? (
+              <div className="commandTenant">
+                <div className="commandTenantAvatar">
+                  {(selectedTenancy.tenant_name ||
+                    selectedTenancy.tenant_email ||
+                    'T')
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+
+                <div className="commandTenantIdentity">
+                  <b>
+                    {selectedTenancy.tenant_name ||
+                      selectedTenancy.tenant_email}
+                  </b>
+                  <span>Active tenant • {selectedUnit.unit_name}</span>
+                </div>
+
+                <div className="commandTenantContact">
+                  <div>
+                    <small>EMAIL</small>
+                    <b>{selectedTenancy.tenant_email || '—'}</b>
                   </div>
 
-                  <div className="commandActivity">
-                    <div>
-                      <span className="commandActivityIcon">
-                        ⌂
-                      </span>
-
-                      <div>
-                        <b>Property active</b>
-                        <span>
-                          Currently managed in your Rentwise
-                          portfolio.
-                        </span>
-                      </div>
-                    </div>
-
-                    {selectedTenancy && (
-                      <div>
-                        <span className="commandActivityIcon">
-                          ♙
-                        </span>
-
-                        <div>
-                          <b>Tenant assigned</b>
-
-                          <span>
-                            {selectedTenancy.tenant_name ||
-                              selectedTenancy.tenant_email}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <span className="commandActivityIcon">
-                        $
-                      </span>
-
-                      <div>
-                        <b>Rent ledger ready</b>
-                        <span>
-                          Payment activity will appear here when
-                          rent collection is connected.
-                        </span>
-                      </div>
-                    </div>
+                  <div>
+                    <small>PHONE</small>
+                    <b>
+                      {selectedTenancy.tenant_phone ||
+                        'Not provided'}
+                    </b>
                   </div>
-                </section>
+                </div>
+              </div>
+            ) : (
+              <div className="commandEmptyState">
+                <div className="commandEmptyIcon">♙</div>
+                <b>No tenant assigned to {selectedUnit.unit_name}</b>
+                <p>
+                  Add a tenant to this unit to begin tracking
+                  their lease, rent and resident information.
+                </p>
+
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => setView('addTenant')}
+                >
+                  + Add Tenant
+                </button>
+              </div>
+            )}
+          </section>
+
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">▤</span>
+                <div>
+                  <h2>Lease</h2>
+                  <p>Rental agreement for {selectedUnit.unit_name}</p>
+                </div>
+              </div>
+
+              {selectedTenancy && (
+                <button
+                  type="button"
+                  className="commandTextButton"
+                  onClick={() => {
+                    setEditingTenancy(selectedTenancy);
+                    setView('editTenant');
+                  }}
+                >
+                  Manage Lease →
+                </button>
+              )}
+            </div>
+
+            {selectedTenancy ? (
+              <div className="commandLeaseGrid">
+                <div>
+                  <small>LEASE STATUS</small>
+                  <b className="commandActiveText">
+                    ● Active
+                  </b>
+                </div>
+
+                <div>
+                  <small>START DATE</small>
+                  <b>
+                    {selectedTenancy.start_date
+                      ? new Date(
+                          selectedTenancy.start_date +
+                            'T00:00:00'
+                        ).toLocaleDateString()
+                      : '—'}
+                  </b>
+                </div>
+
+                <div>
+                  <small>END DATE</small>
+                  <b>
+                    {selectedTenancy.end_date
+                      ? new Date(
+                          selectedTenancy.end_date +
+                            'T00:00:00'
+                        ).toLocaleDateString()
+                      : 'Open ended'}
+                  </b>
+                </div>
+
+                <div>
+                  <small>MONTHLY RENT</small>
+                  <b>
+                    $
+                    {Number(
+                      selectedTenancy.monthly_rent || 0
+                    ).toLocaleString()}
+                  </b>
+                </div>
+              </div>
+            ) : (
+              <div className="commandEmptyState compact">
+                <div className="commandEmptyIcon">▤</div>
+                <b>No active lease</b>
+                <p>
+                  Lease information will appear after a tenant
+                  is assigned to this unit.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">$</span>
+                <div>
+                  <h2>Rent & Ledger</h2>
+                  <p>
+                    Rent activity for {selectedUnit.unit_name}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="commandTextButton"
+                onClick={() => setView('rent')}
+              >
+                View Rent →
+              </button>
+            </div>
+
+            <div className="commandRentSummary">
+              <div>
+                <small>MONTHLY RENT</small>
+                <b>
+                  $
+                  {Number(
+                    selectedTenancy?.monthly_rent ||
+                      selectedUnit.market_rent ||
+                      0
+                  ).toLocaleString()}
+                </b>
+              </div>
+
+              <div>
+                <small>UNIT STATUS</small>
+                <b>
+                  {selectedTenancy ? 'Occupied' : 'Vacant'}
+                </b>
+              </div>
+
+              <div>
+                <small>TENANT</small>
+                <b>
+                  {selectedTenancy
+                    ? selectedTenancy.tenant_name ||
+                      selectedTenancy.tenant_email
+                    : 'None'}
+                </b>
+              </div>
+            </div>
+
+            {selectedTenancy ? (
+              <div className="commandLedgerEmpty">
+                <span>$</span>
+                <div>
+                  <b>Unit ledger ready</b>
+                  <p>
+                    Charges and payments assigned to this unit
+                    will appear in the rent ledger.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="commandLedgerEmpty">
+                <span>$</span>
+                <div>
+                  <b>No rent activity</b>
+                  <p>
+                    Rent activity begins after a tenant and lease
+                    are assigned to this unit.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        <div className="commandSideColumn">
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">◇</span>
+                <div>
+                  <h2>Maintenance</h2>
+                  <p>{selectedUnit.unit_name} repair requests</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="commandTextButton"
+                onClick={() => setView('maintenance')}
+              >
+                View All →
+              </button>
+            </div>
+
+            <div className="commandMiniEmpty">
+              <div className="commandMiniIcon">✓</div>
+              <b>0 Open Requests</b>
+              <span>
+                No maintenance issues reported for this unit.
+              </span>
+            </div>
+          </section>
+
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">▧</span>
+                <div>
+                  <h2>Documents</h2>
+                  <p>Unit files and agreements</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="commandTextButton"
+                onClick={() => setView('documents')}
+              >
+                View All →
+              </button>
+            </div>
+
+            <div className="commandMiniEmpty">
+              <div className="commandMiniIcon">▧</div>
+              <b>No unit documents</b>
+              <span>
+                Leases, notices and other unit files will appear
+                here.
+              </span>
+            </div>
+          </section>
+
+          <section className="commandCard">
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">⌂</span>
+                <div>
+                  <h2>Unit Information</h2>
+                  <p>Rental unit details</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="commandPropertyInfo">
+              <div>
+                <span>Property</span>
+                <b>{selectedProperty.address}</b>
+              </div>
+
+              <div>
+                <span>Unit</span>
+                <b>{selectedUnit.unit_name}</b>
+              </div>
+
+              <div>
+                <span>Status</span>
+                <b>
+                  {selectedTenancy ? 'Occupied' : 'Vacant'}
+                </b>
+              </div>
+
+              <div>
+                <span>Bedrooms</span>
+                <b>{selectedUnit.bedrooms ?? '—'}</b>
+              </div>
+
+              <div>
+                <span>Bathrooms</span>
+                <b>{selectedUnit.bathrooms ?? '—'}</b>
+              </div>
+
+              <div>
+                <span>Square Feet</span>
+                <b>
+                  {selectedUnit.square_feet
+                    ? Number(
+                        selectedUnit.square_feet
+                      ).toLocaleString()
+                    : '—'}
+                </b>
               </div>
             </div>
           </section>
-        )}
-
-      {view === 'unitDetails' && selectedUnit && selectedProperty && (
-  <section className="propertyCommandCenter">
-    <button
-      type="button"
-      className="propertyBackButton"
-      onClick={() => setView('propertyDetails')}
-    >
-      ← Back to Property
-    </button>
-
-    <div className="commandCard">
-      <small>
-  UNIT DETAILS • {selectedUnit.unit_name}
-</small>
-
-<h1>{selectedUnit.unit_name}</h1>
-
-<p>{selectedProperty.address}</p>
-
-<h3>
-  {selectedTenancy
-    ? selectedTenancy.tenant_name ||
-      selectedTenancy.tenant_email
-    : 'Vacant Unit'}
-</h3>
-
-<p>
-  {selectedTenancy
-    ? 'Tenant and lease information for this unit'
-    : 'This unit is ready for a tenant'}
-</p>
-  <div className="commandHeaderActions">
-  {!selectedTenancy && (
-    <button
-      type="button"
-      className="primary"
-      onClick={() => setView('addTenant')}
-    >
-      + Add Tenant
-    </button>
+        </div>
+      </div>
+    </section>
   )}
-
-  {selectedTenancy && (
-    <button
-      type="button"
-      className="primary"
-      onClick={() => {
-        setEditingTenancy(selectedTenancy);
-        setView('editTenant');
-      }}
-    >
-      Manage Tenant
-    </button>
-  )}
-</div>
-    </div>
-  </section>
-)}
-{view === 'editProperty' && selectedProperty && (
-          <section className="panel">
-         <button
-  type="button"
-  onClick={() => setView('propertyDetails')}
->
-  ← Back to Property
-</button>
-
-            <small>EDIT PROPERTY</small>
             <h1>{selectedProperty.address}</h1>
 
             <p>
