@@ -24,7 +24,21 @@ export default function Dashboard() {
     return;
   }
 
-  const { data, error } = await s
+  const { data: p } = await s
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  setProfile(
+    p || {
+      id: user.id,
+      full_name: user.user_metadata?.full_name || '',
+      role: user.user_metadata?.role || 'landlord'
+    }
+  );
+
+  const { data: properties, error } = await s
     .from('properties')
     .select('*')
     .eq('landlord_id', user.id)
@@ -35,37 +49,8 @@ export default function Dashboard() {
     return;
   }
 
-  setProperties(data || []);
+  setProps(properties || []);
 }
-
-const user = data?.user;
-alert('User loaded: ' + (user ? 'YES' : 'NO'));
-
-    if (!user) return r.push('/login');
-
-    const { data: p } = await s
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    setProfile(p || {
-  id: user.id,
-  full_name: user.user_metadata?.full_name || '',
-  role: user.user_metadata?.role || 'landlord'
-});
-
-    if (p?.role === 'landlord') {
-      const { data } = await s
-        .from('properties')
-        .select('*')
-        .eq('landlord_id', user.id)
-        .order('created_at');
-
-      setProps(data || []);
-    }
-  }
-
   useEffect(() => {
     load();
   }, []);
