@@ -924,4 +924,432 @@ button {
   }
 }
 
+/* PREMIUM DASHBOARD CONTENT */
 
+.dashboardContentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard {
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 15px;
+  padding: 23px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.035);
+}
+
+.showcaseHeader,
+.featureCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.showcaseHeader h2,
+.featureCardHeader h2 {
+  margin: 0 0 5px;
+  color: #101828;
+  font-size: 17px;
+}
+
+.showcaseHeader p,
+.featureCardHeader p {
+  margin: 0;
+  color: #98a2b3;
+  font-size: 12px;
+}
+
+.viewAllButton {
+  border: 0;
+  background: transparent;
+  color: #4f6df5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboardProperties {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.dashboardPropertyCard {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e7eaf0;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.dashboardPropertyCard:hover {
+  transform: translateY(-3px);
+  border-color: #cbd3e2;
+  box-shadow: 0 10px 25px rgba(16, 24, 40, 0.09);
+}
+
+.propertyPhoto {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  background: #eef1f6;
+}
+
+.propertyPhoto img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.propertyPhotoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e9edff, #f4f6fb, #e8edf7);
+  color: #7b8bb3;
+}
+
+.propertyPhotoPlaceholder span {
+  font-size: 31px;
+  margin-bottom: 7px;
+}
+
+.propertyPhotoPlaceholder small {
+  color: #8c98ad;
+  font-size: 8px;
+  letter-spacing: 1.3px;
+}
+
+.occupancyBadge {
+  position: absolute;
+  top: 11px;
+  right: 11px;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #18794e;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.propertyCardBody {
+  padding: 15px;
+}
+
+.propertyCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.propertyCardTop h3 {
+  margin: 0 0 4px;
+  color: #101828;
+  font-size: 13px;
+}
+
+.propertyCardTop p {
+  margin: 0;
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+.propertyMenu {
+  color: #98a2b3;
+  font-size: 14px;
+}
+
+.propertyRent {
+  margin-top: 15px;
+  color: #101828;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.propertyRent span {
+  margin-left: 2px;
+  color: #98a2b3;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.propertyMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f2f5;
+  color: #7c8799;
+  font-size: 9px;
+}
+
+.propertyMeta span:last-child {
+  color: #4f6df5;
+  font-weight: 700;
+}
+
+/* RECENT ACTIVITY */
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+}
+
+.activityRow {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.activityRow:last-child {
+  border-bottom: 0;
+}
+
+.activityTypeIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #eef2ff;
+  color: #4f6df5;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.activityRow b {
+  display: block;
+  color: #344054;
+  font-size: 11px;
+}
+
+.activityRow div > span {
+  display: block;
+  margin-top: 3px;
+  color: #98a2b3;
+  font-size: 9px;
+}
+
+.activityRow small {
+  color: #98a2b3;
+  font-size: 8px;
+}
+
+/* LOWER DASHBOARD */
+
+.dashboardBottomGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.dashboardFeatureCard {
+  min-height: 245px;
+}
+
+.rentCollectionContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 20px;
+  padding-top: 9px;
+}
+
+.rentCircle {
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(#4f6df5 0deg, #edf0f5 0deg);
+  position: relative;
+}
+
+.rentCircle::after {
+  content: "";
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.rentCircle div {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.rentCircle b {
+  display: block;
+  font-size: 20px;
+}
+
+.rentCircle span {
+  color: #98a2b3;
+  font-size: 9px;
+}
+
+.rentLegend {
+  flex: 1;
+}
+
+.rentLegend > div {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0;
+  color: #667085;
+  font-size: 10px;
+}
+
+.rentLegend b {
+  color: #344054;
+  font-size: 10px;
+}
+
+.legendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legendDot.collected {
+  background: #4f6df5;
+}
+
+.legendDot.pending {
+  background: #dfe4ec;
+}
+
+.featureEmpty {
+  min-height: 145px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.featureEmptyIcon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 11px;
+  background: #f1f3ff;
+  color: #5b73f5;
+  font-size: 18px;
+}
+
+.featureEmpty b {
+  color: #344054;
+  font-size: 12px;
+}
+
+.featureEmpty span {
+  max-width: 200px;
+  margin-top: 5px;
+  color: #98a2b3;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* PORTFOLIO BANNER */
+
+.portfolioBanner {
+  margin-top: 18px;
+  padding: 22px 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid #dfe3ff;
+  border-radius: 15px;
+  background: linear-gradient(110deg, #f2f0ff, #eef2ff, #f8f9ff);
+}
+
+.portfolioBanner > div {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.bannerIcon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #526bf2;
+  font-size: 21px;
+}
+
+.portfolioBanner h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.portfolioBanner p {
+  margin: 0;
+  color: #667085;
+  font-size: 11px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1200px) {
+  .dashboardContentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardProperties {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboardBottomGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboardProperties {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolioBanner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .portfolioBanner .primary {
+    width: 100%;
+  }
+
+  .rentCollectionContent {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
