@@ -916,16 +916,20 @@ function isMultiFamily(property) {
         setView('propertyDetails');
       }}
     >
-                          <span
-                            className={
-                              occupied
-                                ? 'portfolioOccupancy occupied'
-                                : 'portfolioOccupancy vacant'
-                            }
-                          >
-                            <i></i>
-                            {occupied ? 'Occupied' : 'Vacant'}
-                          </span>
+                    <div className="propertyIdentityPanel">
+  <div className="propertyBuildingIcon">
+    ⌂
+  </div>    
+                    <span
+  className={
+    occupied
+      ? 'portfolioOccupancy occupied'
+      : 'portfolioOccupancy vacant'
+  }
+>
+  <i></i>
+  {occupied ? 'Occupied' : 'Vacant'}
+</span>
                         </div>
 
                         <div className="propertyCardBody">
