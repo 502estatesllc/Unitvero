@@ -704,9 +704,22 @@ export default function Dashboard() {
   <div className="propertyDetailsEmpty">
     <span>♙</span>
     <b>{selectedTenancy.tenant_name || selectedTenancy.tenant_email}</b>
+          <p>✉ {selectedTenancy.tenant_email}</p>
+          {selectedTenancy.tenant_phone && (
+  <p>☎ {selectedTenancy.tenant_phone}</p>
+)}
     <p>
       ${Number(selectedTenancy.monthly_rent || 0).toLocaleString()} / month
     </p>
+    <p>
+  📅 Lease:{' '}
+  {selectedTenancy.start_date
+    ? new Date(selectedTenancy.start_date + 'T00:00:00').toLocaleDateString()
+    : '—'}
+  {selectedTenancy.end_date
+    ? ' – ' + new Date(selectedTenancy.end_date + 'T00:00:00').toLocaleDateString()
+    : ''}
+</p> 
     <small>ACTIVE TENANT</small>
   </div>
 ) : (
