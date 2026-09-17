@@ -99,7 +99,7 @@ export default function Dashboard() {
   const monthlyRent = Number(rentInput.value);
 
   const s = supabase();
-alert('Property ID: ' + selectedProperty.id);
+
   const { data, error } = await s
     .from('properties')
     .update({
