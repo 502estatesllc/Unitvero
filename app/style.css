@@ -2484,3 +2484,255 @@ strong {
     flex-direction: column;
   }
 }
+
+/* =========================================================
+   RENTWISE — DESKTOP SCALE FIX
+   ========================================================= */
+
+@media (min-width: 901px) {
+
+  /* Give the entire workspace a more substantial feel */
+  .dash {
+    padding-top: 38px;
+    padding-bottom: 60px;
+  }
+
+  /* Page headings */
+  .dashboardHeader h1,
+  .panel > h1,
+  .tenantsPage .dashboardHeader h1,
+  .leasesPage .dashboardHeader h1 {
+    font-size: 40px !important;
+    line-height: 1.1 !important;
+    letter-spacing: -1.4px !important;
+  }
+
+  .dashboardHeader small,
+  .tenantsPage .dashboardHeader small,
+  .leasesPage .dashboardHeader small {
+    font-size: 11px !important;
+    letter-spacing: 1.6px !important;
+  }
+
+  .dashboardSubtitle,
+  .tenantsPage .dashboardSubtitle,
+  .leasesPage .dashboardSubtitle {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Overview stat cards */
+  .overviewStats article {
+    min-height: 125px !important;
+    padding: 24px !important;
+  }
+
+  .overviewStats article > span {
+    font-size: 12px !important;
+  }
+
+  .overviewStats article > b {
+    font-size: 30px !important;
+  }
+
+  .overviewStats article > small {
+    font-size: 9px !important;
+  }
+
+  /* Section headings */
+  .showcaseHeader h2,
+  .featureCardHeader h2 {
+    font-size: 17px !important;
+  }
+
+  .showcaseHeader p,
+  .featureCardHeader p {
+    font-size: 11px !important;
+  }
+
+  /* Property cards */
+  .propertyPhoto {
+    height: 190px !important;
+  }
+
+  .propertyCardBody {
+    padding: 18px !important;
+  }
+
+  .propertyCardTop h3 {
+    font-size: 15px !important;
+  }
+
+  .propertyCardTop p {
+    font-size: 11px !important;
+  }
+
+  .propertyRent {
+    font-size: 23px !important;
+  }
+
+  .propertyRent span {
+    font-size: 11px !important;
+  }
+
+  .propertyMeta {
+    font-size: 10px !important;
+  }
+
+  /* Activity */
+  .activityShowcase .activityRow {
+    min-height: 70px !important;
+    padding: 15px !important;
+  }
+
+  .activityShowcase .activityRow b {
+    font-size: 12px !important;
+  }
+
+  .activityShowcase .activityRow span {
+    font-size: 10px !important;
+  }
+
+  /* =======================================================
+     TENANTS
+     ======================================================= */
+
+  .tenantSummaryCard,
+  .leaseSummaryCard {
+    min-height: 145px !important;
+    padding: 24px !important;
+  }
+
+  .tenantSummaryIcon,
+  .leaseSummaryIcon {
+    width: 52px !important;
+    height: 52px !important;
+    flex-basis: 52px !important;
+    font-size: 23px !important;
+  }
+
+  .tenantSummaryCard span,
+  .leaseSummaryCard span {
+    font-size: 14px !important;
+  }
+
+  .tenantSummaryCard b,
+  .leaseSummaryCard b {
+    font-size: 30px !important;
+  }
+
+  .tenantSummaryCard small,
+  .leaseSummaryCard small {
+    font-size: 9px !important;
+  }
+
+  .tenantDirectoryHeader,
+  .leaseDirectoryHeader {
+    min-height: 105px !important;
+    padding: 25px 28px !important;
+  }
+
+  .tenantDirectoryHeader h2,
+  .leaseDirectoryHeader h2 {
+    font-size: 20px !important;
+  }
+
+  .tenantDirectoryHeader p,
+  .leaseDirectoryHeader p {
+    font-size: 13px !important;
+  }
+
+  .tenantTableHeader {
+    min-height: 48px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  .tenantTableHeader span {
+    font-size: 10px !important;
+  }
+
+  .tenantTableRow {
+    min-height: 120px !important;
+    padding: 20px 28px !important;
+  }
+
+  .tenantAvatar {
+    width: 50px !important;
+    height: 50px !important;
+    flex-basis: 50px !important;
+    font-size: 14px !important;
+  }
+
+  .tenantIdentity b,
+  .tenantPropertyCell b,
+  .tenantRentCell b,
+  .tenantLeaseCell b {
+    font-size: 14px !important;
+  }
+
+  .tenantIdentity span,
+  .tenantIdentity small,
+  .tenantPropertyCell span,
+  .tenantRentCell span,
+  .tenantLeaseCell span {
+    font-size: 11px !important;
+  }
+
+  .tenantRentCell b {
+    font-size: 17px !important;
+  }
+
+  .tenantStatus,
+  .leaseStatus {
+    font-size: 10px !important;
+    padding: 7px 10px !important;
+  }
+
+  .tenantEditButton,
+  .tenantPropertyButton {
+    min-height: 38px !important;
+    padding: 0 13px !important;
+    font-size: 10px !important;
+  }
+
+  /* =======================================================
+     LEASES
+     ======================================================= */
+
+  .leaseTableHeader {
+    min-height: 48px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  .leaseTableRow {
+    min-height: 120px !important;
+    padding: 20px 28px !important;
+  }
+
+  .leasePropertyIcon {
+    width: 46px !important;
+    height: 46px !important;
+    flex-basis: 46px !important;
+    font-size: 19px !important;
+  }
+
+  .leasePropertyCell b,
+  .leaseTenantCell b,
+  .leaseRentCell b,
+  .leaseDateCell b {
+    font-size: 13px !important;
+  }
+
+  .leasePropertyCell span,
+  .leaseTenantCell span,
+  .leaseRentCell span,
+  .leaseDateCell span {
+    font-size: 10px !important;
+  }
+
+  .leaseRentCell b {
+    font-size: 16px !important;
+  }
+}
