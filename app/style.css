@@ -9979,3 +9979,365 @@ textarea {
     font-size: 24px !important;
   }
 }
+
+/* =========================================================
+   UNITVERO — LOGIN + SIGNUP PAGE
+   ========================================================= */
+
+.authPage {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  background: #f5f7fa;
+}
+
+.authBrandPanel {
+  min-height: 100vh;
+  padding: 56px 64px;
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(15, 159, 143, 0.22),
+      transparent 35%
+    ),
+    linear-gradient(145deg, #0b1727 0%, #10263b 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.authLogo {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1.3px;
+  color: #ffffff;
+}
+
+.authLogo span {
+  color: #18b8a5;
+}
+
+.authBrandContent {
+  max-width: 560px;
+  margin: auto 0;
+}
+
+.authEyebrow {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  color: #47d5c4;
+}
+
+.authBrandContent h1 {
+  margin: 0;
+  max-width: 520px;
+  font-size: 48px;
+  line-height: 1.08;
+  letter-spacing: -2px;
+  color: #ffffff;
+}
+
+.authBrandContent p {
+  max-width: 500px;
+  margin: 22px 0 0;
+  font-size: 16px;
+  line-height: 1.75;
+  color: #b8c7d8;
+}
+
+.authBenefits {
+  display: grid;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.authBenefit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #dce6ef;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.authBenefitIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(15, 159, 143, 0.16);
+  border: 1px solid rgba(71, 213, 196, 0.24);
+  color: #47d5c4;
+}
+
+.authBrandFooter {
+  color: #7f93a8;
+  font-size: 12px;
+}
+
+.authFormPanel {
+  min-height: 100vh;
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 440px;
+}
+
+.authCardHeader {
+  margin-bottom: 32px;
+}
+
+.authCardHeader small {
+  display: block;
+  margin-bottom: 9px;
+  color: #0f9f8f;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.authCardHeader h1 {
+  margin: 0;
+  color: #0b1727;
+  font-size: 34px;
+  line-height: 1.15;
+  letter-spacing: -1.2px;
+}
+
+.authCardHeader p {
+  margin: 10px 0 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.authForm {
+  display: grid;
+  gap: 18px;
+}
+
+.authField {
+  display: grid;
+  gap: 7px;
+}
+
+.authField label {
+  color: #26384b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.authField input,
+.authField select {
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid #d7dee7;
+  border-radius: 10px;
+  outline: none;
+  background: #ffffff;
+  color: #0b1727;
+  font-family: inherit;
+  font-size: 14px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.authField input:focus,
+.authField select:focus {
+  border-color: #0f9f8f;
+  box-shadow: 0 0 0 3px rgba(15, 159, 143, 0.11);
+}
+
+.authPasswordWrap {
+  position: relative;
+}
+
+.authPasswordWrap input {
+  padding-right: 48px;
+}
+
+.authPasswordToggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #718096;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.authSubmit {
+  width: 100%;
+  height: 49px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 10px;
+  background: #0f9f8f;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(15, 159, 143, 0.18);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.authSubmit:hover {
+  background: #087f73;
+  transform: translateY(-1px);
+}
+
+.authSwitch {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #e8edf2;
+  text-align: center;
+  color: #718096;
+  font-size: 13px;
+}
+
+.authSwitch a,
+.authSwitch button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0f9f8f;
+  font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.authError {
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #fff4f4;
+  border: 1px solid #ffd5d5;
+  color: #b42318;
+  font-size: 12px;
+}
+
+.authSuccess {
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #ecfdf8;
+  border: 1px solid #b8eee2;
+  color: #087f73;
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   EXISTING SIMPLE LOGIN FALLBACK
+   Makes current login look professional before JSX upgrade
+   ========================================================= */
+
+.loginPage,
+.signupPage {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(15, 159, 143, 0.12),
+      transparent 32%
+    ),
+    #f5f7fa;
+}
+
+.loginPage .panel,
+.signupPage .panel,
+.loginPage > div,
+.signupPage > div {
+  box-sizing: border-box;
+}
+
+.loginPage input,
+.signupPage input,
+.loginPage select,
+.signupPage select {
+  min-height: 46px;
+  border: 1px solid #d7dee7;
+  border-radius: 9px;
+  padding: 0 13px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.loginPage input:focus,
+.signupPage input:focus,
+.loginPage select:focus,
+.signupPage select:focus {
+  outline: none;
+  border-color: #0f9f8f;
+  box-shadow: 0 0 0 3px rgba(15, 159, 143, 0.1);
+}
+
+.loginPage button,
+.signupPage button {
+  min-height: 45px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   MOBILE AUTH
+   ========================================================= */
+
+@media (max-width: 850px) {
+  .authPage {
+    display: block;
+  }
+
+  .authBrandPanel {
+    min-height: auto;
+    padding: 32px 24px 38px;
+  }
+
+  .authBrandContent {
+    margin: 55px 0 10px;
+  }
+
+  .authBrandContent h1 {
+    font-size: 36px;
+    letter-spacing: -1.4px;
+  }
+
+  .authBenefits {
+    display: none;
+  }
+
+  .authBrandFooter {
+    display: none;
+  }
+
+  .authFormPanel {
+    min-height: auto;
+    padding: 42px 22px;
+  }
+
+  .authCardHeader h1 {
+    font-size: 29px;
+  }
+}
