@@ -156,38 +156,122 @@ export default function Dashboard() {
 
       <main className="dash">
         {view === 'overview' && (
-          <>
-            <div className="top">
-              <div>
-                <small>{profile?.role || 'Rentwise'} PORTAL</small>
-                <h1>
-                  Good to see you
-                  {profile?.full_name
-                    ? ', ' + profile.full_name.split(' ')[0]
-                    : ''}
-                  .
-                </h1>
-              </div>
-            </div>
+  <>
+    <div className="dashboardHeader">
+      <div>
+        <small>LANDLORD DASHBOARD</small>
+        <h1>
+          Good to see you
+          {profile?.full_name
+            ? ', ' + profile.full_name.split(' ')[0]
+            : ''}
+          .
+        </h1>
+        <p className="dashboardSubtitle">
+          Here&apos;s what&apos;s happening with your portfolio.
+        </p>
+      </div>
 
-            <div className="stats">
-              <article>
-                <span>Properties</span>
-                <b>{props.length}</b>
-              </article>
+      <button
+        type="button"
+        className="primary"
+        onClick={() => setView('properties')}
+      >
+        + Add Property
+      </button>
+    </div>
 
-              <article>
-                <span>Tenants</span>
-                <b>0</b>
-              </article>
+    <div className="overviewStats">
+      <article>
+        <span>Total Properties</span>
+        <b>{props.length}</b>
+        <small>PORTFOLIO</small>
+      </article>
 
-              <article>
-                <span>Rent collected</span>
-                <b>$0</b>
-              </article>
-            </div>
-          </>
-        )}
+      <article>
+        <span>Occupied Units</span>
+        <b>0</b>
+        <small>TENANTS</small>
+      </article>
+
+      <article>
+        <span>Monthly Rent</span>
+        <b>
+          ${props
+            .reduce(
+              (total, property) =>
+                total + Number(property.monthly_rent || 0),
+              0
+            )
+            .toLocaleString()}
+        </b>
+        <small>EXPECTED</small>
+      </article>
+
+      <article>
+        <span>Outstanding</span>
+        <b>$0</b>
+        <small>THIS MONTH</small>
+      </article>
+    </div>
+
+    <div className="overviewGrid">
+      <section className="overviewCard rentOverview">
+        <div className="cardHeader">
+          <div>
+            <h2>Rent Overview</h2>
+            <p>Monthly rent performance across your properties.</p>
+          </div>
+          <span className="monthBadge">This month</span>
+        </div>
+
+        <div className="rentSummary">
+          <div>
+            <span>Expected</span>
+            <strong>
+              ${props
+                .reduce(
+                  (total, property) =>
+                    total + Number(property.monthly_rent || 0),
+                  0
+                )
+                .toLocaleString()}
+            </strong>
+          </div>
+
+          <div>
+            <span>Collected</span>
+            <strong>$0</strong>
+          </div>
+
+          <div>
+            <span>Outstanding</span>
+            <strong>$0</strong>
+          </div>
+        </div>
+
+        <div className="progressTrack">
+          <div className="progressFill"></div>
+        </div>
+      </section>
+
+      <section className="overviewCard">
+        <div className="cardHeader">
+          <div>
+            <h2>Recent Activity</h2>
+            <p>Your latest Rentwise activity.</p>
+          </div>
+        </div>
+
+        <div className="emptyActivity">
+          <div className="activityIcon">✓</div>
+          <b>You&apos;re all caught up</b>
+          <span>New activity will appear here.</span>
+        </div>
+      </section>
+    </div>
+  </>
+)}
 
         {view === 'properties' && (
           <section className="panel">
