@@ -1123,120 +1123,253 @@ export default function Dashboard() {
         )}
 
         {view === 'tenants' && (
-          <section className="panel">
-            <div className="dashboardHeader">
-              <div>
-                <small>TENANT MANAGEMENT</small>
-                <h1>Tenants</h1>
+  <section className="panel tenantsPage">
+    <div className="dashboardHeader">
+      <div>
+        <small>TENANT MANAGEMENT</small>
+        <h1>Tenants</h1>
+        <p className="dashboardSubtitle">
+          Manage tenants, leases, rent, and occupancy across your portfolio.
+        </p>
+      </div>
+    </div>
 
-                <p className="dashboardSubtitle">
-                  View and manage the tenants in your portfolio.
-                </p>
-              </div>
-            </div>
+    <div className="tenantSummaryGrid">
+      <article className="tenantSummaryCard">
+        <div className="tenantSummaryIcon">♙</div>
+        <div>
+          <span>Total Tenants</span>
+          <b>{tenancies.length}</b>
+          <small>ALL TENANTS</small>
+        </div>
+      </article>
 
-            {tenancies.length === 0 ? (
-              <div className="featureEmpty">
-                <div className="featureEmptyIcon">♙</div>
-                <b>No tenants yet</b>
+      <article className="tenantSummaryCard">
+        <div className="tenantSummaryIcon">✓</div>
+        <div>
+          <span>Active Tenants</span>
+          <b>
+            {
+              tenancies.filter(
+                tenancy => tenancy.status === 'active'
+              ).length
+            }
+          </b>
+          <small>CURRENTLY ACTIVE</small>
+        </div>
+      </article>
 
-                <span>
-                  Add a tenant from one of your property pages.
-                </span>
-              </div>
-            ) : (
-              <div className="activityList">
-                {tenancies.map(tenancy => {
-                  const property = props.find(
-                    p => p.id === tenancy.property_id
-                  );
+      <article className="tenantSummaryCard">
+        <div className="tenantSummaryIcon">⌂</div>
+        <div>
+          <span>Occupied Properties</span>
+          <b>
+            {
+              new Set(
+                tenancies
+                  .filter(tenancy => tenancy.status === 'active')
+                  .map(tenancy => tenancy.property_id)
+              ).size
+            }
+          </b>
+          <small>OF {props.length} PROPERTIES</small>
+        </div>
+      </article>
 
-                  return (
-                    <div
-                      className="activityRow"
-                      key={tenancy.id}
-                    >
-                      <div className="activityTypeIcon">
-                        ♙
-                      </div>
+      <article className="tenantSummaryCard">
+        <div className="tenantSummaryIcon">$</div>
+        <div>
+          <span>Monthly Rent</span>
+          <b>
+            $
+            {tenancies
+              .filter(tenancy => tenancy.status === 'active')
+              .reduce(
+                (total, tenancy) =>
+                  total + Number(tenancy.monthly_rent || 0),
+                0
+              )
+              .toLocaleString()}
+          </b>
+          <small>ACTIVE TENANCIES</small>
+        </div>
+      </article>
+    </div>
 
-                      <div>
-                        <b>
-                          {tenancy.tenant_name ||
-                            tenancy.tenant_email}
-                        </b>
+    <section className="tenantDirectory">
+      <div className="tenantDirectoryHeader">
+        <div>
+          <h2>Tenant Directory</h2>
+          <p>
+            Contact information, property assignment, rent and lease details.
+          </p>
+        </div>
 
-                        <span>
-                          {tenancy.tenant_email}
-                        </span>
+        <span className="tenantCount">
+          {tenancies.length}{' '}
+          {tenancies.length === 1 ? 'tenant' : 'tenants'}
+        </span>
+      </div>
 
-                        {tenancy.tenant_phone && (
-                          <span>
-                            {tenancy.tenant_phone}
-                          </span>
-                        )}
+      {tenancies.length === 0 ? (
+        <div className="tenantEmptyState">
+          <div className="tenantEmptyIcon">♙</div>
+          <h3>No tenants yet</h3>
+          <p>
+            Open one of your properties and add a tenant to begin
+            managing their lease and rent information.
+          </p>
 
-                        <span>
-                          {property
-                            ? `${property.address}, ${property.city}, ${property.state} ${property.zip_code}`
-                            : 'Property'}
-                        </span>
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setView('properties')}
+          >
+            View Properties
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="tenantTableHeader">
+            <span>Tenant</span>
+            <span>Property</span>
+            <span>Monthly Rent</span>
+            <span>Lease Term</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
 
-                        <span>
-                          $
-                          {Number(
-                            tenancy.monthly_rent || 0
-                          ).toLocaleString()}{' '}
-                          / month
-                        </span>
+          <div className="tenantRows">
+            {tenancies.map(tenancy => {
+              const property = props.find(
+                p => p.id === tenancy.property_id
+              );
 
-                        <span>
-                          Lease:{' '}
-                          {tenancy.start_date
-                            ? new Date(
-                                tenancy.start_date +
-                                  'T00:00:00'
-                              ).toLocaleDateString()
-                            : '—'}
+              const initials = (
+                tenancy.tenant_name ||
+                tenancy.tenant_email ||
+                'T'
+              )
+                .split(' ')
+                .map(part => part.charAt(0))
+                .join('')
+                .slice(0, 2)
+                .toUpperCase();
 
-                          {tenancy.end_date
-                            ? ' – ' +
-                              new Date(
-                                tenancy.end_date +
-                                  'T00:00:00'
-                              ).toLocaleDateString()
-                            : ''}
-                        </span>
-                      </div>
-
-                      <div>
-                        <small>
-                          {tenancy.status === 'active'
-                            ? 'ACTIVE'
-                            : tenancy.status}
-                        </small>
-
-                        <button
-                          type="button"
-                          className="viewAllButton"
-                          onClick={() => {
-                            setEditingTenancy(tenancy);
-                            setView('editTenant');
-                          }}
-                        >
-                          Edit Tenant
-                        </button>
-                      </div>
+              return (
+                <div className="tenantTableRow" key={tenancy.id}>
+                  <div className="tenantIdentity">
+                    <div className="tenantAvatar">
+                      {initials}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
 
-        {view === 'editTenant' && editingTenancy && (
-          <section className="panel">
+                    <div>
+                      <b>
+                        {tenancy.tenant_name ||
+                          tenancy.tenant_email}
+                      </b>
+
+                      <span>{tenancy.tenant_email}</span>
+
+                      {tenancy.tenant_phone && (
+                        <small>{tenancy.tenant_phone}</small>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="tenantPropertyCell">
+                    <b>
+                      {property?.address || 'Property'}
+                    </b>
+
+                    <span>
+                      {property
+                        ? `${property.city}, ${property.state} ${property.zip_code}`
+                        : 'Property information unavailable'}
+                    </span>
+                  </div>
+
+                  <div className="tenantRentCell">
+                    <b>
+                      $
+                      {Number(
+                        tenancy.monthly_rent || 0
+                      ).toLocaleString()}
+                    </b>
+                    <span>per month</span>
+                  </div>
+
+                  <div className="tenantLeaseCell">
+                    <b>
+                      {tenancy.start_date
+                        ? new Date(
+                            tenancy.start_date + 'T00:00:00'
+                          ).toLocaleDateString()
+                        : '—'}
+                    </b>
+
+                    <span>
+                      to{' '}
+                      {tenancy.end_date
+                        ? new Date(
+                            tenancy.end_date + 'T00:00:00'
+                          ).toLocaleDateString()
+                        : 'No end date'}
+                    </span>
+                  </div>
+
+                  <div className="tenantStatusCell">
+                    <span
+                      className={
+                        tenancy.status === 'active'
+                          ? 'tenantStatus active'
+                          : 'tenantStatus'
+                      }
+                    >
+                      <i></i>
+                      {tenancy.status === 'active'
+                        ? 'Active'
+                        : tenancy.status || 'Inactive'}
+                    </span>
+                  </div>
+
+                  <div className="tenantActionsCell">
+                    <button
+                      type="button"
+                      className="tenantEditButton"
+                      onClick={() => {
+                        setEditingTenancy(tenancy);
+                        setView('editTenant');
+                      }}
+                    >
+                      Edit
+                    </button>
+
+                    {property && (
+                      <button
+                        type="button"
+                        className="tenantPropertyButton"
+                        onClick={() => {
+                          setSelectedProperty(property);
+                          loadTenancy(property.id);
+                          setView('propertyDetails');
+                        }}
+                      >
+                        Property
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </section>
+  </section>
+)}
+    {view === 'editTenant' && editingTenancy && (     
+  <section className="panel">
             <button
               type="button"
               onClick={() => setView('tenants')}
@@ -1361,12 +1494,253 @@ export default function Dashboard() {
         )}
 
         {view === 'leases' && (
-          <section className="panel">
-            <h1>Leases</h1>
-            <p>Lease management is coming next.</p>
-          </section>
-        )}
+  <section className="panel leasesPage">
+    <div className="dashboardHeader">
+      <div>
+        <small>LEASE MANAGEMENT</small>
+        <h1>Leases</h1>
+        <p className="dashboardSubtitle">
+          Track active agreements, lease terms, rent, and upcoming expirations.
+        </p>
+      </div>
+    </div>
 
+    <div className="leaseSummaryGrid">
+      <article className="leaseSummaryCard">
+        <div className="leaseSummaryIcon">▤</div>
+        <div>
+          <span>Total Leases</span>
+          <b>{tenancies.length}</b>
+          <small>ALL AGREEMENTS</small>
+        </div>
+      </article>
+
+      <article className="leaseSummaryCard">
+        <div className="leaseSummaryIcon">✓</div>
+        <div>
+          <span>Active Leases</span>
+          <b>
+            {
+              tenancies.filter(
+                tenancy => tenancy.status === 'active'
+              ).length
+            }
+          </b>
+          <small>CURRENT AGREEMENTS</small>
+        </div>
+      </article>
+
+      <article className="leaseSummaryCard">
+        <div className="leaseSummaryIcon">⌂</div>
+        <div>
+          <span>Leased Properties</span>
+          <b>
+            {
+              new Set(
+                tenancies
+                  .filter(tenancy => tenancy.status === 'active')
+                  .map(tenancy => tenancy.property_id)
+              ).size
+            }
+          </b>
+          <small>OF {props.length} PROPERTIES</small>
+        </div>
+      </article>
+
+      <article className="leaseSummaryCard">
+        <div className="leaseSummaryIcon">$</div>
+        <div>
+          <span>Monthly Lease Value</span>
+          <b>
+            $
+            {tenancies
+              .filter(tenancy => tenancy.status === 'active')
+              .reduce(
+                (total, tenancy) =>
+                  total + Number(tenancy.monthly_rent || 0),
+                0
+              )
+              .toLocaleString()}
+          </b>
+          <small>ACTIVE RENT</small>
+        </div>
+      </article>
+    </div>
+
+    <section className="leaseDirectory">
+      <div className="leaseDirectoryHeader">
+        <div>
+          <h2>Lease Directory</h2>
+          <p>
+            Review tenants, properties, rent amounts, and agreement dates.
+          </p>
+        </div>
+
+        <span className="leaseCount">
+          {tenancies.length}{' '}
+          {tenancies.length === 1 ? 'lease' : 'leases'}
+        </span>
+      </div>
+
+      {tenancies.length === 0 ? (
+        <div className="leaseEmptyState">
+          <div className="leaseEmptyIcon">▤</div>
+
+          <h3>No leases yet</h3>
+
+          <p>
+            Lease information will appear here after a tenant is
+            assigned to a property.
+          </p>
+
+          <button
+            type="button"
+            className="primary"
+            onClick={() => setView('properties')}
+          >
+            View Properties
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="leaseTableHeader">
+            <span>Property</span>
+            <span>Tenant</span>
+            <span>Monthly Rent</span>
+            <span>Start Date</span>
+            <span>End Date</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+
+          <div className="leaseRows">
+            {tenancies.map(tenancy => {
+              const property = props.find(
+                p => p.id === tenancy.property_id
+              );
+
+              return (
+                <div
+                  className="leaseTableRow"
+                  key={tenancy.id}
+                >
+                  <div className="leasePropertyCell">
+                    <div className="leasePropertyIcon">⌂</div>
+
+                    <div>
+                      <b>
+                        {property?.address || 'Property'}
+                      </b>
+
+                      <span>
+                        {property
+                          ? `${property.city}, ${property.state} ${property.zip_code}`
+                          : 'Property information unavailable'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="leaseTenantCell">
+                    <b>
+                      {tenancy.tenant_name ||
+                        tenancy.tenant_email}
+                    </b>
+
+                    <span>{tenancy.tenant_email}</span>
+                  </div>
+
+                  <div className="leaseRentCell">
+                    <b>
+                      $
+                      {Number(
+                        tenancy.monthly_rent || 0
+                      ).toLocaleString()}
+                    </b>
+
+                    <span>per month</span>
+                  </div>
+
+                  <div className="leaseDateCell">
+                    <b>
+                      {tenancy.start_date
+                        ? new Date(
+                            tenancy.start_date +
+                              'T00:00:00'
+                          ).toLocaleDateString()
+                        : '—'}
+                    </b>
+
+                    <span>Lease begins</span>
+                  </div>
+
+                  <div className="leaseDateCell">
+                    <b>
+                      {tenancy.end_date
+                        ? new Date(
+                            tenancy.end_date +
+                              'T00:00:00'
+                          ).toLocaleDateString()
+                        : 'Open'}
+                    </b>
+
+                    <span>
+                      {tenancy.end_date
+                        ? 'Lease expires'
+                        : 'No end date'}
+                    </span>
+                  </div>
+
+                  <div className="leaseStatusCell">
+                    <span
+                      className={
+                        tenancy.status === 'active'
+                          ? 'leaseStatus active'
+                          : 'leaseStatus'
+                      }
+                    >
+                      <i></i>
+
+                      {tenancy.status === 'active'
+                        ? 'Active'
+                        : tenancy.status || 'Inactive'}
+                    </span>
+                  </div>
+
+                  <div className="leaseActionsCell">
+                    <button
+                      type="button"
+                      className="tenantEditButton"
+                      onClick={() => {
+                        setEditingTenancy(tenancy);
+                        setView('editTenant');
+                      }}
+                    >
+                      Edit
+                    </button>
+
+                    {property && (
+                      <button
+                        type="button"
+                        className="tenantPropertyButton"
+                        onClick={() => {
+                          setSelectedProperty(property);
+                          loadTenancy(property.id);
+                          setView('propertyDetails');
+                        }}
+                      >
+                        Property
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </section>
+  </section>
+)}
         {view === 'maintenance' && (
           <section className="panel">
             <h1>Maintenance</h1>
