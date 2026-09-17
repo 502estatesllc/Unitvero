@@ -45,14 +45,14 @@ export async function POST(request) {
             }
           },
           configuration: {
-            merchant: {
-              capabilities: {
-                card_payments: {
-                  requested: true
-                },
-                stripe_balance: {
-                  payouts: {
-                    requested: true
+  merchant: {
+    capabilities: {
+      card_payments: {
+        requested: true
+      }
+    }
+  }
+},
                   }
                 }
               }
