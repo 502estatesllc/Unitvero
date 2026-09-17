@@ -2165,18 +2165,50 @@ selectedPropertyPayments.length === 0 ? (
     </button>
 
     <div className="commandCard">
-      <small>UNIT DETAILS</small>
+      <small>
+  UNIT DETAILS • {selectedUnit.unit_name}
+</small>
 
-      <h1>{selectedUnit.unit_name}</h1>
+<h1>{selectedUnit.unit_name}</h1>
 
-      <p>{selectedProperty.address}</p>
+<p>{selectedProperty.address}</p>
 
-      <h3>
-        {selectedTenancy
-          ? selectedTenancy.tenant_name ||
-            selectedTenancy.tenant_email
-          : 'Vacant Unit'}
-      </h3>
+<h3>
+  {selectedTenancy
+    ? selectedTenancy.tenant_name ||
+      selectedTenancy.tenant_email
+    : 'Vacant Unit'}
+</h3>
+
+<p>
+  {selectedTenancy
+    ? 'Tenant and lease information for this unit'
+    : 'This unit is ready for a tenant'}
+</p>
+  <div className="commandHeaderActions">
+  {!selectedTenancy && (
+    <button
+      type="button"
+      className="primary"
+      onClick={() => setView('addTenant')}
+    >
+      + Add Tenant
+    </button>
+  )}
+
+  {selectedTenancy && (
+    <button
+      type="button"
+      className="primary"
+      onClick={() => {
+        setEditingTenancy(selectedTenancy);
+        setView('editTenant');
+      }}
+    >
+      Manage Tenant
+    </button>
+  )}
+</div>
     </div>
   </section>
 )}
