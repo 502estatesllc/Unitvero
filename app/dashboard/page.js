@@ -617,7 +617,148 @@ function isMultiFamily(property) {
 
         return matchesSearch && matchesFilter;
   });
+  // REAL DASHBOARD FINANCIAL + OCCUPANCY DATA
+  const dashboardCompletedPayments = rentPayments.filter(
+    payment => payment.status === 'completed'
+  );
 
+  const dashboardCompletedPaymentIds = new Set(
+    dashboardCompletedPayments.map(payment => payment.id)
+  );
+
+  const dashboardActiveCharges = rentCharges.filter(
+    charge => charge.status !== 'waived'
+  );
+
+  const dashboardValidAllocations = paymentAllocations.filter(
+    allocation =>
+      dashboardCompletedPaymentIds.has(allocation.payment_id)
+  );
+
+  const dashboardTotalCharges = dashboardActiveCharges.reduce(
+    (total, charge) => total + Number(charge.amount || 0),
+    0
+  );
+
+  const dashboardCollected = dashboardCompletedPayments.reduce(
+    (total, payment) => total + Number(payment.amount || 0),
+    0
+  );
+
+  const dashboardAllocated = dashboardValidAllocations.reduce(
+    (total, allocation) =>
+      total + Number(allocation.amount || 0),
+    0
+  );
+
+  const dashboardOutstanding = Math.max(
+    dashboardTotalCharges - dashboardAllocated,
+    0
+  );
+
+  const dashboardCollectionRate =
+    dashboardTotalCharges > 0
+      ? Math.min(
+          Math.round(
+            (dashboardAllocated / dashboardTotalCharges) * 100
+          ),
+          100
+        )
+      : 0;
+
+  const multiFamilyPropertyIds = new Set(
+    props
+      .filter(property => isMultiFamily(property))
+      .map(property => property.id)
+  );
+
+  const singleFamilyProperties = props.filter(
+    property => !multiFamilyPropertyIds.has(property.id)
+  );
+
+  const occupiedSingleFamily = singleFamilyProperties.filter(
+    property => activeTenancyForProperty(property.id)
+  ).length;
+
+  const occupiedMultiUnits = units.filter(
+    unit =>
+      multiFamilyPropertyIds.has(unit.property_id) &&
+      unit.status === 'occupied'
+  ).length;
+
+  const multiFamilyUnitCount = props
+    .filter(property =>
+      multiFamilyPropertyIds.has(property.id)
+    )
+    .reduce(
+      (total, property) =>
+        total +
+        Math.max(
+          Number(property.total_units || 0),
+          unitsForProperty(property.id).length
+        ),
+      0
+    );
+
+  const dashboardTotalUnits =
+    singleFamilyProperties.length + multiFamilyUnitCount;
+
+  const dashboardOccupiedUnits =
+    occupiedSingleFamily + occupiedMultiUnits;
+
+  const dashboardVacantUnits = Math.max(
+    dashboardTotalUnits - dashboardOccupiedUnits,
+    0
+  );
+
+  const dashboardOccupancyRate =
+    dashboardTotalUnits > 0
+      ? Math.round(
+          (dashboardOccupiedUnits / dashboardTotalUnits) * 100
+        )
+      : 0;
+
+  const dashboardMonthData = Array.from(
+    { length: 6 },
+    (_, index) => {
+      const date = new Date();
+
+      date.setDate(1);
+      date.setMonth(date.getMonth() - (5 - index));
+
+      const year = date.getFullYear();
+      const month = date.getMonth();
+
+      const amount = dashboardCompletedPayments
+        .filter(payment => {
+          const paymentDate = new Date(
+            `${payment.payment_date}T00:00:00`
+          );
+
+          return (
+            paymentDate.getFullYear() === year &&
+            paymentDate.getMonth() === month
+          );
+        })
+        .reduce(
+          (total, payment) =>
+            total + Number(payment.amount || 0),
+          0
+        );
+
+      return {
+        label: date.toLocaleDateString('en-US', {
+          month: 'short'
+        }),
+        amount
+      };
+    }
+  );
+
+  const dashboardMaxMonth = Math.max(
+    ...dashboardMonthData.map(month => month.amount),
+    1
+  );
   const selectedPropertyCharges = selectedProperty
     ? rentCharges.filter(
         charge => charge.property_id === selectedProperty.id
@@ -839,71 +980,158 @@ function isMultiFamily(property) {
               </button>
             </div>
 
-            <div className="overviewStats">
-              <article>
-                <span>Total Properties</span>
-                <b>{props.length}</b>
-                <small>PORTFOLIO</small>
-              </article>
+           <div className="overviewStats overviewStatsEnhanced">
+  <article className="overviewStatCard statBlue">
+    <span>Total Properties</span>
+    <b>{props.length}</b>
+    <small>{dashboardTotalUnits} RENTABLE UNITS</small>
+  </article>
 
-              <article>
-                <span>Occupied Units</span>
-                <b>{occupiedPropertyCount}</b>
-                <small>TENANTS</small>
-              </article>
+  <article className="overviewStatCard statGreen">
+    <span>Occupied Units</span>
+    <b>{dashboardOccupiedUnits}</b>
+    <small>{dashboardOccupancyRate}% OCCUPANCY</small>
+  </article>
 
-              <article>
-                <span>Monthly Rent</span>
-                <b>
-                  ${portfolioMonthlyRent.toLocaleString()}
-                </b>
-                <small>EXPECTED</small>
-              </article>
+  <article className="overviewStatCard statPurple">
+    <span>Monthly Rent</span>
+    <b>${portfolioMonthlyRent.toLocaleString()}</b>
+    <small>EXPECTED</small>
+  </article>
 
-              <article>
-                <span>Outstanding</span>
-                <b>$0</b>
-                <small>THIS MONTH</small>
-              </article>
-            </div>
+  <article className="overviewStatCard statOrange">
+    <span>Outstanding</span>
+    <b>${dashboardOutstanding.toLocaleString()}</b>
+    <small>CURRENT LEDGER</small>
+  </article>
+</div>
 
-            <div className="dashboardContentGrid">
-              <section className="propertiesShowcase">
-                <div className="showcaseHeader">
-                  <div>
-                    <h2>Your Properties</h2>
-                    <p>Quick view of your rental portfolio.</p>
-                  </div>
+<div className="rentwiseChartsGrid">
+  <section className="rentwiseChartCard">
+    <div className="rentwiseChartHeader">
+      <div>
+        <small>COLLECTION PERFORMANCE</small>
+        <h2>Rent Collection</h2>
+      </div>
 
-                  <div className="portfolioPreviewActions">
-                    <span className="portfolioPropertyCount">
-                      Showing {Math.min(props.length, 4)} of{' '}
-                      {props.length}
-                    </span>
+      <strong>{dashboardCollectionRate}%</strong>
+    </div>
 
-                    <button
-                      type="button"
-                      className="viewAllButton"
-                      onClick={() => setView('properties')}
-                    >
-                      View All Properties →
-                    </button>
-                  </div>
-                </div>
+    <div className="collectionDonutRow">
+      <div
+        className="collectionDonut"
+        style={{
+          '--collection-rate':
+            `${dashboardCollectionRate * 3.6}deg`
+        }}
+      >
+        <div>
+          <b>{dashboardCollectionRate}%</b>
+          <span>collected</span>
+        </div>
+      </div>
 
-                <div className="dashboardProperties propertyIdentityGrid">
-                  {props.length === 0 && (
-                    <div className="noProperties">
-                      <div className="propertyPlaceholderIcon">
-                        ⌂
-                      </div>
+      <div className="chartLegend">
+        <div>
+          <i className="legendCollected"></i>
+          <span>Collected</span>
+          <b>${dashboardCollected.toLocaleString()}</b>
+        </div>
 
-                      <b>No properties yet</b>
+        <div>
+          <i className="legendOutstanding"></i>
+          <span>Outstanding</span>
+          <b>${dashboardOutstanding.toLocaleString()}</b>
+        </div>
 
-                      <span>
-                        Add your first property to get started.
-                      </span>
-                    </div>
+        <div>
+          <i className="legendCharges"></i>
+          <span>Total charges</span>
+          <b>${dashboardTotalCharges.toLocaleString()}</b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section className="rentwiseChartCard">
+    <div className="rentwiseChartHeader">
+      <div>
+        <small>PORTFOLIO HEALTH</small>
+        <h2>Occupancy</h2>
+      </div>
+
+      <strong>{dashboardOccupancyRate}%</strong>
+    </div>
+
+    <div className="occupancyVisual">
+      <div className="occupancyTrack">
+        <span
+          style={{
+            width: `${dashboardOccupancyRate}%`
+          }}
+        ></span>
+      </div>
+
+      <div className="occupancyNumbers">
+        <div>
+          <b>{dashboardOccupiedUnits}</b>
+          <span>Occupied</span>
+        </div>
+
+        <div>
+          <b>{dashboardVacantUnits}</b>
+          <span>Vacant</span>
+        </div>
+
+        <div>
+          <b>{dashboardTotalUnits}</b>
+          <span>Total units</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section className="rentwiseChartCard rentwiseChartWide">
+    <div className="rentwiseChartHeader">
+      <div>
+        <small>LAST 6 MONTHS</small>
+        <h2>Rent Collected</h2>
+      </div>
+
+      <strong>
+        ${dashboardCollected.toLocaleString()}
+      </strong>
+    </div>
+
+    <div className="rentBarChart">
+      {dashboardMonthData.map(month => (
+        <div
+          className="rentBarColumn"
+          key={month.label}
+        >
+          <div className="rentBarValue">
+            {month.amount > 0
+              ? `$${month.amount.toLocaleString()}`
+              : ''}
+          </div>
+
+          <div className="rentBarTrack">
+            <span
+              style={{
+                height: `${Math.max(
+                  (month.amount / dashboardMaxMonth) * 100,
+                  month.amount > 0 ? 8 : 2
+                )}%`
+              }}
+            ></span>
+          </div>
+
+          <b>{month.label}</b>
+        </div>
+      ))}
+    </div>
+  </section>
+</div>
                   )}
 
                   {props.slice(0, 4).map(property => {
