@@ -5883,3 +5883,117 @@ textarea:focus-visible,
     width: 100%;
   }
 }
+
+/* =========================================================
+   RENTWISE MULTI-FAMILY UNIT CARDS
+   ========================================================= */
+
+.propertyUnitsCard {
+  margin-bottom: 24px;
+}
+
+.propertyUnitsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.propertyUnitCard {
+  background: #ffffff;
+  border: 1px solid #e6e9ef;
+  border-radius: 16px;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.propertyUnitCard:hover {
+  transform: translateY(-2px);
+  border-color: #d4d9e2;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.propertyUnitTop {
+  min-height: 78px;
+  padding: 16px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.propertyUnitIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e4e8ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.propertyUnitBody {
+  padding: 18px;
+}
+
+.propertyUnitBody > small {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #8b94a3;
+}
+
+.propertyUnitBody h3 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+  color: #172033;
+}
+
+.propertyUnitDetails {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #edf0f4;
+}
+
+.propertyUnitDetails div {
+  min-width: 0;
+}
+
+.propertyUnitDetails span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #98a1af;
+}
+
+.propertyUnitDetails b {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  color: #253047;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 850px) {
+  .propertyUnitsGrid {
+    grid-template-columns: 1fr;
+  }
+}
