@@ -2142,3 +2142,1255 @@ strong {
     margin-top: 14px !important;
   }
 }
+
+/* =========================================================
+   RENTWISE — APPLICATIONS + DOCUMENT CENTER UPGRADE
+   ========================================================= */
+
+.applicationsPage,
+.applicationFormPage,
+.applicationDetailsPage,
+.documentsPage {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 34px 38px 60px;
+  box-sizing: border-box;
+}
+
+/* ---------- HEADERS ---------- */
+
+.applicationsHeader,
+.applicationFormHeader,
+.applicationDetailsHeader,
+.documentsHeader {
+  margin-bottom: 28px;
+}
+
+.applicationsHeader,
+.documentsHeader,
+.applicationDetailsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.applicationsHeader small,
+.applicationFormHeader small,
+.applicationApplicantHeading small,
+.documentsHeader small,
+.esignBanner small,
+.applicationDecisionCard > small,
+.applicationTimelineCard > small,
+.screeningCenterHeader small {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #718096;
+}
+
+.applicationsHeader h1,
+.applicationFormHeader h1,
+.applicationDetailsHeader h1,
+.documentsHeader h1 {
+  margin: 0;
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: #172033;
+}
+
+.applicationsHeader p,
+.applicationFormHeader p,
+.documentsHeader p {
+  margin: 10px 0 0;
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #667085;
+}
+
+/* ---------- APPLICATION STATS ---------- */
+
+.applicationStats,
+.documentStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.applicationStats article,
+.documentStats article {
+  min-height: 126px;
+  padding: 22px;
+  border: 1px solid #e7eaf0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.045);
+  box-sizing: border-box;
+}
+
+.applicationStats article {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.applicationStats article > div:last-child {
+  min-width: 0;
+}
+
+.applicationStats article span,
+.documentStats article > span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 650;
+  color: #667085;
+}
+
+.applicationStats article b,
+.documentStats article b {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #172033;
+}
+
+.applicationStats article small,
+.documentStats article small {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  color: #98a2b3;
+}
+
+.applicationStatIcon {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eef4ff;
+  color: #3158d5;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.applicationStatIcon.new {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.applicationStatIcon.screening {
+  background: #f1edff;
+  color: #6941c6;
+}
+
+.applicationStatIcon.approved {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+/* ---------- APPLICATION DIRECTORY ---------- */
+
+.applicationDirectory,
+.documentLibrary {
+  overflow: hidden;
+  border: 1px solid #e7eaf0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.045);
+}
+
+.applicationDirectoryHeader,
+.documentLibraryHeader {
+  min-height: 84px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #edf0f4;
+  box-sizing: border-box;
+}
+
+.applicationDirectoryHeader h2,
+.documentLibraryHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #172033;
+}
+
+.applicationDirectoryHeader p,
+.documentLibraryHeader p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #667085;
+}
+
+.applicationCount,
+.documentLibraryHeader > span {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  font-size: 11px;
+  font-weight: 750;
+  color: #475467;
+  white-space: nowrap;
+}
+
+.applicationEmpty {
+  min-height: 330px;
+  padding: 50px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.applicationEmptyIcon {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #eef4ff;
+  color: #3158d5;
+  font-size: 23px;
+}
+
+.applicationEmpty h3 {
+  margin: 0;
+  font-size: 19px;
+  color: #172033;
+}
+
+.applicationEmpty p {
+  max-width: 440px;
+  margin: 8px 0 20px;
+  color: #667085;
+}
+
+/* ---------- APPLICATION TABLE ---------- */
+
+.applicationTable {
+  width: 100%;
+}
+
+.applicationTableHeader,
+.applicationTableRow {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.45fr)
+    minmax(190px, 1.15fr)
+    minmax(130px, 0.8fr)
+    minmax(110px, 0.7fr)
+    minmax(110px, 0.7fr)
+    95px;
+  align-items: center;
+  column-gap: 16px;
+}
+
+.applicationTableHeader {
+  min-height: 48px;
+  padding: 0 24px;
+  background: #fafbfc;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.applicationTableHeader > span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #98a2b3;
+}
+
+.applicationTableRow {
+  min-height: 82px;
+  padding: 13px 24px;
+  border-bottom: 1px solid #edf0f4;
+  transition: background 0.18s ease;
+  box-sizing: border-box;
+}
+
+.applicationTableRow:last-child {
+  border-bottom: 0;
+}
+
+.applicationTableRow:hover {
+  background: #fafcff;
+}
+
+.applicationPerson {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.applicationAvatar,
+.applicationLargeAvatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #172b4d;
+  color: white;
+  font-weight: 800;
+}
+
+.applicationAvatar {
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
+}
+
+.applicationLargeAvatar {
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+}
+
+.applicationPerson div:last-child,
+.applicationProperty {
+  min-width: 0;
+}
+
+.applicationPerson b,
+.applicationProperty b {
+  display: block;
+  overflow: hidden;
+  font-size: 13px;
+  color: #172033;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicationPerson span,
+.applicationProperty span,
+.applicationSubmitted {
+  display: block;
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #667085;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.applicationReviewButton {
+  border: 0;
+  background: transparent;
+  color: #3158d5;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+/* ---------- STATUS BADGES ---------- */
+
+.applicationStatusBadge {
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.1;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-new {
+  background: #eef4ff;
+  color: #3158d5;
+}
+
+.status-under_review {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.status-screening {
+  background: #f1edff;
+  color: #6941c6;
+}
+
+.status-approved {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.status-denied {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.status-withdrawn {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.screening-not_started {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.screening-pending_consent {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.screening-requested,
+.screening-in_progress {
+  background: #eef4ff;
+  color: #3158d5;
+}
+
+.screening-completed {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.screening-failed {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+/* ---------- NEW APPLICATION FORM ---------- */
+
+.applicationFormPage {
+  max-width: 1280px;
+}
+
+.applicationFormHeader {
+  margin-top: 24px;
+}
+
+.rentalApplicationForm {
+  display: grid;
+  gap: 18px;
+}
+
+.applicationFormCard {
+  padding: 26px;
+  border: 1px solid #e7eaf0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.04);
+}
+
+.applicationFormSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.applicationFormSectionHeader > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 11px;
+  background: #eef4ff;
+  color: #3158d5;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.applicationFormSectionHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #172033;
+}
+
+.applicationFormSectionHeader p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #667085;
+}
+
+.applicationFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.applicationFormGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #344054;
+}
+
+.applicationFormGrid input,
+.applicationFormGrid select,
+.applicationFormGrid textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  outline: none;
+  background: #ffffff;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #172033;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.applicationFormGrid textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.applicationFormGrid input:focus,
+.applicationFormGrid select:focus,
+.applicationFormGrid textarea:focus {
+  border-color: #6686e8;
+  box-shadow: 0 0 0 3px rgba(49, 88, 213, 0.09);
+}
+
+.applicationWideField {
+  grid-column: 1 / -1;
+}
+
+.applicationFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 5px;
+}
+
+.applicationFormActions > button:not(.primary) {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #dfe3e8;
+  border-radius: 10px;
+  background: white;
+  font-weight: 700;
+  color: #475467;
+  cursor: pointer;
+}
+
+/* ---------- APPLICATION DETAILS ---------- */
+
+.applicationDetailsHeader {
+  margin: 24px 0 24px;
+  padding: 24px;
+  align-items: center;
+  border: 1px solid #e7eaf0;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.applicationApplicantHeading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+}
+
+.applicationApplicantHeading h1 {
+  font-size: 27px;
+}
+
+.applicationApplicantHeading p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: #667085;
+}
+
+.applicationHeaderStatus {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+}
+
+.applicationHeaderStatus small {
+  font-size: 11px;
+  color: #98a2b3;
+}
+
+.applicationDetailsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(330px, 0.75fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.applicationDetailsMain,
+.applicationDetailsSidebar {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.applicationDetailCard,
+.screeningCenterCard,
+.applicationDecisionCard,
+.applicationTimelineCard {
+  padding: 24px;
+  border: 1px solid #e7eaf0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.035);
+}
+
+.applicationDetailCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.applicationDetailCardHeader small {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #98a2b3;
+}
+
+.applicationDetailCardHeader h2,
+.screeningCenterCard h2,
+.applicationDecisionCard h2,
+.applicationTimelineCard h2 {
+  margin: 0;
+  font-size: 17px;
+  color: #172033;
+}
+
+.applicationDetailCardHeader > span {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.applicationDetailFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 28px;
+}
+
+.applicationDetailFields > div {
+  min-width: 0;
+}
+
+.applicationDetailFields span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: #98a2b3;
+}
+
+.applicationDetailFields b {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 650;
+  color: #344054;
+}
+
+.applicationDetailWide {
+  grid-column: 1 / -1;
+}
+
+/* ---------- SCREENING CENTER ---------- */
+
+.screeningCenterHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screeningCenterDescription,
+.applicationDecisionCard > p {
+  margin: 10px 0 20px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #667085;
+}
+
+.screeningItems {
+  overflow: hidden;
+  margin-bottom: 17px;
+  border: 1px solid #edf0f4;
+  border-radius: 12px;
+}
+
+.screeningItems > div {
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.screeningItems > div:last-child {
+  border-bottom: 0;
+}
+
+.screeningItemIcon {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.screeningItems b {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: #344054;
+}
+
+.screeningItems small {
+  display: block;
+  font-size: 10px;
+  color: #98a2b3;
+}
+
+.screeningConsentNotice {
+  padding: 14px;
+  border: 1px solid #dbe5ff;
+  border-radius: 11px;
+  background: #f7f9ff;
+}
+
+.screeningConsentNotice b {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: #2949a7;
+}
+
+.screeningConsentNotice span {
+  display: block;
+  font-size: 10px;
+  line-height: 1.55;
+  color: #667085;
+}
+
+.screeningButton {
+  width: 100%;
+  min-height: 45px;
+  margin-top: 14px;
+}
+
+.screeningRequestedDate {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 10px;
+  color: #98a2b3;
+}
+
+/* ---------- APPROVE / DENY ---------- */
+
+.applicationDecisionActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.approveApplicationButton,
+.denyApplicationButton {
+  min-height: 42px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.approveApplicationButton {
+  border: 1px solid #abefc6;
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.denyApplicationButton {
+  border: 1px solid #fecdca;
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.applicationDecisionNote {
+  display: block;
+  margin-top: 14px;
+  font-size: 9px;
+  line-height: 1.5;
+  color: #98a2b3;
+}
+
+/* ---------- TIMELINE ---------- */
+
+.applicationTimeline {
+  margin-top: 18px;
+}
+
+.timelineItem {
+  position: relative;
+  min-height: 50px;
+  padding-left: 25px;
+}
+
+.timelineItem > span {
+  position: absolute;
+  top: 3px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: #98a2b3;
+  box-shadow: 0 0 0 1px #d0d5dd;
+  box-sizing: content-box;
+}
+
+.timelineItem:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 17px;
+  bottom: -1px;
+  left: 7px;
+  width: 1px;
+  background: #e4e7ec;
+}
+
+.timelineItem.complete > span {
+  background: #12b76a;
+}
+
+.timelineItem.active > span {
+  background: #3158d5;
+}
+
+.timelineItem b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11px;
+  color: #344054;
+}
+
+.timelineItem small {
+  display: block;
+  font-size: 10px;
+  text-transform: capitalize;
+  color: #98a2b3;
+}
+
+/* ---------- DOCUMENT CENTER ---------- */
+
+.documentsPage {
+  padding-bottom: 70px;
+}
+
+.documentStats article {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.documentLibrary {
+  margin-bottom: 22px;
+}
+
+.documentTemplateGrid {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.documentTemplateCard {
+  position: relative;
+  min-height: 230px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  background: #ffffff;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.documentTemplateCard:hover {
+  transform: translateY(-2px);
+  border-color: #cad6fa;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+}
+
+.documentTemplateIcon {
+  width: 43px;
+  height: 43px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #eef4ff;
+  color: #3158d5;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.documentType {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #667085;
+}
+
+.documentTemplateCard h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #172033;
+}
+
+.documentTemplateCard p {
+  flex: 1;
+  margin: 0 0 17px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #667085;
+}
+
+.documentTemplateCard button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  color: #3158d5;
+  cursor: pointer;
+}
+
+.esignBanner {
+  min-height: 145px;
+  padding: 25px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid #dbe5ff;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #f7f9ff 0%,
+      #ffffff 60%,
+      #f8faff 100%
+    );
+}
+
+.esignBannerIcon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #172b4d;
+  color: #ffffff;
+  font-size: 21px;
+}
+
+.esignBanner h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #172033;
+}
+
+.esignBanner p {
+  max-width: 760px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #667085;
+}
+
+.esignBanner > span {
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #eef4ff;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  color: #3158d5;
+}
+
+/* ---------- LARGE DESKTOP ---------- */
+
+@media (min-width: 1400px) {
+  .applicationsPage,
+  .applicationDetailsPage,
+  .documentsPage {
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+
+  .applicationDetailsGrid {
+    grid-template-columns:
+      minmax(650px, 1.7fr)
+      minmax(360px, 0.75fr);
+  }
+
+  .applicationDetailCard {
+    padding: 28px;
+  }
+
+  .applicationDetailFields {
+    gap: 26px 38px;
+  }
+}
+
+/* ---------- MEDIUM DESKTOP ---------- */
+
+@media (max-width: 1200px) {
+  .applicationStats,
+  .documentStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .documentTemplateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .applicationDetailsGrid {
+    grid-template-columns: minmax(0, 1.45fr) 320px;
+  }
+
+  .applicationTableHeader,
+  .applicationTableRow {
+    grid-template-columns:
+      minmax(200px, 1.3fr)
+      minmax(170px, 1fr)
+      minmax(120px, 0.8fr)
+      minmax(100px, 0.7fr)
+      90px;
+  }
+
+  .applicationTableHeader > span:nth-child(5),
+  .applicationTableRow > .applicationSubmitted {
+    display: none;
+  }
+}
+
+/* ---------- TABLET ---------- */
+
+@media (max-width: 900px) {
+  .applicationsPage,
+  .applicationFormPage,
+  .applicationDetailsPage,
+  .documentsPage {
+    padding: 24px 20px 50px;
+  }
+
+  .applicationsHeader,
+  .documentsHeader,
+  .applicationDetailsHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .applicationsHeader .primary,
+  .documentsHeader .primary {
+    width: 100%;
+  }
+
+  .applicationDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .applicationDetailsSidebar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .screeningCenterCard {
+    grid-column: 1 / -1;
+  }
+
+  .applicationTableHeader {
+    display: none;
+  }
+
+  .applicationTable {
+    padding: 12px;
+  }
+
+  .applicationTableRow {
+    margin-bottom: 10px;
+    padding: 16px;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    border: 1px solid #edf0f4;
+    border-radius: 12px;
+  }
+
+  .applicationTableRow:last-child {
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .applicationProperty {
+    grid-column: 1;
+  }
+
+  .applicationTableRow > .applicationStatusBadge {
+    justify-self: end;
+  }
+
+  .applicationSubmitted {
+    display: none !important;
+  }
+
+  .applicationReviewButton {
+    justify-self: end;
+  }
+}
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 700px) {
+  .applicationsPage,
+  .applicationFormPage,
+  .applicationDetailsPage,
+  .documentsPage {
+    padding: 20px 14px 42px;
+  }
+
+  .applicationStats,
+  .documentStats,
+  .documentTemplateGrid,
+  .applicationDetailsSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .applicationStats article,
+  .documentStats article {
+    min-height: 105px;
+  }
+
+  .applicationFormGrid,
+  .applicationDetailFields {
+    grid-template-columns: 1fr;
+  }
+
+  .applicationWideField,
+  .applicationDetailWide {
+    grid-column: auto;
+  }
+
+  .applicationFormCard,
+  .applicationDetailCard,
+  .screeningCenterCard,
+  .applicationDecisionCard,
+  .applicationTimelineCard {
+    padding: 18px;
+  }
+
+  .applicationApplicantHeading {
+    align-items: flex-start;
+  }
+
+  .applicationLargeAvatar {
+    width: 48px;
+    height: 48px;
+    font-size: 17px;
+  }
+
+  .applicationApplicantHeading h1 {
+    font-size: 22px;
+  }
+
+  .applicationHeaderStatus {
+    align-items: flex-start;
+  }
+
+  .applicationDecisionActions {
+    grid-template-columns: 1fr;
+  }
+
+  .documentTemplateGrid {
+    padding: 14px;
+  }
+
+  .esignBanner {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .esignBanner > span {
+    width: fit-content;
+  }
+
+  .applicationDirectoryHeader,
+  .documentLibraryHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .applicationTableRow {
+    grid-template-columns: 1fr;
+  }
+
+  .applicationTableRow > .applicationStatusBadge,
+  .applicationReviewButton {
+    justify-self: start;
+  }
+}
