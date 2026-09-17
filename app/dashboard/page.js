@@ -1132,7 +1132,7 @@ function isMultiFamily(property) {
     </div>
   </section>
 </div>
-                  )}
+                
 
                   {props.slice(0, 4).map(property => {
   const tenancy =
