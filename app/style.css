@@ -6652,3 +6652,1049 @@ textarea:focus-visible,
     font-size: 9px;
   }
 }
+
+/* =========================================================
+   RENTWISE — FINAL VISUAL REFRESH
+   Larger typography • stronger color • cleaner spacing
+   ========================================================= */
+
+/* ---------- GLOBAL READABILITY ---------- */
+
+body {
+  background: #f3f6fb;
+  color: #162033;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.dash {
+  padding: 38px 42px 64px;
+}
+
+.dashboardHeader h1,
+.portfolioPageHeader h1,
+.panel > h1 {
+  color: #0f172a;
+  font-size: clamp(32px, 2.6vw, 42px);
+  font-weight: 800;
+  letter-spacing: -1.3px;
+}
+
+.dashboardSubtitle,
+.portfolioPageHeader p,
+.panel > p {
+  color: #64748b;
+  font-size: 15px;
+}
+
+.dashboardHeader small,
+.portfolioPageHeader small,
+.panel > small {
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 1.35px;
+}
+
+
+/* ---------- BUTTONS ---------- */
+
+.primary,
+.viewAllButton,
+.propertyBackButton,
+.commandSecondaryButton,
+.commandTextButton,
+.panel > button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.primary {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 7px 18px rgba(37, 99, 235, 0.22);
+}
+
+.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+}
+
+
+/* =========================================================
+   TOP DASHBOARD STAT CARDS
+   ========================================================= */
+
+.overviewStatsEnhanced {
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.overviewStatCard {
+  position: relative;
+  min-width: 0;
+  min-height: 145px !important;
+  padding: 25px 25px 22px !important;
+  overflow: hidden;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-radius: 19px !important;
+  box-shadow:
+    0 3px 8px rgba(15, 23, 42, 0.04),
+    0 14px 34px rgba(15, 23, 42, 0.07) !important;
+}
+
+.overviewStatCard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  opacity: 1 !important;
+}
+
+.overviewStatCard > span {
+  display: block;
+  margin-bottom: 10px;
+  color: #475569 !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+}
+
+.overviewStatCard > b {
+  display: block;
+  color: #0f172a !important;
+  font-size: 32px !important;
+  line-height: 1.05;
+  font-weight: 850 !important;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+
+.overviewStatCard > small {
+  display: block;
+  margin-top: 14px !important;
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.8px;
+}
+
+
+/* BLUE */
+
+.statBlue {
+  border-color: #93c5fd !important;
+  background:
+    radial-gradient(circle at 100% 0%, #dbeafe, transparent 45%),
+    #ffffff !important;
+}
+
+.statBlue::before {
+  background: #2563eb !important;
+}
+
+.statBlue > small {
+  color: #1d4ed8 !important;
+}
+
+
+/* GREEN */
+
+.statGreen {
+  border-color: #86efac !important;
+  background:
+    radial-gradient(circle at 100% 0%, #dcfce7, transparent 45%),
+    #ffffff !important;
+}
+
+.statGreen::before {
+  background: #16a34a !important;
+}
+
+.statGreen > small {
+  color: #15803d !important;
+}
+
+
+/* PURPLE */
+
+.statPurple {
+  border-color: #c4b5fd !important;
+  background:
+    radial-gradient(circle at 100% 0%, #ede9fe, transparent 45%),
+    #ffffff !important;
+}
+
+.statPurple::before {
+  background: #7c3aed !important;
+}
+
+.statPurple > small {
+  color: #6d28d9 !important;
+}
+
+
+/* ORANGE */
+
+.statOrange {
+  border-color: #fdba74 !important;
+  background:
+    radial-gradient(circle at 100% 0%, #ffedd5, transparent 45%),
+    #ffffff !important;
+}
+
+.statOrange::before {
+  background: #ea580c !important;
+}
+
+.statOrange > small {
+  color: #c2410c !important;
+}
+
+
+/* =========================================================
+   NEW CHART AREA
+   ========================================================= */
+
+.rentwiseChartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.rentwiseChartCard {
+  min-width: 0;
+  padding: 27px;
+  overflow: hidden;
+  border: 1px solid #cbd9ea;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.035),
+    0 16px 38px rgba(15, 23, 42, 0.065);
+}
+
+.rentwiseChartCard:first-child {
+  border-top: 4px solid #2563eb;
+}
+
+.rentwiseChartCard:nth-child(2) {
+  border-top: 4px solid #16a34a;
+}
+
+.rentwiseChartCard:nth-child(3) {
+  border-top: 4px solid #7c3aed;
+}
+
+.rentwiseChartWide {
+  grid-column: 1 / -1;
+}
+
+.rentwiseChartHeader {
+  margin-bottom: 27px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.rentwiseChartHeader > div {
+  min-width: 0;
+}
+
+.rentwiseChartHeader small {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.15px;
+}
+
+.rentwiseChartHeader h2 {
+  margin: 5px 0 0;
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.rentwiseChartHeader strong {
+  flex: 0 0 auto;
+  color: #2563eb;
+  font-size: 27px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+
+/* ---------- COLLECTION DONUT ---------- */
+
+.collectionDonutRow {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+  min-width: 0;
+}
+
+.collectionDonut {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  flex: 0 0 170px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      #2563eb 0deg var(--collection-rate),
+      #e2e8f0 var(--collection-rate) 360deg
+    );
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.12);
+}
+
+.collectionDonut::after {
+  content: "";
+  position: absolute;
+  width: 124px;
+  height: 124px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.collectionDonut > div {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.collectionDonut b {
+  display: block;
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.collectionDonut span {
+  display: block;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.chartLegend {
+  min-width: 0;
+  flex: 1;
+}
+
+.chartLegend > div {
+  display: grid;
+  grid-template-columns: 11px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.chartLegend > div:last-child {
+  border-bottom: 0;
+}
+
+.chartLegend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legendCollected {
+  background: #2563eb;
+}
+
+.legendOutstanding {
+  background: #f97316;
+}
+
+.legendCharges {
+  background: #94a3b8;
+}
+
+.chartLegend span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.chartLegend b {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+
+/* ---------- OCCUPANCY ---------- */
+
+.occupancyVisual {
+  padding-top: 13px;
+}
+
+.occupancyTrack {
+  width: 100%;
+  height: 22px;
+  overflow: hidden;
+  border: 1px solid #d7e0eb;
+  border-radius: 999px;
+  background: #e8eef6;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.07);
+}
+
+.occupancyTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #15803d, #22c55e);
+  box-shadow: 3px 0 10px rgba(34, 197, 94, 0.25);
+}
+
+.occupancyNumbers {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.occupancyNumbers > div {
+  min-width: 0;
+  padding: 18px 12px;
+  text-align: center;
+  border: 1px solid #dbe3ed;
+  border-radius: 15px;
+  background: #f8fafc;
+}
+
+.occupancyNumbers > div:first-child {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.occupancyNumbers > div:nth-child(2) {
+  border-color: #fdba74;
+  background: #fff7ed;
+}
+
+.occupancyNumbers > div:nth-child(3) {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.occupancyNumbers b {
+  display: block;
+  color: #0f172a;
+  font-size: 27px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.occupancyNumbers span {
+  display: block;
+  margin-top: 8px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* ---------- MONTHLY BAR CHART ---------- */
+
+.rentBarChart {
+  height: 260px;
+  padding-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+  gap: 22px;
+}
+
+.rentBarColumn {
+  height: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 30px 1fr 26px;
+  text-align: center;
+}
+
+.rentBarValue {
+  overflow: hidden;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rentBarTrack {
+  width: min(54px, 72%);
+  height: 100%;
+  justify-self: center;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px 12px 6px 6px;
+  background: #f1f5f9;
+}
+
+.rentBarTrack span {
+  display: block;
+  width: 100%;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+  box-shadow: 0 -5px 15px rgba(37, 99, 235, 0.18);
+}
+
+.rentBarColumn > b {
+  padding-top: 8px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+
+/* =========================================================
+   MAIN DASHBOARD CARDS
+   ========================================================= */
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard,
+.panel,
+.propertyDetailsCard {
+  border: 1px solid #cfdbea !important;
+  border-radius: 18px !important;
+  background: #ffffff;
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.03),
+    0 14px 32px rgba(15, 23, 42, 0.055) !important;
+}
+
+.propertiesShowcase {
+  border-top: 4px solid #2563eb !important;
+}
+
+.activityShowcase {
+  border-top: 4px solid #8b5cf6 !important;
+}
+
+.dashboardFeatureCard:nth-child(1) {
+  border-top: 4px solid #2563eb !important;
+}
+
+.dashboardFeatureCard:nth-child(2) {
+  border-top: 4px solid #f59e0b !important;
+}
+
+.dashboardFeatureCard:nth-child(3) {
+  border-top: 4px solid #16a34a !important;
+}
+
+.propertiesShowcase,
+.activityShowcase,
+.dashboardFeatureCard {
+  padding: 25px !important;
+}
+
+.showcaseHeader h2,
+.featureCardHeader h2,
+.propertyDetailsCard h2 {
+  color: #0f172a !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+}
+
+.showcaseHeader p,
+.featureCardHeader p {
+  color: #64748b !important;
+  font-size: 12px !important;
+}
+
+
+/* =========================================================
+   PROPERTY CARDS
+   ========================================================= */
+
+.dashboardProperties {
+  gap: 20px;
+}
+
+.dashboardPropertyCard,
+.portfolioPropertyCard {
+  min-width: 0;
+  border: 1px solid #cbd8e7 !important;
+  border-radius: 18px !important;
+  background: #ffffff;
+  box-shadow:
+    0 5px 12px rgba(15, 23, 42, 0.04),
+    0 13px 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+.dashboardPropertyCard:hover,
+.portfolioPropertyCard:hover {
+  transform: translateY(-3px);
+  border-color: #93b4df !important;
+  box-shadow:
+    0 9px 18px rgba(15, 23, 42, 0.06),
+    0 20px 42px rgba(15, 23, 42, 0.09) !important;
+}
+
+.propertyIdentityPanel,
+.portfolioCardAccent {
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(96, 165, 250, 0.32),
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      #071b36,
+      #0d3262 55%,
+      #1554a0
+    ) !important;
+}
+
+.dashboardPropertyCard .propertyCardTop small,
+.portfolioPropertyCard small {
+  font-size: 9px !important;
+}
+
+.dashboardPropertyCard .propertyCardTop h3,
+.portfolioPropertyCard h2,
+.portfolioPropertyCard h3 {
+  color: #0f172a !important;
+  font-size: 19px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+  overflow-wrap: anywhere;
+}
+
+.dashboardPropertyCard .propertyCardTop p,
+.portfolioPropertyCard p {
+  color: #64748b !important;
+  font-size: 12px !important;
+}
+
+.propertyCardDetails span,
+.portfolioCardDetails span,
+.portfolioCardMetrics span {
+  color: #64748b !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+}
+
+.propertyCardDetails b,
+.portfolioCardDetails b,
+.portfolioCardMetrics b {
+  color: #1e293b !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere;
+}
+
+.propertyCardDetails > div:first-child b,
+.portfolioCardMetrics > div:first-child b {
+  color: #0f172a !important;
+  font-size: 19px !important;
+  font-weight: 850 !important;
+}
+
+.propertyCardFooter {
+  gap: 14px;
+}
+
+.propertyCardFooter span {
+  color: #64748b !important;
+  font-size: 10px !important;
+}
+
+.propertyCardFooter b {
+  color: #2563eb !important;
+  font-size: 11px !important;
+}
+
+
+/* ---------- STATUS PILLS ---------- */
+
+.portfolioOccupancy,
+.commandOccupancy {
+  min-height: 30px;
+  padding: 6px 11px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  white-space: nowrap;
+}
+
+.portfolioOccupancy.occupied,
+.commandOccupancy.occupied {
+  border: 1px solid #86efac !important;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+}
+
+.portfolioOccupancy.vacant,
+.commandOccupancy.vacant {
+  border: 1px solid #fdba74 !important;
+  background: #ffedd5 !important;
+  color: #c2410c !important;
+}
+
+
+/* =========================================================
+   RECENT ACTIVITY
+   ========================================================= */
+
+.activityList {
+  gap: 11px;
+}
+
+.activityRow {
+  min-width: 0;
+  min-height: 76px;
+  padding: 15px 14px !important;
+  gap: 13px !important;
+  border: 1px solid #dce4ee !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+}
+
+.activityRow:hover {
+  border-color: #bfcee1 !important;
+  background: #ffffff !important;
+}
+
+.activityTypeIcon {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
+.activityRow b {
+  color: #1e293b !important;
+  font-size: 12px !important;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.activityRow span {
+  color: #64748b !important;
+  font-size: 10px !important;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.activityRow > small {
+  color: #64748b !important;
+  font-size: 9px !important;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   RENT + PAYMENTS
+   ========================================================= */
+
+.rentPage {
+  min-width: 0;
+}
+
+.rentPage h1 {
+  color: #0f172a;
+  font-size: 34px;
+  font-weight: 850;
+}
+
+.rentPage h2 {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.rentPage h3 {
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.rentPage p,
+.rentPage span,
+.rentPage label {
+  line-height: 1.55;
+}
+
+.rentLedgerCard,
+.rentPaymentCard,
+.rentAutomationCard {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #cbd8e7 !important;
+  border-radius: 16px !important;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+}
+
+.rentLedgerCard {
+  border-left: 4px solid #f59e0b !important;
+}
+
+.rentPaymentCard {
+  border-left: 4px solid #16a34a !important;
+}
+
+.rentAutomationCard {
+  border-left: 4px solid #2563eb !important;
+}
+
+.rentLedgerCard *,
+.rentPaymentCard *,
+.rentAutomationCard * {
+  min-width: 0;
+}
+
+.rentLedgerCard b,
+.rentPaymentCard b,
+.rentAutomationCard b,
+.rentLedgerCard p,
+.rentPaymentCard p,
+.rentAutomationCard p {
+  overflow-wrap: anywhere;
+}
+
+.rentPage button {
+  white-space: normal;
+}
+
+
+/* =========================================================
+   UNIT / PROPERTY COMMAND CENTER
+   ========================================================= */
+
+.commandCard,
+.propertyUnitCard {
+  min-width: 0;
+  border: 1px solid #cbd8e7 !important;
+  border-radius: 16px !important;
+  background: #ffffff;
+  box-shadow: 0 7px 22px rgba(15, 23, 42, 0.055);
+}
+
+.commandCard {
+  border-top: 3px solid #dbeafe !important;
+}
+
+.propertyUnitCard {
+  border-left: 4px solid #2563eb !important;
+}
+
+.commandCard *,
+.propertyUnitCard * {
+  min-width: 0;
+}
+
+.commandCard h2,
+.commandCard h3,
+.propertyUnitCard h3 {
+  color: #0f172a !important;
+}
+
+.commandCard p,
+.commandCard span,
+.propertyUnitCard p,
+.propertyUnitCard span {
+  color: #64748b;
+}
+
+.commandRentSummary b,
+.propertyUnitDetails b,
+.propertyUnitBody h3 {
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+input,
+select,
+textarea {
+  color: #1e293b;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10) !important;
+}
+
+
+/* =========================================================
+   TEXT OVERLAP PROTECTION
+   ========================================================= */
+
+.dashboardContentGrid,
+.dashboardBottomGrid,
+.portfolioPropertyGrid,
+.propertyUnitsGrid,
+.commandMainGrid,
+.rentwiseChartsGrid {
+  min-width: 0;
+}
+
+.dashboardPropertyCard *,
+.portfolioPropertyCard *,
+.propertyUnitCard *,
+.commandCard *,
+.rentLedgerCard *,
+.rentPaymentCard *,
+.rentAutomationCard * {
+  min-width: 0;
+}
+
+.dashboardPropertyCard h1,
+.dashboardPropertyCard h2,
+.dashboardPropertyCard h3,
+.portfolioPropertyCard h1,
+.portfolioPropertyCard h2,
+.portfolioPropertyCard h3,
+.propertyUnitCard h3,
+.commandCard h2,
+.commandCard h3 {
+  overflow-wrap: anywhere;
+}
+
+.propertyCardDetails,
+.portfolioCardDetails,
+.propertyUnitDetails,
+.commandRentSummary {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .dash {
+    padding: 32px 30px 55px;
+  }
+
+  .overviewStatsEnhanced {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .collectionDonutRow {
+    gap: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .rentwiseChartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .rentwiseChartWide {
+    grid-column: auto;
+  }
+
+  .collectionDonutRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chartLegend {
+    width: 100%;
+  }
+
+  .dashboardProperties {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .dash {
+    padding: 24px 18px 45px;
+  }
+
+  .dashboardHeader h1,
+  .portfolioPageHeader h1 {
+    font-size: 29px;
+  }
+
+  .overviewStatsEnhanced {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewStatCard {
+    min-height: 130px !important;
+  }
+
+  .rentwiseChartCard {
+    padding: 20px;
+  }
+
+  .rentwiseChartHeader {
+    flex-wrap: wrap;
+  }
+
+  .collectionDonut {
+    width: 145px;
+    height: 145px;
+    flex-basis: 145px;
+  }
+
+  .collectionDonut::after {
+    width: 104px;
+    height: 104px;
+  }
+
+  .occupancyNumbers {
+    grid-template-columns: 1fr;
+  }
+
+  .rentBarChart {
+    height: 215px;
+    gap: 7px;
+  }
+
+  .rentBarTrack {
+    width: 72%;
+  }
+
+  .rentBarValue {
+    font-size: 9px;
+  }
+
+  .propertyCardDetails,
+  .portfolioCardDetails {
+    grid-template-columns: 1fr !important;
+  }
+}
