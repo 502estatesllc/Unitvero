@@ -274,61 +274,209 @@ export default function Dashboard() {
       </article>
     </div>
 
-    <div className="overviewGrid">
-      <section className="overviewCard rentOverview">
-        <div className="cardHeader">
-          <div>
-            <h2>Rent Overview</h2>
-            <p>Monthly rent performance across your properties.</p>
-          </div>
-          <span className="monthBadge">This month</span>
-        </div>
+   <div className="dashboardContentGrid">
+  <section className="propertiesShowcase">
+    <div className="showcaseHeader">
+      <div>
+        <h2>Your Properties</h2>
+        <p>Quick view of your rental portfolio.</p>
+      </div>
 
-        <div className="rentSummary">
-          <div>
-            <span>Expected</span>
-            <strong>
-              ${props
-                .reduce(
-                  (total, property) =>
-                    total + Number(property.monthly_rent || 0),
-                  0
-                )
-                .toLocaleString()}
-            </strong>
-          </div>
-
-          <div>
-            <span>Collected</span>
-            <strong>$0</strong>
-          </div>
-
-          <div>
-            <span>Outstanding</span>
-            <strong>$0</strong>
-          </div>
-        </div>
-
-        <div className="progressTrack">
-          <div className="progressFill"></div>
-        </div>
-      </section>
-
-      <section className="overviewCard">
-        <div className="cardHeader">
-          <div>
-            <h2>Recent Activity</h2>
-            <p>Your latest Rentwise activity.</p>
-          </div>
-        </div>
-
-        <div className="emptyActivity">
-          <div className="activityIcon">✓</div>
-          <b>You&apos;re all caught up</b>
-          <span>New activity will appear here.</span>
-        </div>
-      </section>
+      <button
+        type="button"
+        className="viewAllButton"
+        onClick={() => setView('properties')}
+      >
+        View All
+      </button>
     </div>
+
+    <div className="dashboardProperties">
+      {props.length === 0 && (
+        <div className="noProperties">
+          <div className="propertyPlaceholderIcon">⌂</div>
+          <b>No properties yet</b>
+          <span>Add your first property to get started.</span>
+        </div>
+      )}
+
+      {props.slice(0, 3).map(p => (
+        <article
+          className="dashboardPropertyCard"
+          key={p.id}
+          onClick={() => {
+            setSelectedProperty(p);
+            setView('propertyDetails');
+          }}
+        >
+          <div className="propertyPhoto">
+            {p.image_url ? (
+              <img src={p.image_url} alt={p.address} />
+            ) : (
+              <div className="propertyPhotoPlaceholder">
+                <span>⌂</span>
+                <small>PROPERTY PHOTO</small>
+              </div>
+            )}
+
+            <span className="occupancyBadge">Active</span>
+          </div>
+
+          <div className="propertyCardBody">
+            <div className="propertyCardTop">
+              <div>
+                <h3>{p.address}</h3>
+                <p>
+                  {p.city}, {p.state} {p.zip_code}
+                </p>
+              </div>
+
+              <span className="propertyMenu">•••</span>
+            </div>
+
+            <div className="propertyRent">
+              ${Number(p.monthly_rent || 0).toLocaleString()}
+              <span>/mo</span>
+            </div>
+
+            <div className="propertyMeta">
+              <span>Rental Property</span>
+              <span>View details →</span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section className="activityShowcase">
+    <div className="showcaseHeader">
+      <div>
+        <h2>Recent Activity</h2>
+        <p>Latest updates from your portfolio.</p>
+      </div>
+    </div>
+
+    <div className="activityList">
+      <div className="activityRow">
+        <div className="activityTypeIcon">$</div>
+        <div>
+          <b>Rent collection</b>
+          <span>Payments will appear here</span>
+        </div>
+        <small>Current</small>
+      </div>
+
+      <div className="activityRow">
+        <div className="activityTypeIcon">⌂</div>
+        <div>
+          <b>{props.length} properties</b>
+          <span>Currently in your portfolio</span>
+        </div>
+        <small>Portfolio</small>
+      </div>
+
+      <div className="activityRow">
+        <div className="activityTypeIcon">✓</div>
+        <div>
+          <b>Account active</b>
+          <span>Your Rentwise workspace is ready</span>
+        </div>
+        <small>Active</small>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div className="dashboardBottomGrid">
+  <section className="dashboardFeatureCard">
+    <div className="featureCardHeader">
+      <div>
+        <h2>Rent Collection</h2>
+        <p>This month&apos;s performance</p>
+      </div>
+    </div>
+
+    <div className="rentCollectionContent">
+      <div className="rentCircle">
+        <div>
+          <b>0%</b>
+          <span>Collected</span>
+        </div>
+      </div>
+
+      <div className="rentLegend">
+        <div>
+          <span className="legendDot collected"></span>
+          <span>Collected</span>
+          <b>$0</b>
+        </div>
+
+        <div>
+          <span className="legendDot pending"></span>
+          <span>Expected</span>
+          <b>
+            ${props
+              .reduce(
+                (total, property) =>
+                  total + Number(property.monthly_rent || 0),
+                0
+              )
+              .toLocaleString()}
+          </b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section className="dashboardFeatureCard">
+    <div className="featureCardHeader">
+      <div>
+        <h2>Lease Renewals</h2>
+        <p>Upcoming lease activity</p>
+      </div>
+    </div>
+
+    <div className="featureEmpty">
+      <div className="featureEmptyIcon">▤</div>
+      <b>No renewals scheduled</b>
+      <span>Upcoming lease renewals will appear here.</span>
+    </div>
+  </section>
+
+  <section className="dashboardFeatureCard">
+    <div className="featureCardHeader">
+      <div>
+        <h2>Maintenance</h2>
+        <p>Active requests</p>
+      </div>
+    </div>
+
+    <div className="featureEmpty">
+      <div className="featureEmptyIcon">◇</div>
+      <b>0 Open Requests</b>
+      <span>You&apos;re all caught up.</span>
+    </div>
+  </section>
+</div>
+
+<section className="portfolioBanner">
+  <div>
+    <span className="bannerIcon">⌂</span>
+    <div>
+      <h2>Grow Your Portfolio</h2>
+      <p>Add another property and keep building your rental business.</p>
+    </div>
+  </div>
+
+  <button
+    type="button"
+    className="primary"
+    onClick={() => setView('properties')}
+  >
+    + Add Property
+  </button>
+</section>
   </>
 )}
 
