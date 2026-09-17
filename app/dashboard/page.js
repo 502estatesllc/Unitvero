@@ -1788,7 +1788,7 @@ return (
       </button>
     </>
   )}
-</div>
+
                 </section>
 
                 <section className="commandCard">
