@@ -1228,10 +1228,11 @@ function isMultiFamily(property) {
                           </div>
                         </div>
                       </article>
-                    );
-                  }              
+);
+})}
 </div>
-              </section>
+
+</section>
 
             <section className="activityShowcase">
                 <div className="showcaseHeader">
