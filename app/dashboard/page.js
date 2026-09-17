@@ -133,8 +133,9 @@ const r = useRouter();
     } else {
       setPaymentAllocations(allocationData || []);
     }
-  }
+    }
 
+  useEffect(() => {
     load();
   }, []);
 
