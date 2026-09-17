@@ -319,7 +319,10 @@ export default function Dashboard() {
     </div>
   )}
 
-  <label className="photoUploadButton">
+  <label
+  className="photoUploadButton"
+  onClick={e => e.stopPropagation()}
+>
     {p.image_url ? 'Change Photo' : '+ Add Photo'}
     <input
       type="file"
