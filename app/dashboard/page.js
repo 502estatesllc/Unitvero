@@ -703,7 +703,7 @@ export default function Dashboard() {
         {selectedTenancy ? (
   <div className="propertyDetailsEmpty">
     <span>♙</span>
-    <b>{selectedTenancy.tenant_email}</b>
+    <b>{selectedTenancy.tenant_name || selectedTenancy.tenant_email}</b>
     <p>
       ${Number(selectedTenancy.monthly_rent || 0).toLocaleString()} / month
     </p>
@@ -773,6 +773,8 @@ export default function Dashboard() {
           .insert({
             property_id: selectedProperty.id,
             tenant_email: tenantEmail,
+            tenant_name: tenantName,
+tenant_phone: tenantPhone,
             monthly_rent: monthlyRent,
             start_date: startDate,
             end_date: endDate,
