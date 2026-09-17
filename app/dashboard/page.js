@@ -2340,6 +2340,7 @@ selectedPropertyPayments.length === 0 ? (
                   await s.from('invitations').insert({
                     landlord_id: user.id,
                     property_id: selectedProperty.id,
+                    unit_id: selectedUnit?.id || null,
                     email: tenantEmail,
                     status: 'pending'
                   });
