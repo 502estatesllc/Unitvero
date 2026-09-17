@@ -1785,14 +1785,14 @@ return (
         onClick={() => setView('addTenant')}
       >
         + Add Tenant
-      </button>
-    </>
+      </button>    </>
   )}
+</div>
+  )}        
+</section>
 
-                </section>
-
-                <section className="commandCard">
-                  <div className="commandCardHeader">
+<section className="commandCard">
+  <div className="commandCardHeader">
                     <div>
                       <span className="commandSectionIcon">▤</span>
 
