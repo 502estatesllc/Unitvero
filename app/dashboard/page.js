@@ -679,16 +679,179 @@ export default function Dashboard() {
           <span>♙</span>
           <b>No tenant assigned</b>
           <p>Add a tenant to begin tracking rent and lease information.</p>
-          <button type="button" className="viewAllButton">
-            + Add Tenant
-          </button>
+          <button
+  type="button"
+  className="viewAllButton"
+  onClick={() => setView('addTenant')}
+>
+  + Add Tenant
+</button>
         </div>
       </section>
     </div>
   </section>
 )}  
 
-      {view === 'editProperty' && selectedProperty && (
+   {view === 'addTenant' && selectedProperty && (
+  <section className="panel">
+    <button
+      type="button"
+      onClick={() => setView('propertyDetails')}
+    >
+      ← Back to Property
+    </button>
+
+    <small>NEW TENANT</small>
+    <h1>Add Tenant</h1>
+    <p>
+      Add a tenant to {selectedProperty.address}.
+    </p>
+
+    <form
+      className="addTenantForm"
+      onSubmit={async e => {
+        e.preventDefault();
+
+        const form = e.currentTarget;
+        const s = supabase();
+
+        const {
+          data: { user },
+          error: userError
+        } = await s.auth.getUser();
+
+        if (userError || !user) {
+          alert('Authentication error.');
+          return;
+        }
+
+        const tenantName = form.tenantName.value.trim();
+        const tenantEmail = form.tenantEmail.value.trim();
+        const tenantPhone = form.tenantPhone.value.trim();
+        const monthlyRent = Number(form.monthlyRent.value);
+        const startDate = form.startDate.value;
+        const endDate = form.endDate.value || null;
+
+        const { error: tenancyError } = await s
+          .from('tenancies')
+          .insert({
+            property_id: selectedProperty.id,
+            tenant_email: tenantEmail,
+            monthly_rent: monthlyRent,
+            start_date: startDate,
+            end_date: endDate,
+            status: 'active'
+          });
+
+        if (tenancyError) {
+          alert('Could not add tenant: ' + tenancyError.message);
+          return;
+        }
+
+        const { error: inviteError } = await s
+          .from('invitations')
+          .insert({
+            landlord_id: user.id,
+            property_id: selectedProperty.id,
+            email: tenantEmail,
+            status: 'pending'
+          });
+
+        if (inviteError) {
+          alert(
+            'Tenant was added, but invitation could not be created: ' +
+              inviteError.message
+          );
+          return;
+        }
+
+        alert(
+          tenantName +
+            ' was added successfully. Invitation created for ' +
+            tenantEmail
+        );
+
+        form.reset();
+        setView('propertyDetails');
+      }}
+    >
+      <div className="tenantFormGrid">
+        <label>
+          Full Name
+          <input
+            name="tenantName"
+            type="text"
+            placeholder="Tenant full name"
+            required
+          />
+        </label>
+
+        <label>
+          Email Address
+          <input
+            name="tenantEmail"
+            type="email"
+            placeholder="tenant@email.com"
+            required
+          />
+        </label>
+
+        <label>
+          Phone Number
+          <input
+            name="tenantPhone"
+            type="tel"
+            placeholder="(502) 555-1234"
+          />
+        </label>
+
+        <label>
+          Monthly Rent
+          <input
+            name="monthlyRent"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={selectedProperty.monthly_rent || ''}
+            required
+          />
+        </label>
+
+        <label>
+          Lease Start Date
+          <input
+            name="startDate"
+            type="date"
+            required
+          />
+        </label>
+
+        <label>
+          Lease End Date
+          <input
+            name="endDate"
+            type="date"
+          />
+        </label>
+      </div>
+
+      <div className="tenantFormActions">
+        <button
+          type="button"
+          onClick={() => setView('propertyDetails')}
+        >
+          Cancel
+        </button>
+
+        <button type="submit" className="primary">
+          Add Tenant & Create Invitation
+        </button>
+      </div>
+    </form>
+  </section>
+)}  
+
+{view === 'editProperty' && selectedProperty && (
   <section className="panel">
     <button
       type="button"
