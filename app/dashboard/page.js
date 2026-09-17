@@ -23,6 +23,13 @@ const [propertyFilter, setPropertyFilter] = useState('all');
 const [rentCharges, setRentCharges] = useState([]);
 const [rentPayments, setRentPayments] = useState([]);
 const [paymentAllocations, setPaymentAllocations] = useState([]);
+  
+  const [conversations, setConversations] = useState([]);
+const [messages, setMessages] = useState([]);
+const [announcements, setAnnouncements] = useState([]);
+ const [communicationTab, setCommunicationTab] = useState('messages');
+const [selectedConversation, setSelectedConversation] = useState(null);
+const [announcementAudience, setAnnouncementAudience] = useState('property');
 
 const r = useRouter();
 
@@ -132,6 +139,47 @@ const r = useRouter();
       );
     } else {
       setPaymentAllocations(allocationData || []);
+    }
+        // Load landlord conversations
+    const { data: conversationData, error: conversationError } = await s
+      .from('conversations')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    if (conversationError) {
+      console.error('Could not load conversations:', conversationError);
+    } else {
+      setConversations(conversationData || []);
+    }
+
+    // Load landlord messages
+    const { data: messageData, error: messageError } = await s
+      .from('messages')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('created_at', { ascending: true });
+
+    if (messageError) {
+      console.error('Could not load messages:', messageError);
+    } else {
+      setMessages(messageData || []);
+    }
+
+    // Load landlord announcements
+    const { data: announcementData, error: announcementError } = await s
+      .from('announcements')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (announcementError) {
+      console.error(
+        'Could not load announcements:',
+        announcementError
+      );
+    } else {
+      setAnnouncements(announcementData || []);
     }
     }
 
@@ -272,6 +320,217 @@ const r = useRouter();
     setView('tenants');
   }
 
+  async function openOrCreateConversation(tenancyId) {
+  const tenancy = tenancies.find(item => item.id === tenancyId);
+
+  if (!tenancy) {
+    alert('Could not find this tenant.');
+    return;
+  }
+
+  const existingConversation = conversations.find(
+    conversation => conversation.tenancy_id === tenancyId
+  );
+
+  if (existingConversation) {
+    setSelectedConversation(existingConversation);
+    setCommunicationTab('messages');
+    setView('messages');
+    return;
+  }
+
+  const property = props.find(
+    item => item.id === tenancy.property_id
+  );
+
+  const s = supabase();
+
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
+
+  if (userError || !user) {
+    alert(
+      'Authentication error: ' +
+        (userError?.message || 'No user found')
+    );
+    return;
+  }
+
+  const { data, error } = await s
+    .from('conversations')
+    .insert({
+      landlord_id: user.id,
+      property_id: tenancy.property_id,
+      tenancy_id: tenancy.id,
+      subject:
+        tenancy.tenant_name ||
+        tenancy.tenant_email ||
+        property?.address ||
+        'Tenant conversation'
+    })
+    .select()
+    .single();
+
+  if (error) {
+    alert('Could not create conversation: ' + error.message);
+    return;
+  }
+
+  setConversations(current => [data, ...current]);
+  setSelectedConversation(data);
+  setCommunicationTab('messages');
+  setView('messages');
+}
+
+async function sendMessage(e) {
+  e.preventDefault();
+
+  if (!selectedConversation) {
+    alert('Select a conversation first.');
+    return;
+  }
+
+  const form = e.currentTarget;
+  const messageText = form.message.value.trim();
+
+  if (!messageText) return;
+
+  const s = supabase();
+
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
+
+  if (userError || !user) {
+    alert(
+      'Authentication error: ' +
+        (userError?.message || 'No user found')
+    );
+    return;
+  }
+
+  const { error } = await s.from('messages').insert({
+    conversation_id: selectedConversation.id,
+    landlord_id: user.id,
+    sender_type: 'landlord',
+    sender_user_id: user.id,
+    message: messageText
+  });
+
+  if (error) {
+    alert('Could not send message: ' + error.message);
+    return;
+  }
+
+  await s
+    .from('conversations')
+    .update({
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', selectedConversation.id);
+
+  form.reset();
+
+  const conversationId = selectedConversation.id;
+
+  await load();
+
+  setSelectedConversation(current =>
+    current?.id === conversationId
+      ? current
+      : conversations.find(
+          conversation => conversation.id === conversationId
+        ) || selectedConversation
+  );
+}
+
+async function createAnnouncement(e) {
+  e.preventDefault();
+
+  const form = e.currentTarget;
+
+  const title = form.title.value.trim();
+  const messageText = form.message.value.trim();
+  const priority = form.priority.value;
+  const expiresAt = form.expiresAt.value;
+
+  if (!title || !messageText) {
+    alert('Enter an announcement title and message.');
+    return;
+  }
+
+  const s = supabase();
+
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
+
+  if (userError || !user) {
+    alert(
+      'Authentication error: ' +
+        (userError?.message || 'No user found')
+    );
+    return;
+  }
+
+  let propertyId = null;
+  let tenancyId = null;
+
+  if (announcementAudience === 'property') {
+    propertyId = form.propertyId.value || null;
+
+    if (!propertyId) {
+      alert('Select a property.');
+      return;
+    }
+  }
+
+  if (announcementAudience === 'tenant') {
+    tenancyId = form.tenancyId.value || null;
+
+    if (!tenancyId) {
+      alert('Select a tenant.');
+      return;
+    }
+
+    const tenancy = tenancies.find(
+      item => item.id === tenancyId
+    );
+
+    propertyId = tenancy?.property_id || null;
+  }
+
+  const { error } = await s.from('announcements').insert({
+    landlord_id: user.id,
+    property_id: propertyId,
+    tenancy_id: tenancyId,
+    title,
+    message: messageText,
+    priority,
+    audience: announcementAudience,
+    expires_at: expiresAt
+      ? new Date(
+          expiresAt + 'T23:59:59'
+        ).toISOString()
+      : null
+  });
+
+  if (error) {
+    alert('Could not create announcement: ' + error.message);
+    return;
+  }
+
+  form.reset();
+  setAnnouncementAudience('property');
+
+  await load();
+
+  alert('Announcement created.');
+}
   async function out() {
     await supabase().auth.signOut();
     r.push('/login');
@@ -455,13 +714,39 @@ const r = useRouter();
             <span>Applications</span>
           </a>
 
-          <a
+                     <a
+            className={view === 'messages' ? 'active' : ''}
+            onClick={() => setView('messages')}
+          >
+            <span className="navIcon">✉</span>
+            <span>Messages</span>
+
+            {messages.filter(
+              message =>
+                message.sender_type === 'tenant' &&
+                !message.read_at
+            ).length > 0 && (
+              <span className="navNotificationBadge">
+                {
+                  messages.filter(
+                    message =>
+                      message.sender_type === 'tenant' &&
+                      !message.read_at
+                  ).length
+                }
+              </span>
+            )}
+          </a>
+
+                  <a
             className={view === 'documents' ? 'active' : ''}
             onClick={() => setView('documents')}
           >
             <span className="navIcon">▧</span>
             <span>Documents</span>
           </a>
+
+         
 
           <a
             className={view === 'maintenance' ? 'active' : ''}
@@ -470,10 +755,10 @@ const r = useRouter();
             <span className="navIcon">◇</span>
             <span>Maintenance</span>
           </a>
-        </nav>
 
-        <div className="sidebarAccount">
-          <div className="accountAvatar">
+        </nav>
+                  <div className="sidebarAccount">
+            <div className="accountAvatar">
             {profile?.full_name
               ? profile.full_name.charAt(0).toUpperCase()
               : 'L'}
@@ -3876,7 +4161,581 @@ selectedPropertyPayments.length === 0 ? (
           </section>
         )}
 
-        {view === 'rent' && (
+             {view === 'messages' && (
+          <section className="communicationPage">
+            <div className="communicationHeader">
+              <div>
+                <small>COMMUNICATION CENTER</small>
+                <h1>Messages & Alerts</h1>
+                <p>
+                  Communicate with tenants and send important
+                  property announcements.
+                </p>
+              </div>
+            </div>
+
+            <div className="communicationTabs">
+              <button
+                type="button"
+                className={
+                  communicationTab === 'messages' ? 'active' : ''
+                }
+                onClick={() => setCommunicationTab('messages')}
+              >
+                Messages
+              </button>
+
+              <button
+                type="button"
+                className={
+                  communicationTab === 'announcements'
+                    ? 'active'
+                    : ''
+                }
+                onClick={() =>
+                  setCommunicationTab('announcements')
+                }
+              >
+                Announcements & Alerts
+              </button>
+            </div>
+
+            {communicationTab === 'messages' && (
+              <div className="communicationMessagesLayout">
+                <aside className="conversationSidebar">
+                  <div className="conversationSidebarHeader">
+                    <div>
+                      <small>INBOX</small>
+                      <h2>Conversations</h2>
+                    </div>
+
+                    <span>{conversations.length}</span>
+                  </div>
+
+                  <div className="newConversationBox">
+                    <label>Start a conversation</label>
+
+                    <select
+                      defaultValue=""
+                      onChange={e => {
+                        if (e.target.value) {
+                          openOrCreateConversation(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                    >
+                      <option value="">Select a tenant...</option>
+
+                      {tenancies
+                        .filter(
+                          tenancy => tenancy.status === 'active'
+                        )
+                        .map(tenancy => {
+                          const property = props.find(
+                            item =>
+                              item.id === tenancy.property_id
+                          );
+
+                          return (
+                            <option
+                              key={tenancy.id}
+                              value={tenancy.id}
+                            >
+                              {tenancy.tenant_name ||
+                                tenancy.tenant_email ||
+                                'Tenant'}
+                              {' — '}
+                              {property?.address || 'Property'}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+
+                  <div className="conversationList">
+                    {conversations.length === 0 ? (
+                      <div className="conversationEmpty">
+                        <span>✉</span>
+                        <b>No conversations yet</b>
+                        <p>
+                          Select a tenant above to start a
+                          conversation.
+                        </p>
+                      </div>
+                    ) : (
+                      conversations.map(conversation => {
+                        const tenancy = tenancies.find(
+                          item =>
+                            item.id === conversation.tenancy_id
+                        );
+
+                        const property = props.find(
+                          item =>
+                            item.id === conversation.property_id
+                        );
+
+                        const conversationMessages =
+                          messages.filter(
+                            message =>
+                              message.conversation_id ===
+                              conversation.id
+                          );
+
+                        const lastMessage =
+                          conversationMessages[
+                            conversationMessages.length - 1
+                          ];
+
+                        const unreadCount =
+                          conversationMessages.filter(
+                            message =>
+                              message.sender_type === 'tenant' &&
+                              !message.read_at
+                          ).length;
+
+                        return (
+                          <button
+                            type="button"
+                            key={conversation.id}
+                            className={
+                              selectedConversation?.id ===
+                              conversation.id
+                                ? 'conversationItem active'
+                                : 'conversationItem'
+                            }
+                            onClick={() =>
+                              setSelectedConversation(conversation)
+                            }
+                          >
+                            <div className="conversationAvatar">
+                              {(tenancy?.tenant_name ||
+                                tenancy?.tenant_email ||
+                                'T')
+                                .charAt(0)
+                                .toUpperCase()}
+                            </div>
+
+                            <div className="conversationItemContent">
+                              <div>
+                                <b>
+                                  {tenancy?.tenant_name ||
+                                    tenancy?.tenant_email ||
+                                    conversation.subject ||
+                                    'Tenant'}
+                                </b>
+
+                                {unreadCount > 0 && (
+                                  <span className="conversationUnread">
+                                    {unreadCount}
+                                  </span>
+                                )}
+                              </div>
+
+                              <small>
+                                {property?.address ||
+                                  'Rental property'}
+                              </small>
+
+                              <p>
+                                {lastMessage?.message ||
+                                  'No messages yet'}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </aside>
+
+                <section className="messageThread">
+                  {!selectedConversation ? (
+                    <div className="messageThreadEmpty">
+                      <div>✉</div>
+                      <h2>Select a conversation</h2>
+                      <p>
+                        Choose a tenant conversation from the left,
+                        or start a new one.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="messageThreadHeader">
+                        {(() => {
+                          const tenancy = tenancies.find(
+                            item =>
+                              item.id ===
+                              selectedConversation.tenancy_id
+                          );
+
+                          const property = props.find(
+                            item =>
+                              item.id ===
+                              selectedConversation.property_id
+                          );
+
+                          return (
+                            <>
+                              <div className="messageTenantAvatar">
+                                {(tenancy?.tenant_name ||
+                                  tenancy?.tenant_email ||
+                                  'T')
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
+
+                              <div>
+                                <h2>
+                                  {tenancy?.tenant_name ||
+                                    tenancy?.tenant_email ||
+                                    selectedConversation.subject ||
+                                    'Tenant'}
+                                </h2>
+
+                                <p>
+                                  {property?.address ||
+                                    'Rental property'}
+                                </p>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="messageHistory">
+                        {messages.filter(
+                          message =>
+                            message.conversation_id ===
+                            selectedConversation.id
+                        ).length === 0 ? (
+                          <div className="messageHistoryEmpty">
+                            <span>✉</span>
+                            <b>No messages yet</b>
+                            <p>
+                              Send the first message to this tenant.
+                            </p>
+                          </div>
+                        ) : (
+                          messages
+                            .filter(
+                              message =>
+                                message.conversation_id ===
+                                selectedConversation.id
+                            )
+                            .map(message => (
+                              <div
+                                key={message.id}
+                                className={
+                                  message.sender_type === 'landlord'
+                                    ? 'messageRow landlord'
+                                    : 'messageRow tenant'
+                                }
+                              >
+                                <div className="messageBubble">
+                                  <p>{message.message}</p>
+
+                                  <small>
+                                    {new Date(
+                                      message.created_at
+                                    ).toLocaleString()}
+                                  </small>
+                                </div>
+                              </div>
+                            ))
+                        )}
+                      </div>
+
+                      <form
+                        className="messageComposer"
+                        onSubmit={sendMessage}
+                      >
+                        <textarea
+                          name="message"
+                          placeholder="Write a message..."
+                          rows="3"
+                          required
+                        />
+
+                        <button
+                          type="submit"
+                          className="primary"
+                        >
+                          Send Message
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </section>
+              </div>
+            )}
+
+            {communicationTab === 'announcements' && (
+              <div className="announcementLayout">
+                <section className="announcementComposer">
+                  <div className="announcementSectionHeader">
+                    <div>
+                      <small>NEW ANNOUNCEMENT</small>
+                      <h2>Send an Alert</h2>
+                      <p>
+                        Send an in-app notice to a tenant, property,
+                        or your entire portfolio.
+                      </p>
+                    </div>
+
+                    <span className="announcementAlertIcon">!</span>
+                  </div>
+
+                  <form
+                    className="announcementForm"
+                    onSubmit={createAnnouncement}
+                  >
+                    <div className="announcementField">
+                      <label>Audience</label>
+
+                      <select
+                        value={announcementAudience}
+                        onChange={e =>
+                          setAnnouncementAudience(e.target.value)
+                        }
+                      >
+                        <option value="property">
+                          One Property
+                        </option>
+
+                        <option value="tenant">
+                          One Tenant
+                        </option>
+
+                        <option value="all">
+                          All Tenants
+                        </option>
+                      </select>
+                    </div>
+
+                    {announcementAudience === 'property' && (
+                      <div className="announcementField">
+                        <label>Property</label>
+
+                        <select
+                          name="propertyId"
+                          defaultValue=""
+                          required
+                        >
+                          <option value="">
+                            Select a property...
+                          </option>
+
+                          {props.map(property => (
+                            <option
+                              key={property.id}
+                              value={property.id}
+                            >
+                              {property.address}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {announcementAudience === 'tenant' && (
+                      <div className="announcementField">
+                        <label>Tenant</label>
+
+                        <select
+                          name="tenancyId"
+                          defaultValue=""
+                          required
+                        >
+                          <option value="">
+                            Select a tenant...
+                          </option>
+
+                          {tenancies
+                            .filter(
+                              tenancy =>
+                                tenancy.status === 'active'
+                            )
+                            .map(tenancy => {
+                              const property = props.find(
+                                item =>
+                                  item.id ===
+                                  tenancy.property_id
+                              );
+
+                              return (
+                                <option
+                                  key={tenancy.id}
+                                  value={tenancy.id}
+                                >
+                                  {tenancy.tenant_name ||
+                                    tenancy.tenant_email ||
+                                    'Tenant'}
+                                  {' — '}
+                                  {property?.address || 'Property'}
+                                </option>
+                              );
+                            })}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="announcementFormRow">
+                      <div className="announcementField">
+                        <label>Priority</label>
+
+                        <select
+                          name="priority"
+                          defaultValue="normal"
+                        >
+                          <option value="normal">Normal</option>
+                          <option value="important">
+                            Important
+                          </option>
+                          <option value="urgent">Urgent</option>
+                        </select>
+                      </div>
+
+                      <div className="announcementField">
+                        <label>Expires</label>
+
+                        <input
+                          type="date"
+                          name="expiresAt"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="announcementField">
+                      <label>Title</label>
+
+                      <input
+                        type="text"
+                        name="title"
+                        placeholder="Example: Freeze Warning"
+                        required
+                      />
+                    </div>
+
+                    <div className="announcementField">
+                      <label>Message</label>
+
+                      <textarea
+                        name="message"
+                        rows="5"
+                        placeholder="Example: Run water so pipes won't freeze."
+                        required
+                      />
+                    </div>
+
+                    <div className="announcementFormFooter">
+                      <span>
+                        This creates an in-app Rentwise
+                        announcement.
+                      </span>
+
+                      <button
+                        type="submit"
+                        className="primary"
+                      >
+                        Send Announcement
+                      </button>
+                    </div>
+                  </form>
+                </section>
+
+                <section className="announcementHistory">
+                  <div className="announcementHistoryHeader">
+                    <div>
+                      <small>ANNOUNCEMENT HISTORY</small>
+                      <h2>Recent Alerts</h2>
+                    </div>
+
+                    <span>{announcements.length}</span>
+                  </div>
+
+                  {announcements.length === 0 ? (
+                    <div className="announcementEmpty">
+                      <span>!</span>
+                      <b>No announcements yet</b>
+                      <p>
+                        Alerts and property notices will appear here
+                        after you create them.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="announcementList">
+                      {announcements.map(announcement => {
+                        const property = props.find(
+                          item =>
+                            item.id === announcement.property_id
+                        );
+
+                        const tenancy = tenancies.find(
+                          item =>
+                            item.id === announcement.tenancy_id
+                        );
+
+                        return (
+                          <article
+                            className={`announcementCard ${announcement.priority}`}
+                            key={announcement.id}
+                          >
+                            <div className="announcementCardTop">
+                              <span
+                                className={`announcementPriority ${announcement.priority}`}
+                              >
+                                {announcement.priority}
+                              </span>
+
+                              <small>
+                                {new Date(
+                                  announcement.created_at
+                                ).toLocaleDateString()}
+                              </small>
+                            </div>
+
+                            <h3>{announcement.title}</h3>
+
+                            <p>{announcement.message}</p>
+
+                            <div className="announcementMeta">
+                              <span>
+                                TO:{' '}
+                                <b>
+                                  {announcement.audience === 'all'
+                                    ? 'All tenants'
+                                    : announcement.audience ===
+                                      'tenant'
+                                    ? tenancy?.tenant_name ||
+                                      tenancy?.tenant_email ||
+                                      'Tenant'
+                                    : property?.address ||
+                                      'Property'}
+                                </b>
+                              </span>
+
+                              {announcement.expires_at && (
+                                <span>
+                                  EXPIRES:{' '}
+                                  <b>
+                                    {new Date(
+                                      announcement.expires_at
+                                    ).toLocaleDateString()}
+                                  </b>
+                                </span>
+                              )}
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              </div>
+            )}
+          </section>
+        )}   
+{view === 'rent' && (
           <section className="panel">
             <small>RENT COLLECTION</small>
             <h1>Rent</h1>
