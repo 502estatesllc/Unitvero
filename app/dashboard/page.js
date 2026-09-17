@@ -127,32 +127,91 @@ export default function Dashboard() {
 
   return (
     <div className="app">
-      <aside>
-        <b className="logo">
-          rent<span>wise</span>
-        </b>
+      <aside className="sidebar">
+  <div className="sidebarBrand">
+    <b className="logo">
+      rent<span>wise</span>
+    </b>
+    <span className="brandLabel">PROPERTY MANAGEMENT</span>
+  </div>
 
-        <a
-          className={view === 'overview' ? 'active' : ''}
-          onClick={() => setView('overview')}
-        >
-          Overview
-        </a>
+  <nav className="sidebarNav">
+    <span className="navSection">WORKSPACE</span>
 
-        <a
-          className={view === 'properties' ? 'active' : ''}
-          onClick={() => setView('properties')}
-        >
-          Properties
-        </a>
+    <a
+      className={view === 'overview' ? 'active' : ''}
+      onClick={() => setView('overview')}
+    >
+      <span className="navIcon">⌂</span>
+      <span>Overview</span>
+    </a>
 
-        <a onClick={() => setView('tenants')}>Tenants</a>
-        <a onClick={() => setView('rent')}>Rent</a>
-        <a onClick={() => setView('leases')}>Leases</a>
-        <a onClick={() => setView('maintenance')}>Maintenance</a>
+    <a
+      className={
+        view === 'properties' ||
+        view === 'propertyDetails' ||
+        view === 'editProperty'
+          ? 'active'
+          : ''
+      }
+      onClick={() => setView('properties')}
+    >
+      <span className="navIcon">▦</span>
+      <span>Properties</span>
+    </a>
 
-        <button onClick={out}>Sign out</button>
-      </aside>
+    <a
+      className={view === 'tenants' ? 'active' : ''}
+      onClick={() => setView('tenants')}
+    >
+      <span className="navIcon">♙</span>
+      <span>Tenants</span>
+    </a>
+
+    <a
+      className={view === 'rent' ? 'active' : ''}
+      onClick={() => setView('rent')}
+    >
+      <span className="navIcon">$</span>
+      <span>Rent</span>
+    </a>
+
+    <span className="navSection navSectionSecond">MANAGEMENT</span>
+
+    <a
+      className={view === 'leases' ? 'active' : ''}
+      onClick={() => setView('leases')}
+    >
+      <span className="navIcon">▤</span>
+      <span>Leases</span>
+    </a>
+
+    <a
+      className={view === 'maintenance' ? 'active' : ''}
+      onClick={() => setView('maintenance')}
+    >
+      <span className="navIcon">◇</span>
+      <span>Maintenance</span>
+    </a>
+  </nav>
+
+  <div className="sidebarAccount">
+    <div className="accountAvatar">
+      {profile?.full_name
+        ? profile.full_name.charAt(0).toUpperCase()
+        : 'L'}
+    </div>
+
+    <div className="accountInfo">
+      <b>{profile?.full_name || 'Landlord'}</b>
+      <span>{profile?.role || 'Landlord'}</span>
+    </div>
+
+    <button type="button" onClick={out} title="Sign out">
+      ↗
+    </button>
+  </div>
+</aside>
 
       <main className="dash">
         {view === 'overview' && (
