@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [props, setProps] = useState([]);
+  const [units, setUnits] = useState([]);
   const [address, setAddress] = useState('');
   const [view, setView] = useState('overview');
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -72,6 +73,18 @@ const r = useRouter();
     }
 
     setProps(properties || []);
+
+    const { data: unitData, error: unitError } = await s
+  .from('units')
+  .select('*')
+  .eq('landlord_id', user.id)
+  .order('unit_name', { ascending: true });
+
+if (unitError) {
+  alert('Could not load units: ' + unitError.message);
+} else {
+  setUnits(unitData || []);
+}
 
     const { data: applicationData, error: applicationError } = await s
       .from('rental_applications')
@@ -535,6 +548,14 @@ async function createAnnouncement(e) {
     await supabase().auth.signOut();
     r.push('/login');
   }
+
+  function unitsForProperty(propertyId) {
+  return units.filter(unit => unit.property_id === propertyId);
+}
+
+function isMultiFamily(property) {
+  return Number(property.total_units || 1) > 1;
+}
 
   function activeTenancyForProperty(propertyId) {
     return tenancies.find(
@@ -1271,13 +1292,24 @@ async function createAnnouncement(e) {
               </div>
             ) : (
               <div className="portfolioPropertyGrid">
-                {filteredProperties.map(property => {
-                  const tenancy =
-                    activeTenancyForProperty(property.id);
+               {filteredProperties.map(property => {
+  const tenancy =
+    activeTenancyForProperty(property.id);
 
-                  const occupied = Boolean(tenancy);
+  const propertyUnits =
+    unitsForProperty(property.id);
 
-                  return (
+  const multiFamily = isMultiFamily(property);
+
+  const occupiedUnits = propertyUnits.filter(
+    unit => unit.status === 'occupied'
+  ).length;
+
+  const occupied = multiFamily
+    ? occupiedUnits > 0
+    : Boolean(tenancy);
+
+  return (
                     <article
                       className="portfolioPropertyCard"
                       key={property.id}
@@ -1306,7 +1338,13 @@ async function createAnnouncement(e) {
 
                       <div className="portfolioCardContent">
                         <div className="portfolioCardAddress">
-                          <small>RENTAL PROPERTY</small>
+                         <small>
+  {multiFamily
+    ? `${property.property_type
+        ?.replace('_', ' ')
+        .toUpperCase()} • ${property.total_units} UNITS`
+    : 'RENTAL PROPERTY'}
+</small>
                           <h2>{property.address}</h2>
 
                           <p>
@@ -1334,12 +1372,14 @@ async function createAnnouncement(e) {
                             <small>TENANT</small>
 
                             <b>
-                              {tenancy
-                                ? tenancy.tenant_name ||
-                                  tenancy.tenant_email ||
-                                  'Active tenant'
-                                : 'No tenant'}
-                            </b>
+  {multiFamily
+    ? `${occupiedUnits} of ${property.total_units} occupied`
+    : tenancy
+      ? tenancy.tenant_name ||
+        tenancy.tenant_email ||
+        'Active tenant'
+      : 'No tenant'}
+</b>
                           </div>
 
                           <div>
@@ -1359,11 +1399,13 @@ async function createAnnouncement(e) {
                         </div>
 
                         <div className="portfolioCardFooter">
-                          <span>
-                            {occupied
-                              ? 'Tenant assigned'
-                              : 'Ready for tenant'}
-                          </span>
+                         <span>
+  {multiFamily
+    ? `${propertyUnits.length} units • ${occupiedUnits} occupied`
+    : occupied
+      ? 'Tenant assigned'
+      : 'Ready for tenant'}
+</span>
 
                           <button type="button">
                             View Property →
@@ -1545,7 +1587,92 @@ async function createAnnouncement(e) {
               </article>
             </div>
 
-            <div className="commandMainGrid">
+            {isMultiFamily(selectedProperty) && (
+  <section className="commandCard propertyUnitsCard">
+    <div className="commandCardHeader">
+      <div>
+        <span className="commandSectionIcon">▦</span>
+
+        <div>
+          <h2>Units</h2>
+          <p>
+            {selectedProperty.total_units} units at this property
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="commandSecondaryButton"
+      >
+        + Add Unit
+      </button>
+    </div>
+
+    <div className="propertyUnitsGrid">
+      {unitsForProperty(selectedProperty.id).map(unit => {
+        const unitTenancy = tenancies.find(
+          tenancy =>
+            tenancy.unit_id === unit.id &&
+            tenancy.status === 'active'
+        );
+
+        return (
+          <article
+            className="propertyUnitCard"
+            key={unit.id}
+          >
+            <div className="propertyUnitTop">
+              <div className="propertyUnitIcon">⌂</div>
+
+              <span
+                className={
+                  unitTenancy
+                    ? 'portfolioOccupancy occupied'
+                    : 'portfolioOccupancy vacant'
+                }
+              >
+                <i></i>
+                {unitTenancy ? 'Occupied' : 'Vacant'}
+              </span>
+            </div>
+
+            <div className="propertyUnitBody">
+              <small>UNIT</small>
+              <h3>{unit.unit_name}</h3>
+
+              <div className="propertyUnitDetails">
+                <div>
+                  <span>MONTHLY RENT</span>
+                  <b>
+                    $
+                    {Number(
+                      unitTenancy?.monthly_rent ||
+                        unit.market_rent ||
+                        0
+                    ).toLocaleString()}
+                  </b>
+                </div>
+
+                <div>
+                  <span>TENANT</span>
+                  <b>
+                    {unitTenancy
+                      ? unitTenancy.tenant_name ||
+                        unitTenancy.tenant_email ||
+                        'Active tenant'
+                      : 'No tenant'}
+                  </b>
+                </div>
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+)}
+                    <div className="commandMainGrid">
               <div className="commandMainColumn">
                 <section className="commandCard">
                   <div className="commandCardHeader">
