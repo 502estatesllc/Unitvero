@@ -1278,7 +1278,7 @@ function isMultiFamily(property) {
                   </div>
                 </div>
               </section>
-            </div>
+           
 
             <div className="dashboardBottomGrid">
               <section className="dashboardFeatureCard">
