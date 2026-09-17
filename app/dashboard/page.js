@@ -290,12 +290,13 @@ export default function Dashboard() {
   id="editRent"
 />  
     <button
+onClick={saveProperty}
   type="button"
   className="primary"
 >
   Save Changes
 </button>
-      onClick={saveProperty}
+    
   </section>
 )}  
 {view === 'tenants' && (
