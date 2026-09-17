@@ -1475,19 +1475,84 @@ const r = useRouter();
                     </div>
                   </div>
 
-                  <div className="commandLedgerEmpty">
-                    <span>$</span>
+                  {selectedPropertyCharges.length === 0 &&
+selectedPropertyPayments.length === 0 ? (
+  <div className="commandLedgerEmpty">
+    <span>$</span>
 
-                    <div>
-                      <b>No payment activity yet</b>
+    <div>
+      <b>No ledger activity yet</b>
 
-                      <p>
-                        Charges, rent payments, credits and late
-                        fees will appear here once the Rentwise
-                        ledger is connected.
-                      </p>
-                    </div>
-                  </div>
+      <p>
+        Charges and rent payments will appear here
+        as activity is recorded.
+      </p>
+    </div>
+  </div>
+) : (
+  <div className="commandLedgerList">
+    {selectedPropertyCharges.map(charge => (
+      <div
+        className="commandLedgerRow"
+        key={`charge-${charge.id}`}
+      >
+        <div className="commandLedgerType charge">$</div>
+
+        <div className="commandLedgerDescription">
+          <b>{charge.description || 'Rent charge'}</b>
+
+          <span>
+            Due{' '}
+            {new Date(
+              charge.due_date + 'T00:00:00'
+            ).toLocaleDateString()}
+          </span>
+        </div>
+
+        <span
+          className={`commandLedgerStatus ${charge.status}`}
+        >
+          {charge.status}
+        </span>
+
+        <b className="commandLedgerAmount charge">
+          ${Number(charge.amount || 0).toLocaleString()}
+        </b>
+      </div>
+    ))}
+
+    {selectedPropertyPayments.map(payment => (
+      <div
+        className="commandLedgerRow"
+        key={`payment-${payment.id}`}
+      >
+        <div className="commandLedgerType payment">✓</div>
+
+        <div className="commandLedgerDescription">
+          <b>Rent payment</b>
+
+          <span>
+            {new Date(
+              payment.payment_date + 'T00:00:00'
+            ).toLocaleDateString()}
+            {' · '}
+            {payment.payment_method || 'manual'}
+          </span>
+        </div>
+
+        <span
+          className={`commandLedgerStatus ${payment.status}`}
+        >
+          {payment.status}
+        </span>
+
+        <b className="commandLedgerAmount payment">
+          -${Number(payment.amount || 0).toLocaleString()}
+        </b>
+      </div>
+    ))}
+  </div>
+)}
                 </section>
               </div>
 
