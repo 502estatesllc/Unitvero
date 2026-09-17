@@ -5780,13 +5780,77 @@ return (
           </p>
         </div>
 
-        <button
-          type="button"
-          className="primary"
-          onClick={() => setShowRecordPayment(true)}
-        >
-          + Record Payment
-        </button>
+        <div
+  style={{
+    display: 'flex',
+    gap: '10px',
+    alignItems: 'center'
+  }}
+>
+  <button
+    type="button"
+    className="commandSecondaryButton"
+    onClick={async () => {
+      const today = new Date();
+
+      const dueDate =
+        today.getFullYear() +
+        '-' +
+        String(today.getMonth() + 1).padStart(2, '0') +
+        '-01';
+
+      const confirmed = window.confirm(
+        `Generate monthly rent charges for ${today.toLocaleString(
+          'default',
+          { month: 'long', year: 'numeric' }
+        )}?`
+      );
+
+      if (!confirmed) return;
+
+      const s = supabase();
+
+      const { data, error } = await s.rpc(
+        'generate_monthly_rent_charges',
+        {
+          p_due_date: dueDate
+        }
+      );
+
+      if (error) {
+        alert(
+          'Could not generate rent charges: ' +
+            error.message
+        );
+        return;
+      }
+
+      await load();
+
+      if (data === 0) {
+        alert(
+          'No new charges were created. This month may already be generated.'
+        );
+      } else {
+        alert(
+          `${data} monthly rent ${
+            data === 1 ? 'charge' : 'charges'
+          } created successfully!`
+        );
+      }
+    }}
+  >
+    Generate Monthly Charges
+  </button>
+
+  <button
+    type="button"
+    className="primary"
+    onClick={() => setShowRecordPayment(true)}
+  >
+    + Record Payment
+  </button>
+</div>
       </div>
 
       <div className="commandStats">
