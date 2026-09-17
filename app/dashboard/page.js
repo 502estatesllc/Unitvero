@@ -11,13 +11,14 @@ export default function Dashboard() {
   const [view, setView] = useState('overview');
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedTenancy, setSelectedTenancy] = useState(null);
-const [tenancies, setTenancies] = useState([]);
-const [editingTenancy, setEditingTenancy] = useState(null);
-const [applications, setApplications] = useState([]);
-    const [showApplicationForm, setShowApplicationForm] = useState(false);
-const [selectedApplication, setSelectedApplication] = useState(null);
+  const [tenancies, setTenancies] = useState([]);
+  const [editingTenancy, setEditingTenancy] = useState(null);
+  const [applications, setApplications] = useState([]);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+
   const r = useRouter();
-  
+
   async function load() {
     const s = supabase();
 
@@ -57,6 +58,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
     }
 
     setProps(properties || []);
+
     const { data: applicationData, error: applicationError } = await s
       .from('rental_applications')
       .select('*')
@@ -68,6 +70,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
     } else {
       setApplications(applicationData || []);
     }
+
     const propertyIds = (properties || []).map(property => property.id);
 
     if (propertyIds.length === 0) {
@@ -294,13 +297,28 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             <span className="navIcon">▤</span>
             <span>Leases</span>
           </a>
-            <a
-  className={view === 'applications' ? 'active' : ''}
-  onClick={() => setView('applications')}
->
-  <span className="navIcon">▣</span>
-  <span>Applications</span>
-</a>
+
+          <a
+            className={
+              view === 'applications' ||
+              view === 'newApplication' ||
+              view === 'applicationDetails'
+                ? 'active'
+                : ''
+            }
+            onClick={() => setView('applications')}
+          >
+            <span className="navIcon">▣</span>
+            <span>Applications</span>
+          </a>
+
+          <a
+            className={view === 'documents' ? 'active' : ''}
+            onClick={() => setView('documents')}
+          >
+            <span className="navIcon">▧</span>
+            <span>Documents</span>
+          </a>
 
           <a
             className={view === 'maintenance' ? 'active' : ''}
@@ -397,6 +415,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 <small>THIS MONTH</small>
               </article>
             </div>
+
             <div className="dashboardContentGrid">
               <section className="propertiesShowcase">
                 <div className="showcaseHeader">
@@ -501,6 +520,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                               }
 
                               await load();
+
                               alert(
                                 'Property photo updated successfully!'
                               );
@@ -579,7 +599,6 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 </div>
               </section>
             </div>
-
             <div className="dashboardBottomGrid">
               <section className="dashboardFeatureCard">
                 <div className="featureCardHeader">
@@ -659,6 +678,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             <section className="portfolioBanner">
               <div>
                 <span className="bannerIcon">⌂</span>
+
                 <div>
                   <h2>Grow Your Portfolio</h2>
                   <p>
@@ -702,7 +722,9 @@ const [selectedApplication, setSelectedApplication] = useState(null);
               </form>
             )}
 
-            {props.length === 0 && <p>No properties added yet.</p>}
+            {props.length === 0 && (
+              <p>No properties added yet.</p>
+            )}
 
             {props.map(p => (
               <div
@@ -716,6 +738,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 style={{ cursor: 'pointer' }}
               >
                 <b>{p.address}</b>
+
                 <span>
                   {p.city}, {p.state} {p.zip_code}
                 </span>
@@ -778,30 +801,30 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             <div className="propertyDetailsStats">
               <article>
                 <span>Monthly Rent</span>
+
                 <b>
                   $
                   {Number(
                     selectedProperty.monthly_rent || 0
                   ).toLocaleString()}
                 </b>
+
                 <small>EXPECTED PER MONTH</small>
               </article>
 
               <article>
                 <span>Occupancy</span>
-                <b>
-                  {selectedTenancy ? 'Occupied' : 'Vacant'}
-                </b>
-                <small>
-                  {selectedTenancy
-                    ? 'ACTIVE TENANT'
-                    : 'NO TENANT ASSIGNED'}
-                </small>
+                <b>{selectedTenancy ? 'Occupied' : 'Vacant'}</b>
+                <small>CURRENT STATUS</small>
               </article>
 
               <article>
-                <span>Lease</span>
-                <b>{selectedTenancy ? 'Active' : '—'}</b>
+                <span>Tenant</span>
+                <b>
+                  {selectedTenancy
+                    ? selectedTenancy.tenant_name || 'Active'
+                    : 'None'}
+                </b>
                 <small>
                   {selectedTenancy
                     ? 'ACTIVE LEASE'
@@ -910,6 +933,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             </div>
           </section>
         )}
+
         {view === 'editProperty' && selectedProperty && (
           <section className="panel">
             <button
@@ -921,7 +945,10 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
             <small>EDIT PROPERTY</small>
             <h1>{selectedProperty.address}</h1>
-            <p>Update the rental information for this property.</p>
+
+            <p>
+              Update the rental information for this property.
+            </p>
 
             <div className="add">
               <input
@@ -929,7 +956,9 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 type="number"
                 min="0"
                 step="0.01"
-                defaultValue={selectedProperty.monthly_rent || 0}
+                defaultValue={
+                  selectedProperty.monthly_rent || 0
+                }
                 placeholder="Monthly rent"
               />
 
@@ -957,8 +986,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             <h1>Add Tenant</h1>
 
             <p>
-              Add a tenant to {selectedProperty.address} and create
-              their invitation.
+              Add a tenant to {selectedProperty.address} and
+              create their invitation.
             </p>
 
             <form
@@ -977,7 +1006,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 if (userError || !user) {
                   alert(
                     'Authentication error: ' +
-                      (userError?.message || 'No user found')
+                      (userError?.message ||
+                        'No user found')
                   );
                   return;
                 }
@@ -996,7 +1026,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 );
 
                 const startDate = form.startDate.value;
-                const endDate = form.endDate.value || null;
+                const endDate =
+                  form.endDate.value || null;
 
                 if (endDate && endDate < startDate) {
                   alert(
@@ -1005,9 +1036,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                   return;
                 }
 
-                const { error: tenancyError } = await s
-                  .from('tenancies')
-                  .insert({
+                const { error: tenancyError } =
+                  await s.from('tenancies').insert({
                     property_id: selectedProperty.id,
                     tenant_email: tenantEmail,
                     tenant_name: tenantName,
@@ -1026,9 +1056,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                   return;
                 }
 
-                const { error: invitationError } = await s
-                  .from('invitations')
-                  .insert({
+                const { error: invitationError } =
+                  await s.from('invitations').insert({
                     landlord_id: user.id,
                     property_id: selectedProperty.id,
                     email: tenantEmail,
@@ -1041,7 +1070,10 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                       invitationError.message
                   );
 
-                  await loadTenancy(selectedProperty.id);
+                  await loadTenancy(
+                    selectedProperty.id
+                  );
+
                   await load();
                   setView('propertyDetails');
                   return;
@@ -1055,7 +1087,10 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 form.reset();
 
-                await loadTenancy(selectedProperty.id);
+                await loadTenancy(
+                  selectedProperty.id
+                );
+
                 await load();
 
                 setView('propertyDetails');
@@ -1064,6 +1099,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
               <div className="tenantFormGrid">
                 <label>
                   Full Name
+
                   <input
                     name="tenantName"
                     type="text"
@@ -1074,6 +1110,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 <label>
                   Email Address
+
                   <input
                     name="tenantEmail"
                     type="email"
@@ -1084,6 +1121,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 <label>
                   Phone Number
+
                   <input
                     name="tenantPhone"
                     type="tel"
@@ -1093,6 +1131,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 <label>
                   Monthly Rent
+
                   <input
                     name="monthlyRent"
                     type="number"
@@ -1107,6 +1146,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 <label>
                   Lease Start Date
+
                   <input
                     name="startDate"
                     type="date"
@@ -1116,6 +1156,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
 
                 <label>
                   Lease End Date
+
                   <input
                     name="endDate"
                     type="date"
@@ -1126,7 +1167,9 @@ const [selectedApplication, setSelectedApplication] = useState(null);
               <div className="tenantFormActions">
                 <button
                   type="button"
-                  onClick={() => setView('propertyDetails')}
+                  onClick={() =>
+                    setView('propertyDetails')
+                  }
                 >
                   Cancel
                 </button>
@@ -1141,255 +1184,85 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             </form>
           </section>
         )}
-
         {view === 'tenants' && (
-  <section className="panel tenantsPage">
-    <div className="dashboardHeader">
-      <div>
-        <small>TENANT MANAGEMENT</small>
-        <h1>Tenants</h1>
-        <p className="dashboardSubtitle">
-          Manage tenants, leases, rent, and occupancy across your portfolio.
-        </p>
-      </div>
-    </div>
+          <section className="panel">
+            <div className="dashboardHeader">
+              <div>
+                <small>TENANT MANAGEMENT</small>
+                <h1>Tenants</h1>
+                <p className="dashboardSubtitle">
+                  Manage active tenants across your rental portfolio.
+                </p>
+              </div>
+            </div>
 
-    <div className="tenantSummaryGrid">
-      <article className="tenantSummaryCard">
-        <div className="tenantSummaryIcon">♙</div>
-        <div>
-          <span>Total Tenants</span>
-          <b>{tenancies.length}</b>
-          <small>ALL TENANTS</small>
-        </div>
-      </article>
+            <div className="activityList">
+              {tenancies.length === 0 && (
+                <div className="featureEmpty">
+                  <div className="featureEmptyIcon">♙</div>
+                  <b>No tenants yet</b>
+                  <span>
+                    Add a tenant from one of your property pages.
+                  </span>
+                </div>
+              )}
 
-      <article className="tenantSummaryCard">
-        <div className="tenantSummaryIcon">✓</div>
-        <div>
-          <span>Active Tenants</span>
-          <b>
-            {
-              tenancies.filter(
-                tenancy => tenancy.status === 'active'
-              ).length
-            }
-          </b>
-          <small>CURRENTLY ACTIVE</small>
-        </div>
-      </article>
+              {tenancies.map(tenancy => {
+                const property = props.find(
+                  p => p.id === tenancy.property_id
+                );
 
-      <article className="tenantSummaryCard">
-        <div className="tenantSummaryIcon">⌂</div>
-        <div>
-          <span>Occupied Properties</span>
-          <b>
-            {
-              new Set(
-                tenancies
-                  .filter(tenancy => tenancy.status === 'active')
-                  .map(tenancy => tenancy.property_id)
-              ).size
-            }
-          </b>
-          <small>OF {props.length} PROPERTIES</small>
-        </div>
-      </article>
-
-      <article className="tenantSummaryCard">
-        <div className="tenantSummaryIcon">$</div>
-        <div>
-          <span>Monthly Rent</span>
-          <b>
-            $
-            {tenancies
-              .filter(tenancy => tenancy.status === 'active')
-              .reduce(
-                (total, tenancy) =>
-                  total + Number(tenancy.monthly_rent || 0),
-                0
-              )
-              .toLocaleString()}
-          </b>
-          <small>ACTIVE TENANCIES</small>
-        </div>
-      </article>
-    </div>
-
-    <section className="tenantDirectory">
-      <div className="tenantDirectoryHeader">
-        <div>
-          <h2>Tenant Directory</h2>
-          <p>
-            Contact information, property assignment, rent and lease details.
-          </p>
-        </div>
-
-        <span className="tenantCount">
-          {tenancies.length}{' '}
-          {tenancies.length === 1 ? 'tenant' : 'tenants'}
-        </span>
-      </div>
-
-      {tenancies.length === 0 ? (
-        <div className="tenantEmptyState">
-          <div className="tenantEmptyIcon">♙</div>
-          <h3>No tenants yet</h3>
-          <p>
-            Open one of your properties and add a tenant to begin
-            managing their lease and rent information.
-          </p>
-
-          <button
-            type="button"
-            className="primary"
-            onClick={() => setView('properties')}
-          >
-            View Properties
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="tenantTableHeader">
-            <span>Tenant</span>
-            <span>Property</span>
-            <span>Monthly Rent</span>
-            <span>Lease Term</span>
-            <span>Status</span>
-            <span>Actions</span>
-          </div>
-
-          <div className="tenantRows">
-            {tenancies.map(tenancy => {
-              const property = props.find(
-                p => p.id === tenancy.property_id
-              );
-
-              const initials = (
-                tenancy.tenant_name ||
-                tenancy.tenant_email ||
-                'T'
-              )
-                .split(' ')
-                .map(part => part.charAt(0))
-                .join('')
-                .slice(0, 2)
-                .toUpperCase();
-
-              return (
-                <div className="tenantTableRow" key={tenancy.id}>
-                  <div className="tenantIdentity">
-                    <div className="tenantAvatar">
-                      {initials}
-                    </div>
+                return (
+                  <div className="activityRow" key={tenancy.id}>
+                    <div className="activityTypeIcon">♙</div>
 
                     <div>
                       <b>
                         {tenancy.tenant_name ||
-                          tenancy.tenant_email}
+                          tenancy.tenant_email ||
+                          'Tenant'}
                       </b>
+
+                      <span>
+                        {property?.address || 'Property'}
+                      </span>
 
                       <span>{tenancy.tenant_email}</span>
 
-                      {tenancy.tenant_phone && (
-                        <small>{tenancy.tenant_phone}</small>
-                      )}
+                      <span>
+                        $
+                        {Number(
+                          tenancy.monthly_rent || 0
+                        ).toLocaleString()}{' '}
+                        / month
+                      </span>
                     </div>
-                  </div>
 
-                  <div className="tenantPropertyCell">
-                    <b>
-                      {property?.address || 'Property'}
-                    </b>
+                    <div>
+                      <small>
+                        {tenancy.status || 'active'}
+                      </small>
 
-                    <span>
-                      {property
-                        ? `${property.city}, ${property.state} ${property.zip_code}`
-                        : 'Property information unavailable'}
-                    </span>
-                  </div>
-
-                  <div className="tenantRentCell">
-                    <b>
-                      $
-                      {Number(
-                        tenancy.monthly_rent || 0
-                      ).toLocaleString()}
-                    </b>
-                    <span>per month</span>
-                  </div>
-
-                  <div className="tenantLeaseCell">
-                    <b>
-                      {tenancy.start_date
-                        ? new Date(
-                            tenancy.start_date + 'T00:00:00'
-                          ).toLocaleDateString()
-                        : '—'}
-                    </b>
-
-                    <span>
-                      to{' '}
-                      {tenancy.end_date
-                        ? new Date(
-                            tenancy.end_date + 'T00:00:00'
-                          ).toLocaleDateString()
-                        : 'No end date'}
-                    </span>
-                  </div>
-
-                  <div className="tenantStatusCell">
-                    <span
-                      className={
-                        tenancy.status === 'active'
-                          ? 'tenantStatus active'
-                          : 'tenantStatus'
-                      }
-                    >
-                      <i></i>
-                      {tenancy.status === 'active'
-                        ? 'Active'
-                        : tenancy.status || 'Inactive'}
-                    </span>
-                  </div>
-
-                  <div className="tenantActionsCell">
-                    <button
-                      type="button"
-                      className="tenantEditButton"
-                      onClick={() => {
-                        setEditingTenancy(tenancy);
-                        setView('editTenant');
-                      }}
-                    >
-                      Edit
-                    </button>
-
-                    {property && (
                       <button
                         type="button"
-                        className="tenantPropertyButton"
+                        className="viewAllButton"
                         onClick={() => {
-                          setSelectedProperty(property);
-                          loadTenancy(property.id);
-                          setView('propertyDetails');
+                          setEditingTenancy(tenancy);
+                          setView('editTenant');
                         }}
                       >
-                        Property
+                        Edit
                       </button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </section>
-  </section>
-)}
-    {view === 'editTenant' && editingTenancy && (     
-  <section className="panel">
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {view === 'editTenant' && editingTenancy && (
+          <section className="panel">
             <button
               type="button"
               onClick={() => setView('tenants')}
@@ -1405,7 +1278,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
             </h1>
 
             <p>
-              Update tenant contact, rent, and lease information.
+              Update tenant and lease information.
             </p>
 
             <form
@@ -1445,7 +1318,6 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     defaultValue={
                       editingTenancy.tenant_phone || ''
                     }
-                    placeholder="(502) 555-1234"
                   />
                 </label>
 
@@ -1457,7 +1329,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     min="0"
                     step="0.01"
                     defaultValue={
-                      editingTenancy.monthly_rent || ''
+                      editingTenancy.monthly_rent || 0
                     }
                     required
                   />
@@ -1499,349 +1371,201 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                   type="submit"
                   className="primary"
                 >
-                  Save Tenant Changes
+                  Save Tenant
                 </button>
               </div>
             </form>
           </section>
         )}
 
-        {view === 'rent' && (
-          <section className="panel">
-            <h1>Rent</h1>
-            <p>Rent collection is coming next.</p>
-          </section>
-        )}
-
         {view === 'leases' && (
-  <section className="panel leasesPage">
-    <div className="dashboardHeader">
-      <div>
-        <small>LEASE MANAGEMENT</small>
-        <h1>Leases</h1>
-        <p className="dashboardSubtitle">
-          Track active agreements, lease terms, rent, and upcoming expirations.
-        </p>
-      </div>
-    </div>
+          <section className="panel">
+            <div className="dashboardHeader">
+              <div>
+                <small>LEASE MANAGEMENT</small>
+                <h1>Leases</h1>
+                <p className="dashboardSubtitle">
+                  Review active rental agreements and lease dates.
+                </p>
+              </div>
+            </div>
 
-    <div className="leaseSummaryGrid">
-      <article className="leaseSummaryCard">
-        <div className="leaseSummaryIcon">▤</div>
-        <div>
-          <span>Total Leases</span>
-          <b>{tenancies.length}</b>
-          <small>ALL AGREEMENTS</small>
-        </div>
-      </article>
+            <div className="activityList">
+              {tenancies.length === 0 && (
+                <div className="featureEmpty">
+                  <div className="featureEmptyIcon">▤</div>
+                  <b>No active leases</b>
+                  <span>
+                    Lease information will appear after a tenant is
+                    added.
+                  </span>
+                </div>
+              )}
 
-      <article className="leaseSummaryCard">
-        <div className="leaseSummaryIcon">✓</div>
-        <div>
-          <span>Active Leases</span>
-          <b>
-            {
-              tenancies.filter(
-                tenancy => tenancy.status === 'active'
-              ).length
-            }
-          </b>
-          <small>CURRENT AGREEMENTS</small>
-        </div>
-      </article>
+              {tenancies.map(tenancy => {
+                const property = props.find(
+                  p => p.id === tenancy.property_id
+                );
 
-      <article className="leaseSummaryCard">
-        <div className="leaseSummaryIcon">⌂</div>
-        <div>
-          <span>Leased Properties</span>
-          <b>
-            {
-              new Set(
-                tenancies
-                  .filter(tenancy => tenancy.status === 'active')
-                  .map(tenancy => tenancy.property_id)
-              ).size
-            }
-          </b>
-          <small>OF {props.length} PROPERTIES</small>
-        </div>
-      </article>
-
-      <article className="leaseSummaryCard">
-        <div className="leaseSummaryIcon">$</div>
-        <div>
-          <span>Monthly Lease Value</span>
-          <b>
-            $
-            {tenancies
-              .filter(tenancy => tenancy.status === 'active')
-              .reduce(
-                (total, tenancy) =>
-                  total + Number(tenancy.monthly_rent || 0),
-                0
-              )
-              .toLocaleString()}
-          </b>
-          <small>ACTIVE RENT</small>
-        </div>
-      </article>
-    </div>
-
-    <section className="leaseDirectory">
-      <div className="leaseDirectoryHeader">
-        <div>
-          <h2>Lease Directory</h2>
-          <p>
-            Review tenants, properties, rent amounts, and agreement dates.
-          </p>
-        </div>
-
-        <span className="leaseCount">
-          {tenancies.length}{' '}
-          {tenancies.length === 1 ? 'lease' : 'leases'}
-        </span>
-      </div>
-
-      {tenancies.length === 0 ? (
-        <div className="leaseEmptyState">
-          <div className="leaseEmptyIcon">▤</div>
-
-          <h3>No leases yet</h3>
-
-          <p>
-            Lease information will appear here after a tenant is
-            assigned to a property.
-          </p>
-
-          <button
-            type="button"
-            className="primary"
-            onClick={() => setView('properties')}
-          >
-            View Properties
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="leaseTableHeader">
-            <span>Property</span>
-            <span>Tenant</span>
-            <span>Monthly Rent</span>
-            <span>Start Date</span>
-            <span>End Date</span>
-            <span>Status</span>
-            <span>Actions</span>
-          </div>
-
-          <div className="leaseRows">
-            {tenancies.map(tenancy => {
-              const property = props.find(
-                p => p.id === tenancy.property_id
-              );
-
-              return (
-                <div
-                  className="leaseTableRow"
-                  key={tenancy.id}
-                >
-                  <div className="leasePropertyCell">
-                    <div className="leasePropertyIcon">⌂</div>
+                return (
+                  <div
+                    className="activityRow"
+                    key={tenancy.id}
+                  >
+                    <div className="activityTypeIcon">▤</div>
 
                     <div>
                       <b>
-                        {property?.address || 'Property'}
+                        {tenancy.tenant_name ||
+                          tenancy.tenant_email}
                       </b>
 
                       <span>
-                        {property
-                          ? `${property.city}, ${property.state} ${property.zip_code}`
-                          : 'Property information unavailable'}
+                        {property?.address || 'Property'}
+                      </span>
+
+                      <span>
+                        {tenancy.start_date
+                          ? new Date(
+                              tenancy.start_date +
+                                'T00:00:00'
+                            ).toLocaleDateString()
+                          : 'No start date'}
+                        {' – '}
+                        {tenancy.end_date
+                          ? new Date(
+                              tenancy.end_date +
+                                'T00:00:00'
+                            ).toLocaleDateString()
+                          : 'Open ended'}
+                      </span>
+
+                      <span>
+                        $
+                        {Number(
+                          tenancy.monthly_rent || 0
+                        ).toLocaleString()}{' '}
+                        / month
                       </span>
                     </div>
+
+                    <div>
+                      <small>
+                        {tenancy.status || 'active'}
+                      </small>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-                  <div className="leaseTenantCell">
-                    <b>
-                      {tenancy.tenant_name ||
-                        tenancy.tenant_email}
-                    </b>
-
-                    <span>{tenancy.tenant_email}</span>
-                  </div>
-
-                  <div className="leaseRentCell">
-                    <b>
-                      $
-                      {Number(
-                        tenancy.monthly_rent || 0
-                      ).toLocaleString()}
-                    </b>
-
-                    <span>per month</span>
-                  </div>
-
-                  <div className="leaseDateCell">
-                    <b>
-                      {tenancy.start_date
-                        ? new Date(
-                            tenancy.start_date +
-                              'T00:00:00'
-                          ).toLocaleDateString()
-                        : '—'}
-                    </b>
-
-                    <span>Lease begins</span>
-                  </div>
-
-                  <div className="leaseDateCell">
-                    <b>
-                      {tenancy.end_date
-                        ? new Date(
-                            tenancy.end_date +
-                              'T00:00:00'
-                          ).toLocaleDateString()
-                        : 'Open'}
-                    </b>
-
-                    <span>
-                      {tenancy.end_date
-                        ? 'Lease expires'
-                        : 'No end date'}
-                    </span>
-                  </div>
-
-                  <div className="leaseStatusCell">
-                    <span
-                      className={
-                        tenancy.status === 'active'
-                          ? 'leaseStatus active'
-                          : 'leaseStatus'
-                      }
-                    >
-                      <i></i>
-
-                      {tenancy.status === 'active'
-                        ? 'Active'
-                        : tenancy.status || 'Inactive'}
-                    </span>
-                  </div>
-
-                  <div className="leaseActionsCell">
-                    <button
-                      type="button"
-                      className="tenantEditButton"
-                      onClick={() => {
-                        setEditingTenancy(tenancy);
-                        setView('editTenant');
-                      }}
-                    >
-                      Edit
-                    </button>
-
-                    {property && (
-                      <button
-                        type="button"
-                        className="tenantPropertyButton"
-                        onClick={() => {
-                          setSelectedProperty(property);
-                          loadTenancy(property.id);
-                          setView('propertyDetails');
-                        }}
-                      >
-                        Property
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </section>
-  </section>
-)}
-         {view === 'applications' && (
+        {view === 'applications' && (
           <section className="applicationsPage">
-
-            <div className="applicationsHeader">
+            <div className="dashboardHeader applicationsHeader">
               <div>
-                <small>APPLICANT MANAGEMENT</small>
+                <small>LEASING PIPELINE</small>
                 <h1>Applications</h1>
-                <p>
-                  Manage rental applications, applicant information,
-                  and tenant screening from one place.
+
+                <p className="dashboardSubtitle">
+                  Review applicants, request tenant screening and
+                  make leasing decisions.
                 </p>
               </div>
 
               <button
                 type="button"
                 className="primary"
-                onClick={() => setView('newApplication')}
+                onClick={() => {
+                  setShowApplicationForm(true);
+                  setView('newApplication');
+                }}
               >
                 + New Application
               </button>
             </div>
 
             <div className="applicationStats">
-
               <article>
-                <span>Total Applications</span>
-                <b>{applications.length}</b>
-                <small>ALL APPLICATIONS</small>
+                <div className="applicationStatIcon">▣</div>
+
+                <div>
+                  <span>Total Applications</span>
+                  <b>{applications.length}</b>
+                  <small>ALL APPLICANTS</small>
+                </div>
               </article>
 
               <article>
-                <span>New</span>
-                <b>
-                  {
-                    applications.filter(
-                      a => a.application_status === 'new'
-                    ).length
-                  }
-                </b>
-                <small>NEEDS REVIEW</small>
+                <div className="applicationStatIcon new">+</div>
+
+                <div>
+                  <span>New</span>
+                  <b>
+                    {
+                      applications.filter(
+                        application =>
+                          application.application_status === 'new'
+                      ).length
+                    }
+                  </b>
+                  <small>NEEDS REVIEW</small>
+                </div>
               </article>
 
               <article>
-                <span>Screening</span>
-                <b>
-                  {
-                    applications.filter(
-                      a =>
-                        a.screening_status === 'requested' ||
-                        a.screening_status === 'in_progress'
-                    ).length
-                  }
-                </b>
-                <small>SCREENING</small>
+                <div className="applicationStatIcon screening">
+                  ◉
+                </div>
+
+                <div>
+                  <span>Screening</span>
+                  <b>
+                    {
+                      applications.filter(
+                        application =>
+                          application.application_status ===
+                          'screening'
+                      ).length
+                    }
+                  </b>
+                  <small>IN PROGRESS</small>
+                </div>
               </article>
 
               <article>
-                <span>Approved</span>
-                <b>
-                  {
-                    applications.filter(
-                      a => a.application_status === 'approved'
-                    ).length
-                  }
-                </b>
-                <small>APPROVED</small>
-              </article>
+                <div className="applicationStatIcon approved">
+                  ✓
+                </div>
 
+                <div>
+                  <span>Approved</span>
+                  <b>
+                    {
+                      applications.filter(
+                        application =>
+                          application.application_status ===
+                          'approved'
+                      ).length
+                    }
+                  </b>
+                  <small>READY FOR LEASE</small>
+                </div>
+              </article>
             </div>
 
-            <section className="applicationsDirectory">
-
-              <div className="applicationsDirectoryHeader">
+            <section className="applicationDirectory">
+              <div className="applicationDirectoryHeader">
                 <div>
                   <h2>Rental Applications</h2>
                   <p>
-                    Review applicants and manage their screening process.
+                    Review applicant information and screening
+                    progress.
                   </p>
                 </div>
 
-                <span>
+                <span className="applicationCount">
                   {applications.length}{' '}
                   {applications.length === 1
                     ? 'application'
@@ -1850,67 +1574,60 @@ const [selectedApplication, setSelectedApplication] = useState(null);
               </div>
 
               {applications.length === 0 ? (
-
-                <div className="applicationsEmpty">
-
-                  <div className="applicationsEmptyIcon">
-                    ▣
-                  </div>
+                <div className="applicationEmpty">
+                  <div className="applicationEmptyIcon">▣</div>
 
                   <h3>No applications yet</h3>
 
                   <p>
-                    Create an application for a prospective tenant
-                    or send them an application link.
+                    Create an application to begin reviewing future
+                    tenants.
                   </p>
 
                   <button
                     type="button"
                     className="primary"
-                    onClick={() => setView('newApplication')}
+                    onClick={() => {
+                      setShowApplicationForm(true);
+                      setView('newApplication');
+                    }}
                   >
                     + Create Application
                   </button>
-
                 </div>
-
               ) : (
-
-                <div className="applicationsTable">
-
-                  <div className="applicationsTableHeader">
+                <div className="applicationTable">
+                  <div className="applicationTableHeader">
                     <span>Applicant</span>
                     <span>Property</span>
-                    <span>Income</span>
-                    <span>Application</span>
                     <span>Screening</span>
-                    <span>Action</span>
+                    <span>Status</span>
+                    <span>Submitted</span>
+                    <span></span>
                   </div>
 
                   {applications.map(application => {
-
                     const property = props.find(
                       p => p.id === application.property_id
                     );
 
+                    const status =
+                      application.application_status || 'new';
+
+                    const screeningStatus =
+                      application.screening_status ||
+                      'not_started';
+
                     return (
                       <div
-                        className="applicationRow"
+                        className="applicationTableRow"
                         key={application.id}
                       >
-
-                        <div className="applicationApplicant">
+                        <div className="applicationPerson">
                           <div className="applicationAvatar">
-                            {(
-                              application.applicant_name || 'A'
-                            )
-                              .split(' ')
-                              .map(part =>
-                                part.charAt(0)
-                              )
-                              .join('')
-                              .slice(0, 2)
-                              .toUpperCase()}
+                            {application.applicant_name
+                              ?.charAt(0)
+                              .toUpperCase() || 'A'}
                           </div>
 
                           <div>
@@ -1921,11 +1638,6 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                             <span>
                               {application.applicant_email}
                             </span>
-
-                            <small>
-                              {application.applicant_phone ||
-                                'No phone provided'}
-                            </small>
                           </div>
                         </div>
 
@@ -1938,108 +1650,77 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                           <span>
                             {property
                               ? `${property.city}, ${property.state}`
-                              : ''}
-                          </span>
-                        </div>
-
-                        <div className="applicationIncome">
-                          <b>
-                            {application.monthly_income
-                              ? '$' +
-                                Number(
-                                  application.monthly_income
-                                ).toLocaleString()
                               : '—'}
-                          </b>
-
-                          <span>
-                            Monthly income
                           </span>
                         </div>
 
-                        <div>
-                          <span
-                            className={
-                              'applicationStatus ' +
-                              application.application_status
-                            }
-                          >
-                            {application.application_status
-                              .replaceAll('_', ' ')}
-                          </span>
-                        </div>
+                        <span
+                          className={`applicationStatusBadge screening-${screeningStatus}`}
+                        >
+                          {screeningStatus
+                            .replaceAll('_', ' ')}
+                        </span>
 
-                        <div>
-                          <span
-                            className={
-                              'screeningStatus ' +
-                              application.screening_status
-                            }
-                          >
-                            {application.screening_status
-                              .replaceAll('_', ' ')}
-                          </span>
-                        </div>
+                        <span
+                          className={`applicationStatusBadge status-${status}`}
+                        >
+                          {status.replaceAll('_', ' ')}
+                        </span>
 
-                        <div className="applicationActions">
+                        <span className="applicationSubmitted">
+                          {application.created_at
+                            ? new Date(
+                                application.created_at
+                              ).toLocaleDateString()
+                            : '—'}
+                        </span>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedApplication(
-                                application
-                              );
-                              setView(
-                                'applicationDetails'
-                              );
-                            }}
-                          >
-                            Review
-                          </button>
-
-                        </div>
-
+                        <button
+                          type="button"
+                          className="applicationReviewButton"
+                          onClick={() => {
+                            setSelectedApplication(application);
+                            setView('applicationDetails');
+                          }}
+                        >
+                          Review →
+                        </button>
                       </div>
                     );
                   })}
-
                 </div>
-
               )}
-
             </section>
-
           </section>
         )}
 
         {view === 'newApplication' && (
           <section className="applicationFormPage">
-
             <button
               type="button"
-              className="applicationBackButton"
-              onClick={() =>
-                setView('applications')
-              }
+              className="propertyBackButton"
+              onClick={() => {
+                setShowApplicationForm(false);
+                setView('applications');
+              }}
             >
               ← Back to Applications
             </button>
 
-            <div className="applicationsHeader">
-              <div>
-                <small>NEW APPLICANT</small>
-                <h1>Rental Application</h1>
-                <p>
-                  Enter applicant information to begin the
-                  rental screening process.
-                </p>
-              </div>
+            <div className="applicationFormHeader">
+              <small>NEW RENTAL APPLICATION</small>
+              <h1>Create Application</h1>
+
+              <p>
+                Enter the applicant&apos;s rental information. Tenant
+                screening can be requested after the application is
+                created.
+              </p>
             </div>
 
             <form
-              className="applicationForm"
+              className="rentalApplicationForm"
               onSubmit={async e => {
-
                 e.preventDefault();
 
                 const form = e.currentTarget;
@@ -2053,127 +1734,156 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 if (userError || !user) {
                   alert(
                     'Authentication error: ' +
-                    (userError?.message ||
-                      'No user found')
+                      (userError?.message ||
+                        'No user found')
                   );
                   return;
                 }
 
-                const { error } = await s
+                const petValue =
+                  form.hasPets.value === 'yes';
+
+                const applicationRecord = {
+                  landlord_id: user.id,
+                  property_id:
+                    form.propertyId.value || null,
+
+                  applicant_name:
+                    form.applicantName.value.trim(),
+
+                  applicant_email:
+                    form.applicantEmail.value.trim(),
+
+                  applicant_phone:
+                    form.applicantPhone.value.trim() ||
+                    null,
+
+                  current_address:
+                    form.currentAddress.value.trim() ||
+                    null,
+
+                  current_city:
+                    form.currentCity.value.trim() ||
+                    null,
+
+                  current_state:
+                    form.currentState.value.trim() ||
+                    null,
+
+                  current_zip:
+                    form.currentZip.value.trim() ||
+                    null,
+
+                  employer_name:
+                    form.employerName.value.trim() ||
+                    null,
+
+                  job_title:
+                    form.jobTitle.value.trim() ||
+                    null,
+
+                  monthly_income:
+                    form.monthlyIncome.value
+                      ? Number(form.monthlyIncome.value)
+                      : null,
+
+                  current_landlord_name:
+                    form.currentLandlordName.value.trim() ||
+                    null,
+
+                  current_landlord_phone:
+                    form.currentLandlordPhone.value.trim() ||
+                    null,
+
+                  current_rent:
+                    form.currentRent.value
+                      ? Number(form.currentRent.value)
+                      : null,
+
+                  previous_address:
+                    form.previousAddress.value.trim() ||
+                    null,
+
+                  occupants_count:
+                    Number(form.occupantsCount.value || 1),
+
+                  occupants_details:
+                    form.occupantsDetails.value.trim() ||
+                    null,
+
+                  has_pets: petValue,
+
+                  pets_details: petValue
+                    ? form.petsDetails.value.trim() || null
+                    : null,
+
+                  vehicles_details:
+                    form.vehiclesDetails.value.trim() ||
+                    null,
+
+                  application_status: 'new',
+                  screening_status: 'not_started'
+                };
+
+                const { data, error } = await s
                   .from('rental_applications')
-                  .insert({
-                    landlord_id: user.id,
-
-                    property_id:
-                      form.propertyId.value || null,
-
-                    applicant_name:
-                      form.applicantName.value.trim(),
-
-                    applicant_email:
-                      form.applicantEmail.value.trim(),
-
-                    applicant_phone:
-                      form.applicantPhone.value.trim(),
-
-                    current_address:
-                      form.currentAddress.value.trim(),
-
-                    current_city:
-                      form.currentCity.value.trim(),
-
-                    current_state:
-                      form.currentState.value.trim(),
-
-                    current_zip:
-                      form.currentZip.value.trim(),
-
-                    employer_name:
-                      form.employerName.value.trim(),
-
-                    job_title:
-                      form.jobTitle.value.trim(),
-
-                    monthly_income:
-                      Number(form.monthlyIncome.value) || null,
-
-                    current_landlord_name:
-                      form.currentLandlordName.value.trim(),
-
-                    current_landlord_phone:
-                      form.currentLandlordPhone.value.trim(),
-
-                    current_rent:
-                      Number(form.currentRent.value) || null,
-
-                    previous_address:
-                      form.previousAddress.value.trim(),
-
-                    occupants_count:
-                      Number(form.occupantsCount.value) || 1,
-
-                    occupants_details:
-                      form.occupantsDetails.value.trim(),
-
-                    has_pets:
-                      form.hasPets.value === 'yes',
-
-                    pets_details:
-                      form.petsDetails.value.trim(),
-
-                    vehicles_details:
-                      form.vehiclesDetails.value.trim(),
-
-                    application_status: 'new',
-
-                    screening_status: 'not_started'
-                  });
+                  .insert(applicationRecord)
+                  .select()
+                  .single();
 
                 if (error) {
                   alert(
                     'Could not create application: ' +
-                    error.message
+                      error.message
                   );
                   return;
                 }
+
+                setApplications([
+                  data,
+                  ...applications
+                ]);
+
+                setSelectedApplication(data);
+                setShowApplicationForm(false);
 
                 alert(
                   'Rental application created successfully!'
                 );
 
-                await load();
-
-                setView('applications');
+                setView('applicationDetails');
               }}
             >
-
-              <section className="applicationFormSection">
-
+              <section className="applicationFormCard">
                 <div className="applicationFormSectionHeader">
-                  <h2>Applicant Information</h2>
-                  <p>
-                    Basic contact information for the applicant.
-                  </p>
+                  <span>01</span>
+
+                  <div>
+                    <h2>Applicant Information</h2>
+                    <p>
+                      Basic contact and current address information.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="applicationFormGrid">
-
                   <label>
-                    Full Name
+                    Full Name *
                     <input
                       name="applicantName"
-                      required
+                      type="text"
                       placeholder="Applicant full name"
+                      required
                     />
                   </label>
 
                   <label>
-                    Email Address
+                    Email Address *
                     <input
                       name="applicantEmail"
                       type="email"
-                      required
                       placeholder="applicant@email.com"
+                      required
                     />
                   </label>
 
@@ -2187,19 +1897,16 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                   </label>
 
                   <label>
-                    Property
-                    <select
-                      name="propertyId"
-                      defaultValue=""
-                    >
+                    Rental Property
+                    <select name="propertyId">
                       <option value="">
                         Select property
                       </option>
 
                       {props.map(property => (
                         <option
-                          key={property.id}
                           value={property.id}
+                          key={property.id}
                         >
                           {property.address}
                         </option>
@@ -2207,25 +1914,11 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     </select>
                   </label>
 
-                </div>
-
-              </section>
-
-              <section className="applicationFormSection">
-
-                <div className="applicationFormSectionHeader">
-                  <h2>Current Housing</h2>
-                  <p>
-                    Information about the applicant's current residence.
-                  </p>
-                </div>
-
-                <div className="applicationFormGrid">
-
-                  <label className="full">
-                    Current Address
+                  <label className="applicationWideField">
+                    Current Street Address
                     <input
                       name="currentAddress"
+                      type="text"
                       placeholder="Street address"
                     />
                   </label>
@@ -2234,6 +1927,7 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     City
                     <input
                       name="currentCity"
+                      type="text"
                       placeholder="City"
                     />
                   </label>
@@ -2242,7 +1936,8 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     State
                     <input
                       name="currentState"
-                      placeholder="KY"
+                      type="text"
+                      placeholder="State"
                     />
                   </label>
 
@@ -2250,14 +1945,77 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     ZIP Code
                     <input
                       name="currentZip"
-                      placeholder="40211"
+                      type="text"
+                      placeholder="ZIP"
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <section className="applicationFormCard">
+                <div className="applicationFormSectionHeader">
+                  <span>02</span>
+
+                  <div>
+                    <h2>Employment & Income</h2>
+                    <p>
+                      Employment details used during application
+                      review.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="applicationFormGrid">
+                  <label>
+                    Employer
+                    <input
+                      name="employerName"
+                      type="text"
+                      placeholder="Employer name"
                     />
                   </label>
 
                   <label>
+                    Job Title
+                    <input
+                      name="jobTitle"
+                      type="text"
+                      placeholder="Job title"
+                    />
+                  </label>
+
+                  <label>
+                    Monthly Income
+                    <input
+                      name="monthlyIncome"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <section className="applicationFormCard">
+                <div className="applicationFormSectionHeader">
+                  <span>03</span>
+
+                  <div>
+                    <h2>Rental History</h2>
+                    <p>
+                      Current landlord and previous housing
+                      information.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="applicationFormGrid">
+                  <label>
                     Current Landlord
                     <input
                       name="currentLandlordName"
+                      type="text"
                       placeholder="Landlord name"
                     />
                   </label>
@@ -2272,97 +2030,40 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                   </label>
 
                   <label>
-                    Current Rent
+                    Current Monthly Rent
                     <input
                       name="currentRent"
                       type="number"
                       min="0"
                       step="0.01"
-                      placeholder="Monthly rent"
+                      placeholder="0.00"
                     />
                   </label>
 
-                </div>
-
-              </section>
-
-              <section className="applicationFormSection">
-
-                <div className="applicationFormSectionHeader">
-                  <h2>Employment & Income</h2>
-                  <p>
-                    Employment information used for application review.
-                  </p>
-                </div>
-
-                <div className="applicationFormGrid">
-
-                  <label>
-                    Employer
-                    <input
-                      name="employerName"
-                      placeholder="Company name"
-                    />
-                  </label>
-
-                  <label>
-                    Job Title
-                    <input
-                      name="jobTitle"
-                      placeholder="Job title"
-                    />
-                  </label>
-
-                  <label>
-                    Monthly Income
-                    <input
-                      name="monthlyIncome"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Monthly income"
-                    />
-                  </label>
-
-                </div>
-
-              </section>
-
-              <section className="applicationFormSection">
-
-                <div className="applicationFormSectionHeader">
-                  <h2>Rental History</h2>
-                  <p>
-                    Previous housing information.
-                  </p>
-                </div>
-
-                <div className="applicationFormGrid">
-
-                  <label className="full">
+                  <label className="applicationWideField">
                     Previous Address
                     <input
                       name="previousAddress"
+                      type="text"
                       placeholder="Previous rental address"
                     />
                   </label>
-
                 </div>
-
               </section>
 
-              <section className="applicationFormSection">
-
+              <section className="applicationFormCard">
                 <div className="applicationFormSectionHeader">
-                  <h2>Household</h2>
-                  <p>
-                    Tell us about everyone and everything coming with
-                    the applicant.
-                  </p>
+                  <span>04</span>
+
+                  <div>
+                    <h2>Household</h2>
+                    <p>
+                      Occupants, pets and vehicle information.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="applicationFormGrid">
-
                   <label>
                     Number of Occupants
                     <input
@@ -2384,60 +2085,53 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     </select>
                   </label>
 
-                  <label className="full">
+                  <label className="applicationWideField">
                     Occupant Details
                     <textarea
                       name="occupantsDetails"
-                      placeholder="Names and relationship of other occupants"
+                      rows="3"
+                      placeholder="Names and relationship of additional occupants"
                     />
                   </label>
 
-                  <label className="full">
+                  <label className="applicationWideField">
                     Pet Details
                     <textarea
                       name="petsDetails"
-                      placeholder="Type, number, size, etc."
+                      rows="3"
+                      placeholder="Type, breed, size, etc."
                     />
                   </label>
 
-                  <label className="full">
+                  <label className="applicationWideField">
                     Vehicles
                     <textarea
                       name="vehiclesDetails"
-                      placeholder="Vehicle make, model, and year"
+                      rows="3"
+                      placeholder="Vehicle make, model and year"
                     />
                   </label>
-
                 </div>
-
               </section>
 
-              <section className="screeningNotice">
-
-                <div>
-                  <h2>Tenant Screening</h2>
-
-                  <p>
-                    After the application is submitted, you can
-                    request tenant screening. Credit and background
-                    information will be handled through the screening
-                    provider rather than stored directly in Rentwise.
-                  </p>
-                </div>
+              <div className="screeningConsentNotice">
+                <b>Tenant screening is handled separately</b>
 
                 <span>
-                  SCREENING NOT STARTED
+                  Do not enter Social Security numbers, credit card
+                  information or consumer report data in this form.
+                  Screening authorization will be handled by the
+                  screening provider.
                 </span>
-
-              </section>
+              </div>
 
               <div className="applicationFormActions">
-
                 <button
                   type="button"
-                  onClick={() =>
-                    setView('applications')
-                  }
+                  onClick={() => {
+                    setShowApplicationForm(false);
+                    setView('applications');
+                  }}
                 >
                   Cancel
                 </button>
@@ -2448,548 +2142,860 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                 >
                   Create Application
                 </button>
+              </div>
+            </form>
+          </section>
+        )}
+        {view === 'applicationDetails' &&
+          selectedApplication && (
+            <section className="applicationDetailsPage">
+              <button
+                type="button"
+                className="propertyBackButton"
+                onClick={() => {
+                  setSelectedApplication(null);
+                  setView('applications');
+                }}
+              >
+                ← Back to Applications
+              </button>
 
+              <div className="applicationDetailsHeader">
+                <div className="applicationApplicantHeading">
+                  <div className="applicationLargeAvatar">
+                    {selectedApplication.applicant_name
+                      ?.charAt(0)
+                      .toUpperCase() || 'A'}
+                  </div>
+
+                  <div>
+                    <small>APPLICATION REVIEW</small>
+
+                    <h1>
+                      {selectedApplication.applicant_name}
+                    </h1>
+
+                    <p>
+                      {props.find(
+                        p =>
+                          p.id ===
+                          selectedApplication.property_id
+                      )?.address ||
+                        'No property selected'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="applicationHeaderStatus">
+                  <span
+                    className={`applicationStatusBadge status-${
+                      selectedApplication.application_status ||
+                      'new'
+                    }`}
+                  >
+                    {(
+                      selectedApplication.application_status ||
+                      'new'
+                    ).replaceAll('_', ' ')}
+                  </span>
+
+                  <small>
+                    Submitted{' '}
+                    {selectedApplication.created_at
+                      ? new Date(
+                          selectedApplication.created_at
+                        ).toLocaleDateString()
+                      : '—'}
+                  </small>
+                </div>
               </div>
 
-            </form>
+              <div className="applicationDetailsGrid">
+                <div className="applicationDetailsMain">
+                  <section className="applicationDetailCard">
+                    <div className="applicationDetailCardHeader">
+                      <div>
+                        <small>CONTACT</small>
+                        <h2>Applicant Information</h2>
+                      </div>
 
-          </section>
-        )}      
-        {view === 'applicationDetails' && selectedApplication && (
-          <section className="applicationDetailsPage">
+                      <span>01</span>
+                    </div>
 
-            <button
-              type="button"
-              className="applicationBackButton"
-              onClick={() => setView('applications')}
-            >
-              ← Back to Applications
-            </button>
+                    <div className="applicationDetailFields">
+                      <div>
+                        <span>Full Name</span>
+                        <b>
+                          {selectedApplication.applicant_name ||
+                            'Not provided'}
+                        </b>
+                      </div>
 
-            <div className="applicationDetailsHeader">
+                      <div>
+                        <span>Email Address</span>
+                        <b>
+                          {selectedApplication.applicant_email ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Phone Number</span>
+                        <b>
+                          {selectedApplication.applicant_phone ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Current Address</span>
+                        <b>
+                          {selectedApplication.current_address
+                            ? `${selectedApplication.current_address}${
+                                selectedApplication.current_city
+                                  ? `, ${selectedApplication.current_city}`
+                                  : ''
+                              }${
+                                selectedApplication.current_state
+                                  ? `, ${selectedApplication.current_state}`
+                                  : ''
+                              }${
+                                selectedApplication.current_zip
+                                  ? ` ${selectedApplication.current_zip}`
+                                  : ''
+                              }`
+                            : 'Not provided'}
+                        </b>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="applicationDetailCard">
+                    <div className="applicationDetailCardHeader">
+                      <div>
+                        <small>FINANCIAL</small>
+                        <h2>Employment & Income</h2>
+                      </div>
+
+                      <span>02</span>
+                    </div>
+
+                    <div className="applicationDetailFields">
+                      <div>
+                        <span>Employer</span>
+                        <b>
+                          {selectedApplication.employer_name ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Job Title</span>
+                        <b>
+                          {selectedApplication.job_title ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Monthly Income</span>
+                        <b>
+                          {selectedApplication.monthly_income
+                            ? `$${Number(
+                                selectedApplication.monthly_income
+                              ).toLocaleString()}`
+                            : 'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Current Rent</span>
+                        <b>
+                          {selectedApplication.current_rent
+                            ? `$${Number(
+                                selectedApplication.current_rent
+                              ).toLocaleString()}`
+                            : 'Not provided'}
+                        </b>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="applicationDetailCard">
+                    <div className="applicationDetailCardHeader">
+                      <div>
+                        <small>HOUSING</small>
+                        <h2>Rental History</h2>
+                      </div>
+
+                      <span>03</span>
+                    </div>
+
+                    <div className="applicationDetailFields">
+                      <div>
+                        <span>Current Landlord</span>
+                        <b>
+                          {selectedApplication.current_landlord_name ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Landlord Phone</span>
+                        <b>
+                          {selectedApplication.current_landlord_phone ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div className="applicationDetailWide">
+                        <span>Previous Address</span>
+                        <b>
+                          {selectedApplication.previous_address ||
+                            'Not provided'}
+                        </b>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="applicationDetailCard">
+                    <div className="applicationDetailCardHeader">
+                      <div>
+                        <small>HOUSEHOLD</small>
+                        <h2>Occupants & Property Details</h2>
+                      </div>
+
+                      <span>04</span>
+                    </div>
+
+                    <div className="applicationDetailFields">
+                      <div>
+                        <span>Occupants</span>
+                        <b>
+                          {selectedApplication.occupants_count || 1}
+                        </b>
+                      </div>
+
+                      <div>
+                        <span>Pets</span>
+                        <b>
+                          {selectedApplication.has_pets
+                            ? 'Yes'
+                            : 'No'}
+                        </b>
+                      </div>
+
+                      <div className="applicationDetailWide">
+                        <span>Occupant Details</span>
+                        <b>
+                          {selectedApplication.occupants_details ||
+                            'Not provided'}
+                        </b>
+                      </div>
+
+                      <div className="applicationDetailWide">
+                        <span>Pet Details</span>
+                        <b>
+                          {selectedApplication.has_pets
+                            ? selectedApplication.pets_details ||
+                              'No details provided'
+                            : 'No pets'}
+                        </b>
+                      </div>
+
+                      <div className="applicationDetailWide">
+                        <span>Vehicles</span>
+                        <b>
+                          {selectedApplication.vehicles_details ||
+                            'Not provided'}
+                        </b>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <aside className="applicationDetailsSidebar">
+                  <section className="screeningCenterCard">
+                    <div className="screeningCenterHeader">
+                      <div>
+                        <small>TENANT SCREENING</small>
+                        <h2>Screening Center</h2>
+                      </div>
+
+                      <span
+                        className={`applicationStatusBadge screening-${
+                          selectedApplication.screening_status ||
+                          'not_started'
+                        }`}
+                      >
+                        {(
+                          selectedApplication.screening_status ||
+                          'not_started'
+                        ).replaceAll('_', ' ')}
+                      </span>
+                    </div>
+
+                    <p className="screeningCenterDescription">
+                      Request applicant screening through TransUnion
+                      SmartMove.
+                    </p>
+
+                    <div className="screeningItems">
+                      <div>
+                        <span className="screeningItemIcon">✓</span>
+
+                        <div>
+                          <b>Identity Check</b>
+                          <small>
+                            {selectedApplication.screening_status ===
+                            'completed'
+                              ? 'Provider completed'
+                              : 'Awaiting provider'}
+                          </small>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="screeningItemIcon">$</span>
+
+                        <div>
+                          <b>Credit Report</b>
+                          <small>
+                            {selectedApplication.screening_status ===
+                            'completed'
+                              ? 'Provider completed'
+                              : 'Awaiting provider'}
+                          </small>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="screeningItemIcon">◇</span>
+
+                        <div>
+                          <b>Criminal Background</b>
+                          <small>
+                            {selectedApplication.screening_status ===
+                            'completed'
+                              ? 'Provider completed'
+                              : 'Awaiting provider'}
+                          </small>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="screeningItemIcon">⌂</span>
+
+                        <div>
+                          <b>Eviction History</b>
+                          <small>
+                            {selectedApplication.screening_status ===
+                            'completed'
+                              ? 'Provider completed'
+                              : 'Awaiting provider'}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="screeningConsentNotice">
+                      <b>Authorization handled by SmartMove</b>
+
+                      <span>
+                        SmartMove will email the applicant and collect
+                        their authorization before releasing the
+                        screening reports.
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="primary screeningButton"
+                      onClick={async () => {
+                        const s = supabase();
+                        const now = new Date().toISOString();
+
+                        const { error } = await s
+                          .from('rental_applications')
+                          .update({
+                            screening_status:
+                              'pending_consent',
+                            screening_requested_at: now,
+                            application_status: 'screening',
+                            updated_at: now
+                          })
+                          .eq(
+                            'id',
+                            selectedApplication.id
+                          );
+
+                        if (error) {
+                          alert(
+                            'Could not start screening: ' +
+                              error.message
+                          );
+                          return;
+                        }
+
+                        const updatedApplication = {
+                          ...selectedApplication,
+                          screening_status:
+                            'pending_consent',
+                          screening_requested_at: now,
+                          application_status: 'screening'
+                        };
+
+                        setSelectedApplication(
+                          updatedApplication
+                        );
+
+                        setApplications(
+                          applications.map(application =>
+                            application.id ===
+                            selectedApplication.id
+                              ? updatedApplication
+                              : application
+                          )
+                        );
+
+                        window.open(
+                          'https://www.mysmartmove.com/landlord-tenant-screening',
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+
+                        alert(
+                          'SmartMove opened in a new tab.\n\n' +
+                            'Applicant: ' +
+                            selectedApplication.applicant_name +
+                            '\nEmail: ' +
+                            selectedApplication.applicant_email +
+                            '\n\nEnter this applicant email in SmartMove to send the screening request.'
+                        );
+                      }}
+                    >
+                      Start SmartMove Screening
+                    </button>
+
+                    {selectedApplication.screening_requested_at && (
+                      <small className="screeningRequestedDate">
+                        Screening started{' '}
+                        {new Date(
+                          selectedApplication.screening_requested_at
+                        ).toLocaleString()}
+                      </small>
+                    )}
+                  </section>
+
+                  <section className="applicationDecisionCard">
+                    <small>LEASING DECISION</small>
+                    <h2>Application Decision</h2>
+
+                    <p>
+                      Update the application after completing your
+                      review.
+                    </p>
+
+                    <div className="applicationDecisionActions">
+                      <button
+                        type="button"
+                        className="approveApplicationButton"
+                        onClick={async () => {
+                          const s = supabase();
+                          const now =
+                            new Date().toISOString();
+
+                          const { error } = await s
+                            .from('rental_applications')
+                            .update({
+                              application_status:
+                                'approved',
+                              updated_at: now
+                            })
+                            .eq(
+                              'id',
+                              selectedApplication.id
+                            );
+
+                          if (error) {
+                            alert(
+                              'Could not approve application: ' +
+                                error.message
+                            );
+                            return;
+                          }
+
+                          const updatedApplication = {
+                            ...selectedApplication,
+                            application_status:
+                              'approved',
+                            updated_at: now
+                          };
+
+                          setSelectedApplication(
+                            updatedApplication
+                          );
+
+                          setApplications(
+                            applications.map(application =>
+                              application.id ===
+                              selectedApplication.id
+                                ? updatedApplication
+                                : application
+                            )
+                          );
+
+                          alert(
+                            'Application approved successfully.'
+                          );
+                        }}
+                      >
+                        ✓ Approve
+                      </button>
+
+                      <button
+                        type="button"
+                        className="denyApplicationButton"
+                        onClick={async () => {
+                          const confirmed =
+                            window.confirm(
+                              'Mark this application as denied?'
+                            );
+
+                          if (!confirmed) return;
+
+                          const s = supabase();
+                          const now =
+                            new Date().toISOString();
+
+                          const { error } = await s
+                            .from('rental_applications')
+                            .update({
+                              application_status:
+                                'denied',
+                              updated_at: now
+                            })
+                            .eq(
+                              'id',
+                              selectedApplication.id
+                            );
+
+                          if (error) {
+                            alert(
+                              'Could not deny application: ' +
+                                error.message
+                            );
+                            return;
+                          }
+
+                          const updatedApplication = {
+                            ...selectedApplication,
+                            application_status: 'denied',
+                            updated_at: now
+                          };
+
+                          setSelectedApplication(
+                            updatedApplication
+                          );
+
+                          setApplications(
+                            applications.map(application =>
+                              application.id ===
+                              selectedApplication.id
+                                ? updatedApplication
+                                : application
+                            )
+                          );
+
+                          alert(
+                            'Application status updated to denied.'
+                          );
+                        }}
+                      >
+                        × Deny
+                      </button>
+                    </div>
+
+                    <small className="applicationDecisionNote">
+                      If a consumer report affects a leasing decision,
+                      follow applicable adverse-action requirements.
+                    </small>
+                  </section>
+
+                  <section className="applicationTimelineCard">
+                    <small>ACTIVITY</small>
+                    <h2>Application Timeline</h2>
+
+                    <div className="applicationTimeline">
+                      <div className="timelineItem complete">
+                        <span></span>
+
+                        <div>
+                          <b>Application created</b>
+                          <small>
+                            {selectedApplication.created_at
+                              ? new Date(
+                                  selectedApplication.created_at
+                                ).toLocaleString()
+                              : 'Created'}
+                          </small>
+                        </div>
+                      </div>
+
+                      {selectedApplication.screening_requested_at && (
+                        <div className="timelineItem active">
+                          <span></span>
+
+                          <div>
+                            <b>
+                              Screening pending consent
+                            </b>
+
+                            <small>
+                              {new Date(
+                                selectedApplication.screening_requested_at
+                              ).toLocaleString()}
+                            </small>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="timelineItem active">
+                        <span></span>
+
+                        <div>
+                          <b>Application status</b>
+
+                          <small>
+                            {(
+                              selectedApplication.application_status ||
+                              'new'
+                            ).replaceAll('_', ' ')}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </aside>
+              </div>
+            </section>
+          )}
+
+        {view === 'documents' && (
+          <section className="documentsPage">
+            <div className="applicationsHeader documentsHeader">
               <div>
-                <small>APPLICATION REVIEW</small>
-                <h1>{selectedApplication.applicant_name}</h1>
+                <small>DOCUMENT CENTER</small>
+                <h1>Documents</h1>
+
                 <p>
-                  Review applicant information, screening status,
-                  and application details.
+                  Create, send, track, and prepare rental documents
+                  for eSignature.
                 </p>
               </div>
 
-              <div className="applicationDetailsHeaderActions">
-                <button
-                  type="button"
-                  onClick={() => setView('applications')}
-                >
-                  Close
-                </button>
+              <button
+                type="button"
+                className="primary"
+                onClick={() =>
+                  alert(
+                    'Custom document builder is the next Documents step.'
+                  )
+                }
+              >
+                + Create Document
+              </button>
+            </div>
+
+            <div className="documentStats">
+              <article>
+                <span>Documents</span>
+                <b>0</b>
+                <small>ALL DOCUMENTS</small>
+              </article>
+
+              <article>
+                <span>Awaiting Signature</span>
+                <b>0</b>
+                <small>ESIGN</small>
+              </article>
+
+              <article>
+                <span>Completed</span>
+                <b>0</b>
+                <small>SIGNED & STORED</small>
+              </article>
+
+              <article>
+                <span>Revenue</span>
+                <b>$0</b>
+                <small>DOCUMENT SERVICES</small>
+              </article>
+            </div>
+
+            <section className="documentLibrary">
+              <div className="documentLibraryHeader">
+                <div>
+                  <h2>Template Library</h2>
+
+                  <p>
+                    Start with a rental document and Rentwise will
+                    eventually auto-fill tenant and property
+                    information.
+                  </p>
+                </div>
+
+                <span>Templates</span>
               </div>
-            </div>
 
-            <div className="applicationDetailsGrid">
-
-              <section className="applicationDetailsMain">
-
-                <div className="applicationDetailCard">
-                  <div className="applicationDetailCardHeader">
-                    <div>
-                      <small>APPLICANT</small>
-                      <h2>Applicant Information</h2>
-                    </div>
-
-                    <span
-                      className={
-                        'applicationStatus ' +
-                        selectedApplication.application_status
-                      }
+              <div className="documentTemplateGrid">
+                {[
+                  [
+                    '▤',
+                    'Residential Lease',
+                    'Create a new residential lease and prepare it for electronic signature.',
+                    'LEASE'
+                  ],
+                  [
+                    '↻',
+                    'Lease Renewal',
+                    'Prepare updated lease terms for an existing tenant.',
+                    'LEASE'
+                  ],
+                  [
+                    '!',
+                    'Late Rent Notice',
+                    'Create a written notice concerning an outstanding rent balance.',
+                    'NOTICE'
+                  ],
+                  [
+                    '⌂',
+                    'Notice to Vacate',
+                    'Prepare a state-specific notice to end or recover possession of a tenancy.',
+                    'NOTICE'
+                  ],
+                  [
+                    '$',
+                    'Rent Change Notice',
+                    'Document an upcoming rent change for a tenant.',
+                    'NOTICE'
+                  ],
+                  [
+                    '⌁',
+                    'Notice of Entry',
+                    'Create written notice of planned property access.',
+                    'NOTICE'
+                  ],
+                  [
+                    '+',
+                    'Lease Addendum',
+                    'Add property rules or additional terms to an existing lease.',
+                    'ADDENDUM'
+                  ],
+                  [
+                    '✓',
+                    'Move-In / Move-Out',
+                    'Create condition and turnover documentation.',
+                    'PROPERTY'
+                  ]
+                ].map(
+                  ([icon, title, description, type]) => (
+                    <article
+                      className="documentTemplateCard"
+                      key={title}
                     >
-                      {selectedApplication.application_status
-                        .replaceAll('_', ' ')}
-                    </span>
-                  </div>
+                      <div className="documentTemplateIcon">
+                        {icon}
+                      </div>
 
-                  <div className="applicationDetailGrid">
+                      <span className="documentType">
+                        {type}
+                      </span>
 
-                    <div>
-                      <span>Full Name</span>
-                      <b>{selectedApplication.applicant_name}</b>
-                    </div>
+                      <h3>{title}</h3>
 
-                    <div>
-                      <span>Email</span>
-                      <b>{selectedApplication.applicant_email}</b>
-                    </div>
+                      <p>{description}</p>
 
-                    <div>
-                      <span>Phone</span>
-                      <b>
-                        {selectedApplication.applicant_phone ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Current Address</span>
-                      <b>
-                        {selectedApplication.current_address ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>City / State / ZIP</span>
-                      <b>
-                        {[
-                          selectedApplication.current_city,
-                          selectedApplication.current_state,
-                          selectedApplication.current_zip
-                        ]
-                          .filter(Boolean)
-                          .join(', ') || 'Not provided'}
-                      </b>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div className="applicationDetailCard">
-                  <div className="applicationDetailCardHeader">
-                    <div>
-                      <small>EMPLOYMENT</small>
-                      <h2>Employment & Income</h2>
-                    </div>
-                  </div>
-
-                  <div className="applicationDetailGrid">
-
-                    <div>
-                      <span>Employer</span>
-                      <b>
-                        {selectedApplication.employer_name ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Job Title</span>
-                      <b>
-                        {selectedApplication.job_title ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Monthly Income</span>
-                      <b>
-                        {selectedApplication.monthly_income
-                          ? '$' +
-                            Number(
-                              selectedApplication.monthly_income
-                            ).toLocaleString()
-                          : 'Not provided'}
-                      </b>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div className="applicationDetailCard">
-                  <div className="applicationDetailCardHeader">
-                    <div>
-                      <small>RENTAL HISTORY</small>
-                      <h2>Housing History</h2>
-                    </div>
-                  </div>
-
-                  <div className="applicationDetailGrid">
-
-                    <div>
-                      <span>Current Landlord</span>
-                      <b>
-                        {selectedApplication.current_landlord_name ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Landlord Phone</span>
-                      <b>
-                        {selectedApplication.current_landlord_phone ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Current Rent</span>
-                      <b>
-                        {selectedApplication.current_rent
-                          ? '$' +
-                            Number(
-                              selectedApplication.current_rent
-                            ).toLocaleString()
-                          : 'Not provided'}
-                      </b>
-                    </div>
-
-                    <div className="fullDetail">
-                      <span>Previous Address</span>
-                      <b>
-                        {selectedApplication.previous_address ||
-                          'Not provided'}
-                      </b>
-                    </div>
-
-                  </div>
-                </div>
-
-                <div className="applicationDetailCard">
-                  <div className="applicationDetailCardHeader">
-                    <div>
-                      <small>HOUSEHOLD</small>
-                      <h2>Household Information</h2>
-                    </div>
-                  </div>
-
-                  <div className="applicationDetailGrid">
-
-                    <div>
-                      <span>Occupants</span>
-                      <b>
-                        {selectedApplication.occupants_count || 1}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Pets</span>
-                      <b>
-                        {selectedApplication.has_pets
-                          ? 'Yes'
-                          : 'No'}
-                      </b>
-                    </div>
-
-                    <div className="fullDetail">
-                      <span>Occupant Details</span>
-                      <b>
-                        {selectedApplication.occupants_details ||
-                          'None provided'}
-                      </b>
-                    </div>
-
-                    <div className="fullDetail">
-                      <span>Pet Details</span>
-                      <b>
-                        {selectedApplication.pets_details ||
-                          'None provided'}
-                      </b>
-                    </div>
-
-                    <div className="fullDetail">
-                      <span>Vehicles</span>
-                      <b>
-                        {selectedApplication.vehicles_details ||
-                          'None provided'}
-                      </b>
-                    </div>
-
-                  </div>
-                </div>
-
-              </section>
-
-              <aside className="applicationDetailsSidebar">
-
-                <section className="screeningCard">
-
-                  <div className="screeningCardTop">
-                    <div>
-                      <small>SCREENING</small>
-                      <h2>Tenant Screening</h2>
-                    </div>
-
-                    <span
-                      className={
-                        'screeningStatus ' +
-                        selectedApplication.screening_status
-                      }
-                    >
-                      {selectedApplication.screening_status
-                        .replaceAll('_', ' ')}
-                    </span>
-                  </div>
-
-                  <p>
-                    Credit, background, eviction, and identity
-                    screening can be requested through an approved
-                    screening provider.
-                  </p>
-
-                  <div className="screeningConsentNotice">
-  <b>Authorization handled by SmartMove</b>
-
-  <span>
-    SmartMove will email the applicant and collect their
-    authorization before releasing the screening reports.
-  </span>
-</div>
-
-<button
-  type="button"
-  className="primary screeningButton"
-  onClick={async () => {
-    const s = supabase();
-    const now = new Date().toISOString();
-
-    const { error } = await s
-      .from('rental_applications')
-      .update({
-        
-        screening_status: 'pending_consent',
-        screening_requested_at: now,
-        application_status: 'screening',
-        updated_at: now
-      })
-      .eq('id', selectedApplication.id);
-
-    if (error) {
-      alert(
-        'Could not start screening: ' +
-          error.message
-      );
-      return;
-    }
-
-    const updatedApplication = {
-      ...selectedApplication,
-      
-      screening_status: 'pending_consent',
-      screening_requested_at: now,
-      application_status: 'screening'
-    };
-
-    setSelectedApplication(updatedApplication);
-
-    setApplications(
-      applications.map(application =>
-        application.id === selectedApplication.id
-          ? updatedApplication
-          : application
-      )
-    );
-
-    window.open(
-      'https://www.mysmartmove.com/landlord-tenant-screening',
-      '_blank',
-      'noopener,noreferrer'
-    );
-
-    alert(
-      'SmartMove opened in a new tab.\n\n' +
-        'Applicant: ' +
-        selectedApplication.applicant_name +
-        '\nEmail: ' +
-        selectedApplication.applicant_email +
-        '\n\nEnter this applicant email in SmartMove to send the screening request.'
-    );
-  }}
->
-  Start SmartMove Screening
-</button>
-
-                  <div className="screeningItems">
-
-                    <div>
-                      <span>Identity</span>
-                      <b>Pending</b>
-                    </div>
-
-                    <div>
-                      <span>Credit</span>
-                      <b>Pending</b>
-                    </div>
-
-                    <div>
-                      <span>Criminal Background</span>
-                      <b>Pending</b>
-                    </div>
-
-                    <div>
-                      <span>Eviction History</span>
-                      <b>Pending</b>
-                    </div>
-
-                  </div>
-
-                </section>
-
-                <section className="applicationDecisionCard">
-
-                  <small>APPLICATION DECISION</small>
-
-                  <h2>Review Decision</h2>
-
-                  <p>
-                    Record your application decision after reviewing
-                    the applicant information and screening results.
-                  </p>
-
-                  <div className="applicationDecisionActions">
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-
-                        const s = supabase();
-
-                        const { error } = await s
-                          .from('rental_applications')
-                          .update({
-                            application_status: 'approved',
-                            updated_at:
-                              new Date().toISOString()
-                          })
-                          .eq(
-                            'id',
-                            selectedApplication.id
-                          );
-
-                        if (error) {
+                      <button
+                        type="button"
+                        onClick={() =>
                           alert(
-                            'Could not approve application: ' +
-                            error.message
-                          );
-                          return;
-                        }
-
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: 'approved'
-                        };
-
-                        setSelectedApplication(
-                          updatedApplication
-                        );
-
-                        setApplications(
-                          applications.map(application =>
-                            application.id ===
-                            selectedApplication.id
-                              ? updatedApplication
-                              : application
+                            title +
+                              ' builder is being prepared.'
                           )
-                        );
-
-                        alert('Application approved.');
-                      }}
-                    >
-                      Approve Application
-                    </button>
-
-                    <button
-                      type="button"
-                      className="dangerButton"
-                      onClick={async () => {
-
-                        const s = supabase();
-
-                        const { error } = await s
-                          .from('rental_applications')
-                          .update({
-                            application_status: 'denied',
-                            updated_at:
-                              new Date().toISOString()
-                          })
-                          .eq(
-                            'id',
-                            selectedApplication.id
-                          );
-
-                        if (error) {
-                          alert(
-                            'Could not update application: ' +
-                            error.message
-                          );
-                          return;
                         }
+                      >
+                        Create document →
+                      </button>
+                    </article>
+                  )
+                )}
+              </div>
+            </section>
 
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: 'denied'
-                        };
+            <section className="esignBanner">
+              <div className="esignBannerIcon">✎</div>
 
-                        setSelectedApplication(
-                          updatedApplication
-                        );
+              <div>
+                <small>ESIGN FOUNDATION</small>
 
-                        setApplications(
-                          applications.map(application =>
-                            application.id ===
-                            selectedApplication.id
-                              ? updatedApplication
-                              : application
-                          )
-                        );
+                <h2>
+                  Electronic signatures inside Rentwise
+                </h2>
 
-                        alert('Application marked as denied.');
-                      }}
-                    >
-                      Deny Application
-                    </button>
+                <p>
+                  The document workflow is being structured for Draft
+                  → Sent → Viewed → Signed → Completed. Provider
+                  connection and real charges will be added before
+                  launch.
+                </p>
+              </div>
 
-                  </div>
-
-                </section>
-
-                <section className="applicationTimelineCard">
-
-                  <small>APPLICATION TIMELINE</small>
-
-                  <div className="timelineItem">
-                    <div className="timelineDot" />
-                    <div>
-                      <b>Application created</b>
-                      <span>
-                        {new Date(
-                          selectedApplication.created_at
-                        ).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="timelineItem">
-                    <div className="timelineDot" />
-                    <div>
-                      <b>Screening</b>
-                      <span>
-                        {selectedApplication.screening_status
-                          .replaceAll('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="timelineItem">
-                    <div className="timelineDot" />
-                    <div>
-                      <b>Application status</b>
-                      <span>
-                        {selectedApplication.application_status
-                          .replaceAll('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-
-                </section>
-
-              </aside>
-
-            </div>
-
+              <span>COMING NEXT</span>
+            </section>
           </section>
         )}
-{view === 'maintenance' && (
+
+        {view === 'rent' && (
           <section className="panel">
+            <small>RENT COLLECTION</small>
+            <h1>Rent</h1>
+
+            <p>
+              Online rent collection and payment tracking is coming
+              next.
+            </p>
+
+            <div className="featureEmpty">
+              <div className="featureEmptyIcon">$</div>
+              <b>Rent collection</b>
+
+              <span>
+                Payments, balances and transaction history will appear
+                here.
+              </span>
+            </div>
+          </section>
+        )}
+
+        {view === 'maintenance' && (
+          <section className="panel">
+            <small>PROPERTY OPERATIONS</small>
             <h1>Maintenance</h1>
-            <p>Maintenance management is coming next.</p>
+
+            <p>
+              Track maintenance requests across your rental
+              portfolio.
+            </p>
+
+            <div className="featureEmpty">
+              <div className="featureEmptyIcon">◇</div>
+              <b>No maintenance requests</b>
+
+              <span>
+                New tenant maintenance requests will appear here.
+              </span>
+            </div>
           </section>
         )}
       </main>
