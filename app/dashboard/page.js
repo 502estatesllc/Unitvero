@@ -26,6 +26,8 @@ const [rentCharges, setRentCharges] = useState([]);
 const [rentPayments, setRentPayments] = useState([]);
 const [paymentAllocations, setPaymentAllocations] = useState([]);
   const [showRecordPayment, setShowRecordPayment] = useState(false);
+  const [rentSettings, setRentSettings] = useState(null);
+const [showRentSettings, setShowRentSettings] = useState(false);
   const [conversations, setConversations] = useState([]);
 const [messages, setMessages] = useState([]);
 const [announcements, setAnnouncements] = useState([]);
@@ -154,6 +156,17 @@ if (unitError) {
     } else {
       setPaymentAllocations(allocationData || []);
     }
+    const { data: rentSettingsData, error: rentSettingsError } = await s
+  .from('rent_settings')
+  .select('*')
+  .eq('landlord_id', user.id)
+  .maybeSingle();
+
+if (rentSettingsError) {
+  alert('Could not load rent settings: ' + rentSettingsError.message);
+} else {
+  setRentSettings(rentSettingsData || null);
+}
         // Load landlord conversations
     const { data: conversationData, error: conversationError } = await s
       .from('conversations')
