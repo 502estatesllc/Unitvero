@@ -1,12 +1,18 @@
-import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const accountId = body?.accountId;
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!secretKey) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured.' },
+        { status: 500 }
+      );
+    }
+
+    const { accountId } = await request.json();
 
     if (!accountId) {
       return NextResponse.json(
@@ -15,17 +21,19 @@ export async function POST(request) {
       );
     }
 
-    const origin = new URL(request.url).origin;
+    const stripe = new Stripe(secretKey);
+
+    const origin = request.nextUrl.origin;
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${origin}/dashboard?stripe=refresh`,
-      return_url: `${origin}/dashboard?stripe=return`,
-      type: 'account_onboarding',
+      refresh_url: `${origin}/dashboard`,
+      return_url: `${origin}/dashboard`,
+      type: 'account_onboarding'
     });
 
     return NextResponse.json({
-      url: accountLink.url,
+      url: accountLink.url
     });
   } catch (error) {
     console.error('Stripe account link error:', error);
@@ -34,7 +42,7 @@ export async function POST(request) {
       {
         error:
           error?.message ||
-          'Could not start Stripe onboarding.',
+          'Could not start Stripe onboarding.'
       },
       { status: 500 }
     );
