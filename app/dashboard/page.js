@@ -813,11 +813,11 @@ function isMultiFamily(property) {
     <div className="app">
       <aside className="sidebar">
         <div className="sidebarBrand">
-          <b className="logo">
-            rent<span>wise</span>
-          </b>
-          <span className="brandLabel">PROPERTY MANAGEMENT</span>
-        </div>
+  <b className="logo">
+    unit<span>vero</span>
+  </b>
+  <span className="brandLabel">PROPERTY MANAGEMENT</span>
+</div>
 
         <nav className="sidebarNav">
           <span className="navSection">WORKSPACE</span>
