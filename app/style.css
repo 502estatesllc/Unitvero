@@ -1378,3 +1378,249 @@ button {
 .photoUploadButton input {
   display: none;
 }
+
+/* PROPERTY DETAILS PAGE */
+
+.propertyDetailsPage {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.propertyBackButton {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.propertyBackButton:hover {
+  color: #4f6df5;
+}
+
+.propertyDetailsHero {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  overflow: hidden;
+  min-height: 240px;
+  background: #ffffff;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(16, 24, 40, 0.05);
+}
+
+.propertyDetailsImage {
+  min-height: 240px;
+  background: #f2f4f7;
+}
+
+.propertyDetailsImage img {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  display: block;
+  object-fit: cover;
+}
+
+.propertyDetailsPlaceholder {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  background: #f2f4f7;
+  color: #98a2b3;
+  font-size: 52px;
+}
+
+.propertyDetailsInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 38px;
+}
+
+.propertyDetailsLabel {
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.propertyDetailsInfo h1 {
+  margin: 0;
+  color: #101828;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.propertyDetailsInfo p {
+  margin: 8px 0 16px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.propertyStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #027a48;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.propertyDetailsStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.propertyDetailsStats article {
+  min-height: 120px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #eaecf0;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.04);
+}
+
+.propertyDetailsStats span {
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.propertyDetailsStats b {
+  color: #101828;
+  font-size: 23px;
+}
+
+.propertyDetailsStats small {
+  margin-top: 7px;
+  color: #98a2b3;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.propertyDetailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.propertyDetailsCard {
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.04);
+}
+
+.propertyDetailsCard h2 {
+  margin: 0 0 20px;
+  color: #101828;
+  font-size: 16px;
+}
+
+.propertyInfoRow {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.propertyInfoRow:last-child {
+  border-bottom: none;
+}
+
+.propertyInfoRow span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.propertyInfoRow b {
+  color: #344054;
+  font-size: 12px;
+  text-align: right;
+}
+
+.propertyDetailsEmpty {
+  min-height: 205px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.propertyDetailsEmpty > span {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 20px;
+}
+
+.propertyDetailsEmpty b {
+  color: #344054;
+  font-size: 13px;
+}
+
+.propertyDetailsEmpty p {
+  max-width: 300px;
+  margin: 6px 0 15px;
+  color: #98a2b3;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1000px) {
+  .propertyDetailsHero {
+    grid-template-columns: 300px 1fr;
+  }
+
+  .propertyDetailsStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .propertyDetailsHero {
+    grid-template-columns: 1fr;
+  }
+
+  .propertyDetailsImage,
+  .propertyDetailsImage img,
+  .propertyDetailsPlaceholder {
+    min-height: 210px;
+  }
+
+  .propertyDetailsInfo {
+    padding: 24px;
+  }
+
+  .propertyDetailsStats,
+  .propertyDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
