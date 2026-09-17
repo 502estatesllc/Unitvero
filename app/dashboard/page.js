@@ -424,13 +424,19 @@ export default function Dashboard() {
                     <p>Quick view of your rental portfolio.</p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="viewAllButton"
-                    onClick={() => setView('properties')}
-                  >
-                    View All
-                  </button>
+                  <div className="portfolioPreviewActions">
+  <span className="portfolioPropertyCount">
+    Showing {Math.min(props.length, 4)} of {props.length}
+  </span>
+
+  <button
+    type="button"
+    className="viewAllButton"
+    onClick={() => setView('properties')}
+  >
+    View All Properties →
+  </button>
+</div>
                 </div>
 
                 <div className="dashboardProperties">
@@ -442,7 +448,7 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {props.slice(0, 3).map(p => (
+                  {props.slice(0, 4).map(p => (
                     <article
                       className="dashboardPropertyCard"
                       key={p.id}
