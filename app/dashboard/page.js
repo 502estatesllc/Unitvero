@@ -2216,7 +2216,9 @@ selectedPropertyPayments.length === 0 ? (
           <section className="panel">
             <button
               type="button"
-              onClick={() => setView('propertyDetails')}
+              onClick={() =>
+  setView(selectedUnit ? 'unitDetails' : 'propertyDetails')
+}
             >
               ← Back to Property
             </button>
@@ -2263,11 +2265,11 @@ selectedPropertyPayments.length === 0 ? (
             <small>NEW TENANT</small>
             <h1>Add Tenant</h1>
 
-            <p>
-              Add a tenant to {selectedProperty.address} and
-              create their invitation.
-            </p>
-
+           <p>
+  Add a tenant to {selectedProperty.address}
+  {selectedUnit ? ` • ${selectedUnit.unit_name}` : ''} and
+  create their invitation.
+</p>
             <form
               className="addTenantForm"
               onSubmit={async e => {
@@ -2356,7 +2358,7 @@ selectedPropertyPayments.length === 0 ? (
                   );
 
                   await load();
-                  setView('propertyDetails');
+               setView(selectedUnit ? 'unitDetails' : 'propertyDetails');
                   return;
                 }
 
@@ -2374,7 +2376,7 @@ selectedPropertyPayments.length === 0 ? (
 
                 await load();
 
-                setView('propertyDetails');
+              setView(selectedUnit ? 'unitDetails' : 'propertyDetails');
               }}
             >
               <div className="tenantFormGrid">
