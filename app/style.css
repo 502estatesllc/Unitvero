@@ -2065,3 +2065,80 @@ strong {
     border-radius: 14px !important;
   }
 }
+
+/* =========================================================
+   RENTWISE — PROPERTY CARD FINAL POLISH
+   ========================================================= */
+
+@media (min-width: 901px) {
+
+  /* Keep the property image proportional */
+  .propertyCard {
+    display: grid !important;
+    grid-template-columns: 280px minmax(0, 1fr) !important;
+    min-height: 190px !important;
+    overflow: hidden !important;
+  }
+
+  .propertyCard .propertyPhoto {
+    width: 280px !important;
+    height: 190px !important;
+    overflow: hidden !important;
+  }
+
+  .propertyCard .propertyPhoto img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+
+  .propertyCardBody {
+    min-width: 0 !important;
+    padding: 22px 24px !important;
+  }
+
+  /* Make property information easier to read */
+  .propertyCardTop h3 {
+    font-size: 17px !important;
+    font-weight: 750 !important;
+  }
+
+  .propertyCardTop p {
+    font-size: 12px !important;
+  }
+
+  .propertyRent {
+    font-size: 25px !important;
+    margin-top: 20px !important;
+  }
+
+  .propertyMeta {
+    font-size: 10px !important;
+  }
+
+  /* Give the three lower dashboard panels more useful content height */
+  .dashboardFeatureCard {
+    min-height: 185px !important;
+  }
+
+  .featureEmpty {
+    min-height: 105px !important;
+  }
+
+  /* Slightly stronger section titles */
+  .showcaseHeader h2,
+  .featureCardHeader h2 {
+    font-size: 17px !important;
+    font-weight: 720 !important;
+  }
+
+  /* Keep the dashboard from feeling vertically stretched */
+  .dashboardBottomGrid {
+    margin-top: 2px !important;
+  }
+
+  .portfolioBanner {
+    margin-top: 14px !important;
+  }
+}
