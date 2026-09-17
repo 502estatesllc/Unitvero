@@ -2796,7 +2796,18 @@ return (
       </div>
     </section>
   )}
-            <h1>{selectedProperty.address}</h1>
+
+      {view === 'editProperty' && selectedProperty && (
+  <section className="panel">
+    <button
+      type="button"
+      onClick={() => setView('propertyDetails')}
+    >
+      ← Back to Property
+    </button>
+
+    <small>EDIT PROPERTY</small>      
+    <h1>{selectedProperty.address}</h1>
 
             <p>
               Update the rental information for this property.
