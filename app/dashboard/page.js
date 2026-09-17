@@ -14,9 +14,10 @@ export default function Dashboard() {
 const [tenancies, setTenancies] = useState([]);
 const [editingTenancy, setEditingTenancy] = useState(null);
 const [applications, setApplications] = useState([]);
+    const [showApplicationForm, setShowApplicationForm] = useState(false);
 const [selectedApplication, setSelectedApplication] = useState(null);
   const r = useRouter();
-
+l
   async function load() {
     const s = supabase();
 
@@ -2723,86 +2724,77 @@ const [selectedApplication, setSelectedApplication] = useState(null);
                     screening provider.
                   </p>
 
-                  {!selectedApplication.screening_consent ? (
-                    <div className="screeningConsentNotice">
-                      <b>Applicant consent required</b>
+                  <div className="screeningConsentNotice">
+  <b>Authorization handled by SmartMove</b>
 
-                      <span>
-                        Screening should only be requested after the
-                        applicant has provided the required authorization.
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="screeningConsentNotice complete">
-                      <b>Screening consent received</b>
+  <span>
+    SmartMove will email the applicant and collect their
+    authorization before releasing the screening reports.
+  </span>
+</div>
 
-                      <span>
-                        Applicant authorization has been recorded.
-                      </span>
-                    </div>
-                  )}
+<button
+  type="button"
+  className="primary screeningButton"
+  onClick={async () => {
+    const s = supabase();
+    const now = new Date().toISOString();
 
-                  <button
-                    type="button"
-                    className="primary screeningButton"
-                    disabled={
-                      !selectedApplication.screening_consent
-                    }
-                    onClick={async () => {
+    const { error } = await s
+      .from('rental_applications')
+      .update({
+        
+        screening_status: 'pending_consent',
+        screening_requested_at: now,
+        application_status: 'screening',
+        updated_at: now
+      })
+      .eq('id', selectedApplication.id);
 
-                      const s = supabase();
+    if (error) {
+      alert(
+        'Could not start screening: ' +
+          error.message
+      );
+      return;
+    }
 
-                      const { error } = await s
-                        .from('rental_applications')
-                        .update({
-                          screening_status: 'requested',
-                          screening_requested_at:
-                            new Date().toISOString(),
-                          application_status: 'screening',
-                          updated_at:
-                            new Date().toISOString()
-                        })
-                        .eq(
-                          'id',
-                          selectedApplication.id
-                        );
+    const updatedApplication = {
+      ...selectedApplication,
+      
+      screening_status: 'pending_consent',
+      screening_requested_at: now,
+      application_status: 'screening'
+    };
 
-                      if (error) {
-                        alert(
-                          'Could not request screening: ' +
-                          error.message
-                        );
-                        return;
-                      }
+    setSelectedApplication(updatedApplication);
 
-                      const updatedApplication = {
-                        ...selectedApplication,
-                        screening_status: 'requested',
-                        screening_requested_at:
-                          new Date().toISOString(),
-                        application_status: 'screening'
-                      };
+    setApplications(
+      applications.map(application =>
+        application.id === selectedApplication.id
+          ? updatedApplication
+          : application
+      )
+    );
 
-                      setSelectedApplication(
-                        updatedApplication
-                      );
+    window.open(
+      'https://www.mysmartmove.com/landlord-tenant-screening',
+      '_blank',
+      'noopener,noreferrer'
+    );
 
-                      setApplications(
-                        applications.map(application =>
-                          application.id ===
-                          selectedApplication.id
-                            ? updatedApplication
-                            : application
-                        )
-                      );
-
-                      alert(
-                        'Screening request created. Connect your screening provider to complete the report.'
-                      );
-                    }}
-                  >
-                    Request Tenant Screening
-                  </button>
+    alert(
+      'SmartMove opened in a new tab.\n\n' +
+        'Applicant: ' +
+        selectedApplication.applicant_name +
+        '\nEmail: ' +
+        selectedApplication.applicant_email +
+        '\n\nEnter this applicant email in SmartMove to send the screening request.'
+    );
+  }}
+>
+  Start SmartMove Screening
+</button>
 
                   <div className="screeningItems">
 
