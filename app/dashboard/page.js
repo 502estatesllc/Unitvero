@@ -629,6 +629,96 @@ async function createAnnouncement(e) {
 
   alert('Announcement created.');
 }
+ async function connectStripeAccount() {
+  try {
+    const s = supabase();
+
+    const {
+      data: { user },
+      error: userError
+    } = await s.auth.getUser();
+
+    if (userError || !user) {
+      alert('Please sign in again.');
+      return;
+    }
+
+    let accountId = paymentAccount?.stripe_account_id;
+
+    if (!accountId) {
+      const accountResponse = await fetch('/api/create-connect-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: user.email
+        })
+      });
+
+      const accountData = await accountResponse.json();
+
+      if (!accountResponse.ok) {
+        throw new Error(
+          accountData.error || 'Could not create Stripe account.'
+        );
+      }
+
+      accountId = accountData.accountId;
+
+      const { error: saveError } = await s
+        .from('landlord_payment_accounts')
+        .upsert(
+          {
+            landlord_id: user.id,
+            provider: 'stripe',
+            stripe_account_id: accountId
+          },
+          {
+            onConflict: 'landlord_id'
+          }
+        );
+
+      if (saveError) {
+        throw new Error(saveError.message);
+      }
+
+      setPaymentAccount(current => ({
+        ...(current || {}),
+        landlord_id: user.id,
+        provider: 'stripe',
+        stripe_account_id: accountId
+      }));
+    }
+
+    const linkResponse = await fetch('/api/create-account-link', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        accountId
+      })
+    });
+
+    const linkData = await linkResponse.json();
+
+    if (!linkResponse.ok) {
+      throw new Error(
+        linkData.error || 'Could not start Stripe onboarding.'
+      );
+    }
+
+    window.location.href = linkData.url;
+  } catch (error) {
+    console.error('Stripe onboarding error:', error);
+
+    alert(
+      error?.message ||
+      'Could not connect your bank account.'
+    );
+  }
+}
   async function out() {
     await supabase().auth.signOut();
     r.push('/login');
@@ -7519,9 +7609,7 @@ return (
                 style={{ marginTop: '16px' }}
                 onClick={() => {
                   alert(
-                    'Secure Stripe onboarding will be connected in the next step.'
-                  );
-                }}
+                   onClick={connectStripeAccount}
               >
                 Connect Bank Account
               </button>
