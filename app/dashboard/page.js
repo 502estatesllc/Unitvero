@@ -1134,106 +1134,104 @@ function isMultiFamily(property) {
 </div>
                 
 
-                  {props.slice(0, 4).map(property => {
-  const tenancy =
-    activeTenancyForProperty(property.id);
+                  <div className="dashboardProperties">
+  {props.slice(0, 4).map(property => {
+    const tenancy = activeTenancyForProperty(property.id);
+    const occupied = Boolean(tenancy);
 
-  const occupied = Boolean(tenancy);
+    return (
+      <article
+        className="dashboardPropertyCard identityPropertyCard"
+        key={property.id}
+        onClick={() => {
+          setSelectedProperty(property);
+          setSelectedUnit(null);
 
-  return (
-    <article
-      className="dashboardPropertyCard identityPropertyCard"
-      key={property.id}
-      onClick={() => {
-        setSelectedProperty(property);
-        setSelectedUnit(null);
+          if (isMultiFamily(property)) {
+            setSelectedTenancy(null);
+          } else {
+            loadTenancy(property.id);
+          }
 
-        if (isMultiFamily(property)) {
-          setSelectedTenancy(null);
-        } else {
-          loadTenancy(property.id);
-        }
+          setView('propertyDetails');
+        }}
+      >
+        <div className="propertyIdentityPanel">
+          <div className="propertyBuildingIcon">
+            ⌂
+          </div>
 
-        setView('propertyDetails');
-      }}
-    >
-                    <div className="propertyIdentityPanel">
-  <div className="propertyBuildingIcon">
-    ⌂
-  </div>    
-                    <span
-  className={
-    occupied
-      ? 'portfolioOccupancy occupied'
-      : 'portfolioOccupancy vacant'
-  }
->
-  <i></i>
-  {occupied ? 'Occupied' : 'Vacant'}
-</span>
-                        </div>
+          <span
+            className={
+              occupied
+                ? 'portfolioOccupancy occupied'
+                : 'portfolioOccupancy vacant'
+            }
+          >
+            <i></i>
+            {occupied ? 'Occupied' : 'Vacant'}
+          </span>
+        </div>
 
-                        <div className="propertyCardBody">
-                          <div className="propertyCardTop">
-                            <div>
-                              <small>RENTAL PROPERTY</small>
+        <div className="propertyCardBody">
+          <div className="propertyCardTop">
+            <div>
+              <small>RENTAL PROPERTY</small>
 
-                              <h3>{property.address}</h3>
+              <h3>{property.address}</h3>
 
-                              <p>
-                                {property.city},{' '}
-                                {property.state}{' '}
-                                {property.zip_code}
-                              </p>
-                            </div>
+              <p>
+                {property.city},{' '}
+                {property.state}{' '}
+                {property.zip_code}
+              </p>
+            </div>
 
-                            <span className="propertyArrow">
-                              →
-                            </span>
-                          </div>
+            <span className="propertyArrow">
+              →
+            </span>
+          </div>
 
-                          <div className="propertyCardDetails">
-                            <div>
-                              <span>MONTHLY RENT</span>
+          <div className="propertyCardDetails">
+            <div>
+              <span>MONTHLY RENT</span>
 
-                              <b>
-                                $
-                                {Number(
-                                  property.monthly_rent || 0
-                                ).toLocaleString()}
-                              </b>
-                            </div>
+              <b>
+                $
+                {Number(
+                  property.monthly_rent || 0
+                ).toLocaleString()}
+              </b>
+            </div>
 
-                            <div>
-                              <span>TENANT</span>
+            <div>
+              <span>TENANT</span>
 
-                              <b>
-                                {tenancy
-                                  ? tenancy.tenant_name ||
-                                    tenancy.tenant_email ||
-                                    'Active tenant'
-                                  : 'No tenant'}
-                              </b>
-                            </div>
-                          </div>
+              <b>
+                {tenancy
+                  ? tenancy.tenant_name ||
+                    tenancy.tenant_email ||
+                    'Active tenant'
+                  : 'No tenant'}
+              </b>
+            </div>
+          </div>
 
-                          <div className="propertyCardFooter">
-                            <span>
-                              {occupied
-                                ? 'Active tenancy'
-                                : 'Ready for tenant'}
-                            </span>
+          <div className="propertyCardFooter">
+            <span>
+              {occupied
+                ? 'Active tenancy'
+                : 'Ready for tenant'}
+            </span>
 
-                            <b>View Property →</b>
-                          </div>
-                        </div>
-                      </article>
-);
-})}
+            <b>View Property →</b>
+          </div>
+        </div>
+      </article>
+    );
+  })}
 </div>
-
 </section>
-
             <section className="activityShowcase">
                 <div className="showcaseHeader">
                   <div>
