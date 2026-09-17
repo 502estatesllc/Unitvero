@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/navigation';
-
+import StripeOnboarding from './StripeOnboarding';
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [props, setProps] = useState([]);
@@ -28,6 +28,7 @@ const [paymentAllocations, setPaymentAllocations] = useState([]);
   const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [rentSettings, setRentSettings] = useState(null);
 const [showRentSettings, setShowRentSettings] = useState(false);
+  const [stripeOnboardingAccountId, setStripeOnboardingAccountId] = useState(null);
   const [paymentAccount, setPaymentAccount] = useState(null);
 const [onlineTransactions, setOnlineTransactions] = useState([]);
 const [landlordPayouts, setLandlordPayouts] = useState([]);
@@ -646,25 +647,29 @@ async function createAnnouncement(e) {
     let accountId = paymentAccount?.stripe_account_id;
 
     if (!accountId) {
-      const accountResponse = await fetch('/api/create-connect-account', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: user.email
-        })
-      });
+      const response = await fetch(
+        '/api/create-connect-account',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: user.email
+          })
+        }
+      );
 
-      const accountData = await accountResponse.json();
+      const data = await response.json();
 
-      if (!accountResponse.ok) {
+      if (!response.ok) {
         throw new Error(
-          accountData.error || 'Could not create Stripe account.'
+          data.error ||
+            'Could not create payout account.'
         );
       }
 
-      accountId = accountData.accountId;
+      accountId = data.accountId;
 
       const { error: saveError } = await s
         .from('landlord_payment_accounts')
@@ -672,7 +677,11 @@ async function createAnnouncement(e) {
           {
             landlord_id: user.id,
             provider: 'stripe',
-            stripe_account_id: accountId
+            stripe_account_id: accountId,
+            onboarding_complete: false,
+            charges_enabled: false,
+            payouts_enabled: false,
+            details_submitted: false
           },
           {
             onConflict: 'landlord_id'
@@ -691,34 +700,17 @@ async function createAnnouncement(e) {
       }));
     }
 
-    const linkResponse = await fetch('/api/create-account-link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        accountId
-      })
-    });
-
-    const linkData = await linkResponse.json();
-
-    if (!linkResponse.ok) {
-      throw new Error(
-        linkData.error || 'Could not start Stripe onboarding.'
-      );
-    }
-
-    window.location.href = linkData.url;
+    setStripeOnboardingAccountId(accountId);
   } catch (error) {
     console.error('Stripe onboarding error:', error);
 
     alert(
       error?.message ||
-      'Could not connect your bank account.'
+        'Could not start payout setup.'
     );
   }
 }
+  
   async function out() {
     await supabase().auth.signOut();
     r.push('/login');
@@ -7603,14 +7595,30 @@ return (
                 accepting online tenant payments.
               </span>
 
-          <button
-  type="button"
-  className="primary"
-  style={{ marginTop: '16px' }}
-  onClick={connectStripeAccount}
->
-  Connect Bank Account
-</button>
+         {stripeOnboardingAccountId ? (
+  <div
+    style={{
+      width: '100%',
+      marginTop: '16px'
+    }}
+  >
+    <StripeOnboarding
+      accountId={stripeOnboardingAccountId}
+      onExit={() =>
+        setStripeOnboardingAccountId(null)
+      }
+    />
+  </div>
+) : (
+  <button
+    type="button"
+    className="primary"
+    style={{ marginTop: '16px' }}
+    onClick={connectStripeAccount}
+  >
+    Connect Bank Account
+  </button>
+)}
 
             </div>
 
@@ -7687,27 +7695,25 @@ return (
 
 
             <div>
-              <small>PAID OUT</small>
+  <small>PAID OUT</small>
 
-              <b>
-                ${paidOut.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}
-              </b>
-            </div>
+  <b>
+    ${paidOut.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}
+  </b>
+</div>
 
+<div>
+  <small>PAYOUT STATUS</small>
 
-            <div>
-              <small>PAYOUT STATUS</small>
-
-              <b>
-                {bankConnected
-                  ? 'Active'
-                  : 'Setup Required'}
-              </b>
-            </div>
-
+  <b>
+    {bankConnected
+      ? 'Active'
+      : 'Setup Required'}
+  </b>
+</div>
           </div>
 
         </section>
