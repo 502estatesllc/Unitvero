@@ -50,6 +50,7 @@ export default function Dashboard() {
   }
 
   setProps(properties || []);
+   alert('Properties loaded: ' + (properties?.length || 0)); 
 }
   useEffect(() => {
     load();
