@@ -1006,9 +1006,9 @@ function isMultiFamily(property) {
   </article>
 </div>
 
-<div className="rentwiseChartsGrid">
-  <section className="rentwiseChartCard">
-    <div className="rentwiseChartHeader">
+<div className="UnitveroChartsGrid">
+  <section className="UnitveroChartCard">
+    <div className="UnitveroChartHeader">
       <div>
         <small>COLLECTION PERFORMANCE</small>
         <h2>Rent Collection</h2>
@@ -1053,8 +1053,8 @@ function isMultiFamily(property) {
     </div>
   </section>
 
-  <section className="rentwiseChartCard">
-    <div className="rentwiseChartHeader">
+  <section className="UnitveroChartCard">
+    <div className="UnitveroChartHeader">
       <div>
         <small>PORTFOLIO HEALTH</small>
         <h2>Occupancy</h2>
@@ -1091,8 +1091,8 @@ function isMultiFamily(property) {
     </div>
   </section>
 
-  <section className="rentwiseChartCard rentwiseChartWide">
-    <div className="rentwiseChartHeader">
+  <section className="UnitveroChartCard UnitveroChartWide">
+    <div className="UnitveroChartHeader">
       <div>
         <small>LAST 6 MONTHS</small>
         <h2>Rent Collected</h2>
@@ -1533,7 +1533,7 @@ function isMultiFamily(property) {
 
                 <p>
                   {props.length === 0
-                    ? 'Start building your Rentwise portfolio below.'
+                    ? 'Start building your Unitvero portfolio below.'
                     : 'Try changing your search or property filter.'}
                 </p>
               </div>
@@ -1687,7 +1687,7 @@ return (
 
                   <p>
                     Add another rental property to your
-                    Rentwise workspace.
+                    Unitvero workspace.
                   </p>
                 </div>
 
@@ -5258,7 +5258,7 @@ return (
                   <h2>Template Library</h2>
 
                   <p>
-                    Start with a rental document and Rentwise
+                    Start with a rental document and Unitvero
                     will eventually auto-fill tenant and
                     property information.
                   </p>
@@ -5359,7 +5359,7 @@ return (
                 <small>ESIGN FOUNDATION</small>
 
                 <h2>
-                  Electronic signatures inside Rentwise
+                  Electronic signatures inside Unitvero
                 </h2>
 
                 <p>
@@ -5843,7 +5843,7 @@ return (
 
                     <div className="announcementFormFooter">
                       <span>
-                        This creates an in-app Rentwise
+                        This creates an in-app Unitvero
                         announcement.
                       </span>
 
@@ -6017,7 +6017,7 @@ return (
 
   async function runRentAutomation() {
     const confirmed = window.confirm(
-      'Run Rentwise rent automation now? This will create any missing monthly rent charges and eligible late fees. Duplicate charges are protected.'
+      'Run Unitvero rent automation now? This will create any missing monthly rent charges and eligible late fees. Duplicate charges are protected.'
     );
 
     if (!confirmed) return;
@@ -6421,7 +6421,7 @@ return (
             <div>
               <h2>Automation Status</h2>
               <p>
-                Current rules Rentwise uses for rent collection.
+                Current rules Unitvero uses for rent collection.
               </p>
             </div>
           </div>
@@ -6548,7 +6548,7 @@ return (
               <b>Partial payments are blocked.</b>
 
               <div>
-                Rentwise will require the tenant&apos;s full
+                Unitvero will require the tenant&apos;s full
                 outstanding balance.
               </div>
             </div>
@@ -6932,7 +6932,7 @@ return (
 
                     {charge.source === 'automatic' && (
                       <small>
-                        Automatic Rentwise charge
+                        Automatic Unitvero charge
                       </small>
                     )}
                   </div>
