@@ -3394,3 +3394,467 @@ strong {
     justify-self: start;
   }
 }
+
+/* =========================================================
+   RENTWISE — LARGE DESKTOP SCALE FIX
+   Makes Applications / Review / Documents easier to read
+   ========================================================= */
+
+@media (min-width: 1100px) {
+
+  /* Use more of the available desktop screen */
+  .applicationsPage,
+  .applicationDetailsPage,
+  .documentsPage {
+    max-width: 1750px !important;
+    padding: 42px 52px 70px !important;
+  }
+
+  .applicationFormPage {
+    max-width: 1450px !important;
+    padding: 42px 52px 70px !important;
+  }
+
+  /* ---------- PAGE HEADERS ---------- */
+
+  .applicationsHeader,
+  .documentsHeader {
+    margin-bottom: 32px !important;
+  }
+
+  .applicationsHeader small,
+  .documentsHeader small,
+  .applicationFormHeader small {
+    font-size: 12px !important;
+  }
+
+  .applicationsHeader h1,
+  .documentsHeader h1,
+  .applicationFormHeader h1 {
+    font-size: 42px !important;
+  }
+
+  .applicationsHeader p,
+  .documentsHeader p,
+  .applicationFormHeader p {
+    font-size: 16px !important;
+  }
+
+  .applicationsHeader .primary,
+  .documentsHeader .primary {
+    min-height: 48px !important;
+    padding: 0 22px !important;
+    font-size: 14px !important;
+  }
+
+  /* ---------- APPLICATION DASHBOARD STATS ---------- */
+
+  .applicationStats,
+  .documentStats {
+    gap: 20px !important;
+    margin-bottom: 28px !important;
+  }
+
+  .applicationStats article,
+  .documentStats article {
+    min-height: 145px !important;
+    padding: 26px !important;
+    border-radius: 18px !important;
+  }
+
+  .applicationStatIcon {
+    width: 52px !important;
+    height: 52px !important;
+    flex-basis: 52px !important;
+    font-size: 20px !important;
+  }
+
+  .applicationStats article span,
+  .documentStats article > span {
+    font-size: 15px !important;
+  }
+
+  .applicationStats article b,
+  .documentStats article b {
+    font-size: 34px !important;
+  }
+
+  .applicationStats article small,
+  .documentStats article small {
+    font-size: 11px !important;
+  }
+
+  /* ---------- APPLICATION LIST ---------- */
+
+  .applicationDirectoryHeader,
+  .documentLibraryHeader {
+    min-height: 96px !important;
+    padding: 24px 28px !important;
+  }
+
+  .applicationDirectoryHeader h2,
+  .documentLibraryHeader h2 {
+    font-size: 21px !important;
+  }
+
+  .applicationDirectoryHeader p,
+  .documentLibraryHeader p {
+    font-size: 14px !important;
+  }
+
+  .applicationTableHeader {
+    min-height: 54px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+
+  .applicationTableHeader > span {
+    font-size: 11px !important;
+  }
+
+  .applicationTableRow {
+    min-height: 96px !important;
+    padding: 17px 28px !important;
+  }
+
+  .applicationAvatar {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 17px !important;
+  }
+
+  .applicationPerson {
+    gap: 14px !important;
+  }
+
+  .applicationPerson b,
+  .applicationProperty b {
+    font-size: 15px !important;
+  }
+
+  .applicationPerson span,
+  .applicationProperty span,
+  .applicationSubmitted {
+    font-size: 13px !important;
+  }
+
+  .applicationStatusBadge {
+    padding: 7px 11px !important;
+    font-size: 11px !important;
+  }
+
+  .applicationReviewButton {
+    font-size: 13px !important;
+  }
+
+  /* =====================================================
+     APPLICATION REVIEW
+     ===================================================== */
+
+  .applicationDetailsHeader {
+    padding: 28px 30px !important;
+    margin-top: 26px !important;
+    margin-bottom: 26px !important;
+  }
+
+  .applicationLargeAvatar {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 25px !important;
+  }
+
+  .applicationApplicantHeading {
+    gap: 20px !important;
+  }
+
+  .applicationApplicantHeading small {
+    font-size: 11px !important;
+  }
+
+  .applicationApplicantHeading h1 {
+    font-size: 32px !important;
+  }
+
+  .applicationApplicantHeading p {
+    font-size: 15px !important;
+  }
+
+  .applicationHeaderStatus small {
+    font-size: 12px !important;
+  }
+
+  /* Make both columns larger */
+  .applicationDetailsGrid {
+    grid-template-columns:
+      minmax(650px, 1.55fr)
+      minmax(390px, 0.85fr) !important;
+
+    gap: 26px !important;
+  }
+
+  .applicationDetailsMain,
+  .applicationDetailsSidebar {
+    gap: 22px !important;
+  }
+
+  /* Main information cards */
+  .applicationDetailCard,
+  .screeningCenterCard,
+  .applicationDecisionCard,
+  .applicationTimelineCard {
+    padding: 30px !important;
+    border-radius: 19px !important;
+  }
+
+  .applicationDetailCardHeader {
+    margin-bottom: 27px !important;
+    padding-bottom: 20px !important;
+  }
+
+  .applicationDetailCardHeader small {
+    font-size: 11px !important;
+  }
+
+  .applicationDetailCardHeader h2,
+  .screeningCenterCard h2,
+  .applicationDecisionCard h2,
+  .applicationTimelineCard h2 {
+    font-size: 20px !important;
+  }
+
+  .applicationDetailCardHeader > span {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 11px !important;
+  }
+
+  .applicationDetailFields {
+    gap: 28px 42px !important;
+  }
+
+  .applicationDetailFields span {
+    margin-bottom: 8px !important;
+    font-size: 11px !important;
+  }
+
+  .applicationDetailFields b {
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+  }
+
+  /* ---------- SCREENING CENTER ---------- */
+
+  .screeningCenterHeader small {
+    font-size: 11px !important;
+  }
+
+  .screeningCenterDescription {
+    margin-top: 12px !important;
+    margin-bottom: 23px !important;
+    font-size: 14px !important;
+  }
+
+  .screeningItems {
+    margin-bottom: 20px !important;
+  }
+
+  .screeningItems > div {
+    min-height: 64px !important;
+    padding: 15px 16px !important;
+    gap: 14px !important;
+    box-sizing: border-box;
+  }
+
+  .screeningItemIcon {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 13px !important;
+  }
+
+  .screeningItems b {
+    font-size: 14px !important;
+  }
+
+  .screeningItems small {
+    margin-top: 3px !important;
+    font-size: 11px !important;
+  }
+
+  .screeningConsentNotice {
+    padding: 17px !important;
+  }
+
+  .screeningConsentNotice b {
+    font-size: 13px !important;
+  }
+
+  .screeningConsentNotice span {
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+  }
+
+  .screeningButton {
+    min-height: 50px !important;
+    margin-top: 17px !important;
+    font-size: 14px !important;
+  }
+
+  .screeningRequestedDate {
+    margin-top: 12px !important;
+    font-size: 11px !important;
+  }
+
+  /* ---------- DECISION CARD ---------- */
+
+  .applicationDecisionCard > small,
+  .applicationTimelineCard > small {
+    font-size: 11px !important;
+  }
+
+  .applicationDecisionCard > p {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
+  .applicationDecisionActions {
+    gap: 12px !important;
+  }
+
+  .approveApplicationButton,
+  .denyApplicationButton {
+    min-height: 48px !important;
+    font-size: 13px !important;
+  }
+
+  .applicationDecisionNote {
+    margin-top: 16px !important;
+    font-size: 10px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* ---------- TIMELINE ---------- */
+
+  .applicationTimeline {
+    margin-top: 22px !important;
+  }
+
+  .timelineItem {
+    min-height: 62px !important;
+    padding-left: 30px !important;
+  }
+
+  .timelineItem b {
+    font-size: 13px !important;
+  }
+
+  .timelineItem small {
+    font-size: 11px !important;
+  }
+
+  /* =====================================================
+     NEW APPLICATION FORM
+     ===================================================== */
+
+  .applicationFormCard {
+    padding: 30px !important;
+  }
+
+  .applicationFormSectionHeader {
+    margin-bottom: 28px !important;
+  }
+
+  .applicationFormSectionHeader > span {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 12px !important;
+  }
+
+  .applicationFormSectionHeader h2 {
+    font-size: 20px !important;
+  }
+
+  .applicationFormSectionHeader p {
+    font-size: 13px !important;
+  }
+
+  .applicationFormGrid {
+    gap: 22px !important;
+  }
+
+  .applicationFormGrid label {
+    font-size: 13px !important;
+  }
+
+  .applicationFormGrid input,
+  .applicationFormGrid select,
+  .applicationFormGrid textarea {
+    min-height: 50px !important;
+    padding: 13px 15px !important;
+    font-size: 14px !important;
+  }
+
+  .applicationFormGrid textarea {
+    min-height: 105px !important;
+  }
+
+  /* =====================================================
+     DOCUMENT CENTER
+     ===================================================== */
+
+  .documentTemplateGrid {
+    padding: 26px !important;
+    gap: 20px !important;
+  }
+
+  .documentTemplateCard {
+    min-height: 265px !important;
+    padding: 24px !important;
+  }
+
+  .documentTemplateIcon {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 19px !important;
+  }
+
+  .documentType {
+    top: 24px !important;
+    right: 24px !important;
+    font-size: 10px !important;
+  }
+
+  .documentTemplateCard h3 {
+    font-size: 17px !important;
+  }
+
+  .documentTemplateCard p {
+    font-size: 13px !important;
+  }
+
+  .documentTemplateCard button {
+    font-size: 13px !important;
+  }
+
+  .esignBanner {
+    min-height: 170px !important;
+    padding: 30px 34px !important;
+  }
+
+  .esignBannerIcon {
+    width: 62px !important;
+    height: 62px !important;
+    font-size: 24px !important;
+  }
+
+  .esignBanner h2 {
+    font-size: 21px !important;
+  }
+
+  .esignBanner p {
+    font-size: 13px !important;
+  }
+
+  .esignBanner > span {
+    font-size: 10px !important;
+  }
+}
