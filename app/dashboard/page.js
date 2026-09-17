@@ -7603,16 +7603,14 @@ return (
                 accepting online tenant payments.
               </span>
 
-              <button
-                type="button"
-                className="primary"
-                style={{ marginTop: '16px' }}
-                onClick={() => {
-                  alert(
-                   onClick={connectStripeAccount}
-              >
-                Connect Bank Account
-              </button>
+          <button
+  type="button"
+  className="primary"
+  style={{ marginTop: '16px' }}
+  onClick={connectStripeAccount}
+>
+  Connect Bank Account
+</button>
 
             </div>
 
