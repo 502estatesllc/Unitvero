@@ -310,17 +310,66 @@ export default function Dashboard() {
           }}
         >
           <div className="propertyPhoto">
-            {p.image_url ? (
-              <img src={p.image_url} alt={p.address} />
-            ) : (
-              <div className="propertyPhotoPlaceholder">
-                <span>⌂</span>
-                <small>PROPERTY PHOTO</small>
-              </div>
-            )}
+  {p.image_url ? (
+    <img src={p.image_url} alt={p.address} />
+  ) : (
+    <div className="propertyPhotoPlaceholder">
+      <span>⌂</span>
+      <small>ADD PROPERTY PHOTO</small>
+    </div>
+  )}
 
-            <span className="occupancyBadge">Active</span>
-          </div>
+  <label className="photoUploadButton">
+    {p.image_url ? 'Change Photo' : '+ Add Photo'}
+    <input
+      type="file"
+      accept="image/*"
+      hidden
+      onChange={async e => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const s = supabase();
+
+        const filePath =
+          `${p.id}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+
+        const { error: uploadError } = await s.storage
+          .from('property-images')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (uploadError) {
+          alert('Could not upload photo: ' + uploadError.message);
+          return;
+        }
+
+        const { data: publicData } = s.storage
+          .from('property-images')
+          .getPublicUrl(filePath);
+
+        const imageUrl = publicData.publicUrl;
+
+        const { error: updateError } = await s
+          .from('properties')
+          .update({ image_url: imageUrl })
+          .eq('id', p.id);
+
+        if (updateError) {
+          alert('Photo uploaded, but could not save it: ' + updateError.message);
+          return;
+        }
+
+        await load();
+        alert('Property photo updated successfully!');
+      }}
+    />
+  </label>
+
+  <span className="occupancyBadge">Active</span>
+</div>
 
           <div className="propertyCardBody">
             <div className="propertyCardTop">
