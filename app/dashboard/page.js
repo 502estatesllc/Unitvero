@@ -894,26 +894,28 @@ function isMultiFamily(property) {
                   )}
 
                   {props.slice(0, 4).map(property => {
-                    const tenancy =
-                      activeTenancyForProperty(property.id);
+  const tenancy =
+    activeTenancyForProperty(property.id);
 
-                    const occupied = Boolean(tenancy);
+  const occupied = Boolean(tenancy);
 
-                    return (
-                      <article
-                        className="dashboardPropertyCard identityPropertyCard"
-                        key={property.id}
-                        onClick={() => {
-                          setSelectedProperty(property);
-                          loadTenancy(property.id);
-                          setView('propertyDetails');
-                        }}
-                      >
-                        <div className="propertyIdentityPanel">
-                          <div className="propertyBuildingIcon">
-                            ⌂
-                          </div>
+  return (
+    <article
+      className="dashboardPropertyCard identityPropertyCard"
+      key={property.id}
+      onClick={() => {
+        setSelectedProperty(property);
+        setSelectedUnit(null);
 
+        if (isMultiFamily(property)) {
+          setSelectedTenancy(null);
+        } else {
+          loadTenancy(property.id);
+        }
+
+        setView('propertyDetails');
+      }}
+    >
                           <span
                             className={
                               occupied
@@ -1309,28 +1311,22 @@ function isMultiFamily(property) {
   const occupied = multiFamily
     ? occupiedUnits > 0
     : Boolean(tenancy);
+<article
+  className="portfolioPropertyCard"
+  key={property.id}
+  onClick={() => {
+    setSelectedProperty(property);
+    setSelectedUnit(null);
 
-  return (
-                    <article
-                      className="portfolioPropertyCard"
-                      key={property.id}
-                      onClick={() => {
-                        setSelectedProperty(property);
-                        loadTenancy(property.id);
-                        setView('propertyDetails');
-                      }}
-                    >
-                      <div className="portfolioCardAccent">
-                        <div className="portfolioHouseIcon">
-                          ⌂
-                        </div>
+    if (isMultiFamily(property)) {
+      setSelectedTenancy(null);
+    } else {
+      loadTenancy(property.id);
+    }
 
-                        <span
-                          className={
-                            occupied
-                              ? 'portfolioOccupancy occupied'
-                              : 'portfolioOccupancy vacant'
-                          }
+    setView('propertyDetails');
+  }}
+>                          }
                         >
                           <i></i>
                           {occupied ? 'Occupied' : 'Vacant'}
@@ -1502,16 +1498,15 @@ function isMultiFamily(property) {
               </div>
 
               <div className="commandHeaderActions">
-                {!selectedTenancy && (
-                  <button
-                    type="button"
-                    className="commandSecondaryButton"
-                    onClick={() => setView('addTenant')}
-                  >
-                    + Add Tenant
-                  </button>
-                )}
-
+               {!isMultiFamily(selectedProperty) && !selectedTenancy && (
+  <button
+    type="button"
+    className="commandSecondaryButton"
+    onClick={() => setView('addTenant')}
+  >
+    + Add Tenant
+  </button>
+)}
                 <button
                   type="button"
                   className="primary"
@@ -1748,25 +1743,33 @@ function isMultiFamily(property) {
                       </div>
                     </div>
                   ) : (
-                    <div className="commandEmptyState">
-                      <div className="commandEmptyIcon">♙</div>
-                      <b>No tenant assigned</b>
+                    
+                     <div className="commandEmptyState">
+  <div className="commandEmptyIcon">♙</div>
+  <b>No tenant assigned</b>
 
-                      <p>
-                        Add a tenant to begin tracking the lease,
-                        rent and resident information for this
-                        property.
-                      </p>
+  {isMultiFamily(selectedProperty) ? (
+    <p>
+      Select a unit above to add or manage a tenant.
+    </p>
+  ) : (
+    <>
+      <p>
+        Add a tenant to begin tracking the lease,
+        rent and resident information for this
+        property.
+      </p>
 
-                      <button
-                        type="button"
-                        className="primary"
-                        onClick={() => setView('addTenant')}
-                      >
-                        + Add Tenant
-                      </button>
-                    </div>
-                  )}
+      <button
+        type="button"
+        className="primary"
+        onClick={() => setView('addTenant')}
+      >
+        + Add Tenant
+      </button>
+    </>
+  )}
+</div>
                 </section>
 
                 <section className="commandCard">
@@ -2216,8 +2219,7 @@ selectedPropertyPayments.length === 0 ? (
           <section className="panel">
             <button
               type="button"
-              onClick={() =>
-  setView(selectedUnit ? 'unitDetails' : 'propertyDetails')
+              onClick={() => setView('propertyDetails')}
 }
             >
               ← Back to Property
@@ -2257,7 +2259,9 @@ selectedPropertyPayments.length === 0 ? (
           <section className="panel">
             <button
               type="button"
-              onClick={() => setView('propertyDetails')}
+              onClick={() =>
+  setView(selectedUnit ? 'unitDetails' : 'propertyDetails')
+}
             >
               ← Back to Property
             </button>
@@ -2272,112 +2276,133 @@ selectedPropertyPayments.length === 0 ? (
 </p>
             <form
               className="addTenantForm"
-              onSubmit={async e => {
-                e.preventDefault();
+             onSubmit={async e => {
+  e.preventDefault();
 
-                const form = e.currentTarget;
-                const s = supabase();
+  const form = e.currentTarget;
+  const s = supabase();
 
-                const {
-                  data: { user },
-                  error: userError
-                } = await s.auth.getUser();
+  const {
+    data: { user },
+    error: userError
+  } = await s.auth.getUser();
 
-                if (userError || !user) {
-                  alert(
-                    'Authentication error: ' +
-                      (userError?.message ||
-                        'No user found')
-                  );
-                  return;
-                }
+  if (userError || !user) {
+    alert(
+      'Authentication error: ' +
+        (userError?.message || 'No user found')
+    );
+    return;
+  }
 
-                const tenantName =
-                  form.tenantName.value.trim();
+  const tenantName = form.tenantName.value.trim();
+  const tenantEmail = form.tenantEmail.value.trim();
+  const tenantPhone = form.tenantPhone.value.trim();
+  const monthlyRent = Number(form.monthlyRent.value);
+  const startDate = form.startDate.value;
+  const endDate = form.endDate.value || null;
 
-                const tenantEmail =
-                  form.tenantEmail.value.trim();
+  if (endDate && endDate < startDate) {
+    alert(
+      'Lease end date cannot be before the lease start date.'
+    );
+    return;
+  }
 
-                const tenantPhone =
-                  form.tenantPhone.value.trim();
+  const { data: newTenancy, error: tenancyError } =
+    await s
+      .from('tenancies')
+      .insert({
+        property_id: selectedProperty.id,
+        unit_id: selectedUnit?.id || null,
+        tenant_email: tenantEmail,
+        tenant_name: tenantName,
+        tenant_phone: tenantPhone,
+        monthly_rent: monthlyRent,
+        start_date: startDate,
+        end_date: endDate,
+        status: 'active'
+      })
+      .select()
+      .single();
 
-                const monthlyRent = Number(
-                  form.monthlyRent.value
-                );
+  if (tenancyError) {
+    alert(
+      'Could not add tenant: ' +
+        tenancyError.message
+    );
+    return;
+  }
 
-                const startDate =
-                  form.startDate.value;
+  if (selectedUnit) {
+    const { error: unitError } = await s
+      .from('units')
+      .update({
+        status: 'occupied',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', selectedUnit.id);
 
-                const endDate =
-                  form.endDate.value || null;
+    if (unitError) {
+      alert(
+        'Tenant was added, but unit status could not be updated: ' +
+          unitError.message
+      );
+    } else {
+      setSelectedUnit(current =>
+        current
+          ? {
+              ...current,
+              status: 'occupied'
+            }
+          : current
+      );
+    }
+  }
 
-                if (endDate && endDate < startDate) {
-                  alert(
-                    'Lease end date cannot be before the lease start date.'
-                  );
-                  return;
-                }
+  const { error: invitationError } =
+    await s.from('invitations').insert({
+      landlord_id: user.id,
+      property_id: selectedProperty.id,
+      unit_id: selectedUnit?.id || null,
+      email: tenantEmail,
+      status: 'pending'
+    });
 
-                const { error: tenancyError } =
-                  await s.from('tenancies').insert({
-                    property_id: selectedProperty.id,
-                    tenant_email: tenantEmail,
-                    tenant_name: tenantName,
-                    tenant_phone: tenantPhone,
-                    monthly_rent: monthlyRent,
-                    start_date: startDate,
-                    end_date: endDate,
-                    status: 'active'
-                  });
+  setSelectedTenancy(newTenancy);
 
-                if (tenancyError) {
-                  alert(
-                    'Could not add tenant: ' +
-                      tenancyError.message
-                  );
-                  return;
-                }
+  await load();
 
-                const { error: invitationError } =
-                  await s.from('invitations').insert({
-                    landlord_id: user.id,
-                    property_id: selectedProperty.id,
-                    unit_id: selectedUnit?.id || null,
-                    email: tenantEmail,
-                    status: 'pending'
-                  });
+  if (invitationError) {
+    alert(
+      tenantName +
+        ' was added, but the invitation could not be created: ' +
+        invitationError.message
+    );
 
-                if (invitationError) {
-                  alert(
-                    'Tenant was added, but invitation could not be created: ' +
-                      invitationError.message
-                  );
+    setView(
+      selectedUnit
+        ? 'unitDetails'
+        : 'propertyDetails'
+    );
 
-                  await loadTenancy(
-                    selectedProperty.id
-                  );
+    return;
+  }
 
-                  await load();
-               setView(selectedUnit ? 'unitDetails' : 'propertyDetails');
-                  return;
-                }
+  alert(
+    tenantName +
+      ' was added successfully. Invitation created for ' +
+      tenantEmail
+  );
 
-                alert(
-                  tenantName +
-                    ' was added successfully. Invitation created for ' +
-                    tenantEmail
-                );
+  form.reset();
 
-                form.reset();
-
-                await loadTenancy(
-                  selectedProperty.id
-                );
-
-                await load();
-
-              setView(selectedUnit ? 'unitDetails' : 'propertyDetails');
-              }}
+  setView(
+    selectedUnit
+      ? 'unitDetails'
+      : 'propertyDetails'
+  );
+}}
             >
               <div className="tenantFormGrid">
                 <label>
