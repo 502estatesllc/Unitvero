@@ -333,11 +333,7 @@ export default function Dashboard() {
         if (!file) return;
 
         const s = supabase();
-const {
-  data: { user }
-} = await s.auth.getUser();
 
-alert('Upload user: ' + (user ? user.id : 'NOT LOGGED IN'));
         const filePath =
           `${p.id}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
 
