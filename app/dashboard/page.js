@@ -11,8 +11,10 @@ export default function Dashboard() {
   const [view, setView] = useState('overview');
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedTenancy, setSelectedTenancy] = useState(null);
-  const [tenancies, setTenancies] = useState([]);
-  const [editingTenancy, setEditingTenancy] = useState(null);
+const [tenancies, setTenancies] = useState([]);
+const [editingTenancy, setEditingTenancy] = useState(null);
+const [applications, setApplications] = useState([]);
+const [selectedApplication, setSelectedApplication] = useState(null);
   const r = useRouter();
 
   async function load() {
@@ -54,7 +56,17 @@ export default function Dashboard() {
     }
 
     setProps(properties || []);
+    const { data: applicationData, error: applicationError } = await s
+      .from('rental_applications')
+      .select('*')
+      .eq('landlord_id', user.id)
+      .order('created_at', { ascending: false });
 
+    if (applicationError) {
+      alert('Could not load applications: ' + applicationError.message);
+    } else {
+      setApplications(applicationData || []);
+    }
     const propertyIds = (properties || []).map(property => property.id);
 
     if (propertyIds.length === 0) {
@@ -281,6 +293,13 @@ export default function Dashboard() {
             <span className="navIcon">▤</span>
             <span>Leases</span>
           </a>
+            <a
+  className={view === 'applications' ? 'active' : ''}
+  onClick={() => setView('applications')}
+>
+  <span className="navIcon">▣</span>
+  <span>Applications</span>
+</a>
 
           <a
             className={view === 'maintenance' ? 'active' : ''}
@@ -1741,7 +1760,701 @@ export default function Dashboard() {
     </section>
   </section>
 )}
-        {view === 'maintenance' && (
+         {view === 'applications' && (
+          <section className="applicationsPage">
+
+            <div className="applicationsHeader">
+              <div>
+                <small>APPLICANT MANAGEMENT</small>
+                <h1>Applications</h1>
+                <p>
+                  Manage rental applications, applicant information,
+                  and tenant screening from one place.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="primary"
+                onClick={() => setView('newApplication')}
+              >
+                + New Application
+              </button>
+            </div>
+
+            <div className="applicationStats">
+
+              <article>
+                <span>Total Applications</span>
+                <b>{applications.length}</b>
+                <small>ALL APPLICATIONS</small>
+              </article>
+
+              <article>
+                <span>New</span>
+                <b>
+                  {
+                    applications.filter(
+                      a => a.application_status === 'new'
+                    ).length
+                  }
+                </b>
+                <small>NEEDS REVIEW</small>
+              </article>
+
+              <article>
+                <span>Screening</span>
+                <b>
+                  {
+                    applications.filter(
+                      a =>
+                        a.screening_status === 'requested' ||
+                        a.screening_status === 'in_progress'
+                    ).length
+                  }
+                </b>
+                <small>SCREENING</small>
+              </article>
+
+              <article>
+                <span>Approved</span>
+                <b>
+                  {
+                    applications.filter(
+                      a => a.application_status === 'approved'
+                    ).length
+                  }
+                </b>
+                <small>APPROVED</small>
+              </article>
+
+            </div>
+
+            <section className="applicationsDirectory">
+
+              <div className="applicationsDirectoryHeader">
+                <div>
+                  <h2>Rental Applications</h2>
+                  <p>
+                    Review applicants and manage their screening process.
+                  </p>
+                </div>
+
+                <span>
+                  {applications.length}{' '}
+                  {applications.length === 1
+                    ? 'application'
+                    : 'applications'}
+                </span>
+              </div>
+
+              {applications.length === 0 ? (
+
+                <div className="applicationsEmpty">
+
+                  <div className="applicationsEmptyIcon">
+                    ▣
+                  </div>
+
+                  <h3>No applications yet</h3>
+
+                  <p>
+                    Create an application for a prospective tenant
+                    or send them an application link.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => setView('newApplication')}
+                  >
+                    + Create Application
+                  </button>
+
+                </div>
+
+              ) : (
+
+                <div className="applicationsTable">
+
+                  <div className="applicationsTableHeader">
+                    <span>Applicant</span>
+                    <span>Property</span>
+                    <span>Income</span>
+                    <span>Application</span>
+                    <span>Screening</span>
+                    <span>Action</span>
+                  </div>
+
+                  {applications.map(application => {
+
+                    const property = props.find(
+                      p => p.id === application.property_id
+                    );
+
+                    return (
+                      <div
+                        className="applicationRow"
+                        key={application.id}
+                      >
+
+                        <div className="applicationApplicant">
+                          <div className="applicationAvatar">
+                            {(
+                              application.applicant_name || 'A'
+                            )
+                              .split(' ')
+                              .map(part =>
+                                part.charAt(0)
+                              )
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+
+                          <div>
+                            <b>
+                              {application.applicant_name}
+                            </b>
+
+                            <span>
+                              {application.applicant_email}
+                            </span>
+
+                            <small>
+                              {application.applicant_phone ||
+                                'No phone provided'}
+                            </small>
+                          </div>
+                        </div>
+
+                        <div className="applicationProperty">
+                          <b>
+                            {property?.address ||
+                              'No property selected'}
+                          </b>
+
+                          <span>
+                            {property
+                              ? `${property.city}, ${property.state}`
+                              : ''}
+                          </span>
+                        </div>
+
+                        <div className="applicationIncome">
+                          <b>
+                            {application.monthly_income
+                              ? '$' +
+                                Number(
+                                  application.monthly_income
+                                ).toLocaleString()
+                              : '—'}
+                          </b>
+
+                          <span>
+                            Monthly income
+                          </span>
+                        </div>
+
+                        <div>
+                          <span
+                            className={
+                              'applicationStatus ' +
+                              application.application_status
+                            }
+                          >
+                            {application.application_status
+                              .replaceAll('_', ' ')}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span
+                            className={
+                              'screeningStatus ' +
+                              application.screening_status
+                            }
+                          >
+                            {application.screening_status
+                              .replaceAll('_', ' ')}
+                          </span>
+                        </div>
+
+                        <div className="applicationActions">
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedApplication(
+                                application
+                              );
+                              setView(
+                                'applicationDetails'
+                              );
+                            }}
+                          >
+                            Review
+                          </button>
+
+                        </div>
+
+                      </div>
+                    );
+                  })}
+
+                </div>
+
+              )}
+
+            </section>
+
+          </section>
+        )}
+
+        {view === 'newApplication' && (
+          <section className="applicationFormPage">
+
+            <button
+              type="button"
+              className="applicationBackButton"
+              onClick={() =>
+                setView('applications')
+              }
+            >
+              ← Back to Applications
+            </button>
+
+            <div className="applicationsHeader">
+              <div>
+                <small>NEW APPLICANT</small>
+                <h1>Rental Application</h1>
+                <p>
+                  Enter applicant information to begin the
+                  rental screening process.
+                </p>
+              </div>
+            </div>
+
+            <form
+              className="applicationForm"
+              onSubmit={async e => {
+
+                e.preventDefault();
+
+                const form = e.currentTarget;
+                const s = supabase();
+
+                const {
+                  data: { user },
+                  error: userError
+                } = await s.auth.getUser();
+
+                if (userError || !user) {
+                  alert(
+                    'Authentication error: ' +
+                    (userError?.message ||
+                      'No user found')
+                  );
+                  return;
+                }
+
+                const { error } = await s
+                  .from('rental_applications')
+                  .insert({
+                    landlord_id: user.id,
+
+                    property_id:
+                      form.propertyId.value || null,
+
+                    applicant_name:
+                      form.applicantName.value.trim(),
+
+                    applicant_email:
+                      form.applicantEmail.value.trim(),
+
+                    applicant_phone:
+                      form.applicantPhone.value.trim(),
+
+                    current_address:
+                      form.currentAddress.value.trim(),
+
+                    current_city:
+                      form.currentCity.value.trim(),
+
+                    current_state:
+                      form.currentState.value.trim(),
+
+                    current_zip:
+                      form.currentZip.value.trim(),
+
+                    employer_name:
+                      form.employerName.value.trim(),
+
+                    job_title:
+                      form.jobTitle.value.trim(),
+
+                    monthly_income:
+                      Number(form.monthlyIncome.value) || null,
+
+                    current_landlord_name:
+                      form.currentLandlordName.value.trim(),
+
+                    current_landlord_phone:
+                      form.currentLandlordPhone.value.trim(),
+
+                    current_rent:
+                      Number(form.currentRent.value) || null,
+
+                    previous_address:
+                      form.previousAddress.value.trim(),
+
+                    occupants_count:
+                      Number(form.occupantsCount.value) || 1,
+
+                    occupants_details:
+                      form.occupantsDetails.value.trim(),
+
+                    has_pets:
+                      form.hasPets.value === 'yes',
+
+                    pets_details:
+                      form.petsDetails.value.trim(),
+
+                    vehicles_details:
+                      form.vehiclesDetails.value.trim(),
+
+                    application_status: 'new',
+
+                    screening_status: 'not_started'
+                  });
+
+                if (error) {
+                  alert(
+                    'Could not create application: ' +
+                    error.message
+                  );
+                  return;
+                }
+
+                alert(
+                  'Rental application created successfully!'
+                );
+
+                await load();
+
+                setView('applications');
+              }}
+            >
+
+              <section className="applicationFormSection">
+
+                <div className="applicationFormSectionHeader">
+                  <h2>Applicant Information</h2>
+                  <p>
+                    Basic contact information for the applicant.
+                  </p>
+                </div>
+
+                <div className="applicationFormGrid">
+
+                  <label>
+                    Full Name
+                    <input
+                      name="applicantName"
+                      required
+                      placeholder="Applicant full name"
+                    />
+                  </label>
+
+                  <label>
+                    Email Address
+                    <input
+                      name="applicantEmail"
+                      type="email"
+                      required
+                      placeholder="applicant@email.com"
+                    />
+                  </label>
+
+                  <label>
+                    Phone Number
+                    <input
+                      name="applicantPhone"
+                      type="tel"
+                      placeholder="(502) 555-1234"
+                    />
+                  </label>
+
+                  <label>
+                    Property
+                    <select
+                      name="propertyId"
+                      defaultValue=""
+                    >
+                      <option value="">
+                        Select property
+                      </option>
+
+                      {props.map(property => (
+                        <option
+                          key={property.id}
+                          value={property.id}
+                        >
+                          {property.address}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                </div>
+
+              </section>
+
+              <section className="applicationFormSection">
+
+                <div className="applicationFormSectionHeader">
+                  <h2>Current Housing</h2>
+                  <p>
+                    Information about the applicant's current residence.
+                  </p>
+                </div>
+
+                <div className="applicationFormGrid">
+
+                  <label className="full">
+                    Current Address
+                    <input
+                      name="currentAddress"
+                      placeholder="Street address"
+                    />
+                  </label>
+
+                  <label>
+                    City
+                    <input
+                      name="currentCity"
+                      placeholder="City"
+                    />
+                  </label>
+
+                  <label>
+                    State
+                    <input
+                      name="currentState"
+                      placeholder="KY"
+                    />
+                  </label>
+
+                  <label>
+                    ZIP Code
+                    <input
+                      name="currentZip"
+                      placeholder="40211"
+                    />
+                  </label>
+
+                  <label>
+                    Current Landlord
+                    <input
+                      name="currentLandlordName"
+                      placeholder="Landlord name"
+                    />
+                  </label>
+
+                  <label>
+                    Landlord Phone
+                    <input
+                      name="currentLandlordPhone"
+                      type="tel"
+                      placeholder="Phone number"
+                    />
+                  </label>
+
+                  <label>
+                    Current Rent
+                    <input
+                      name="currentRent"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Monthly rent"
+                    />
+                  </label>
+
+                </div>
+
+              </section>
+
+              <section className="applicationFormSection">
+
+                <div className="applicationFormSectionHeader">
+                  <h2>Employment & Income</h2>
+                  <p>
+                    Employment information used for application review.
+                  </p>
+                </div>
+
+                <div className="applicationFormGrid">
+
+                  <label>
+                    Employer
+                    <input
+                      name="employerName"
+                      placeholder="Company name"
+                    />
+                  </label>
+
+                  <label>
+                    Job Title
+                    <input
+                      name="jobTitle"
+                      placeholder="Job title"
+                    />
+                  </label>
+
+                  <label>
+                    Monthly Income
+                    <input
+                      name="monthlyIncome"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Monthly income"
+                    />
+                  </label>
+
+                </div>
+
+              </section>
+
+              <section className="applicationFormSection">
+
+                <div className="applicationFormSectionHeader">
+                  <h2>Rental History</h2>
+                  <p>
+                    Previous housing information.
+                  </p>
+                </div>
+
+                <div className="applicationFormGrid">
+
+                  <label className="full">
+                    Previous Address
+                    <input
+                      name="previousAddress"
+                      placeholder="Previous rental address"
+                    />
+                  </label>
+
+                </div>
+
+              </section>
+
+              <section className="applicationFormSection">
+
+                <div className="applicationFormSectionHeader">
+                  <h2>Household</h2>
+                  <p>
+                    Tell us about everyone and everything coming with
+                    the applicant.
+                  </p>
+                </div>
+
+                <div className="applicationFormGrid">
+
+                  <label>
+                    Number of Occupants
+                    <input
+                      name="occupantsCount"
+                      type="number"
+                      min="1"
+                      defaultValue="1"
+                    />
+                  </label>
+
+                  <label>
+                    Pets
+                    <select
+                      name="hasPets"
+                      defaultValue="no"
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </label>
+
+                  <label className="full">
+                    Occupant Details
+                    <textarea
+                      name="occupantsDetails"
+                      placeholder="Names and relationship of other occupants"
+                    />
+                  </label>
+
+                  <label className="full">
+                    Pet Details
+                    <textarea
+                      name="petsDetails"
+                      placeholder="Type, number, size, etc."
+                    />
+                  </label>
+
+                  <label className="full">
+                    Vehicles
+                    <textarea
+                      name="vehiclesDetails"
+                      placeholder="Vehicle make, model, and year"
+                    />
+                  </label>
+
+                </div>
+
+              </section>
+
+              <section className="screeningNotice">
+
+                <div>
+                  <h2>Tenant Screening</h2>
+
+                  <p>
+                    After the application is submitted, you can
+                    request tenant screening. Credit and background
+                    information will be handled through the screening
+                    provider rather than stored directly in Rentwise.
+                  </p>
+                </div>
+
+                <span>
+                  SCREENING NOT STARTED
+                </span>
+
+              </section>
+
+              <div className="applicationFormActions">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setView('applications')
+                  }
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="primary"
+                >
+                  Create Application
+                </button>
+
+              </div>
+
+            </form>
+
+          </section>
+        )}      
+{view === 'maintenance' && (
           <section className="panel">
             <h1>Maintenance</h1>
             <p>Maintenance management is coming next.</p>
