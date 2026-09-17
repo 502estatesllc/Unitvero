@@ -1313,29 +1313,44 @@ function isMultiFamily(property) {
   ).length;
 
   const occupied = multiFamily
-    ? occupiedUnits > 0
-    : Boolean(tenancy);
-<article
-  className="portfolioPropertyCard"
-  key={property.id}
-  onClick={() => {
-    setSelectedProperty(property);
-    setSelectedUnit(null);
+  ? occupiedUnits > 0
+  : Boolean(tenancy);
 
-    if (isMultiFamily(property)) {
-      setSelectedTenancy(null);
-    } else {
-      loadTenancy(property.id);
-    }
+return (
+  <article
+    className="portfolioPropertyCard"
+    key={property.id}
+    onClick={() => {
+      setSelectedProperty(property);
+      setSelectedUnit(null);
 
-    setView('propertyDetails');
-  }}
->                          }
-                        >
-                          <i></i>
-                          {occupied ? 'Occupied' : 'Vacant'}
-                        </span>
-                      </div>
+      if (isMultiFamily(property)) {
+        setSelectedTenancy(null);
+      } else {
+        loadTenancy(property.id);
+      }
+
+      setView('propertyDetails');
+    }}
+  >
+    <div className="portfolioCardAccent">
+      <div className="portfolioHouseIcon">
+        ⌂
+      </div>
+
+      <span
+        className={
+          occupied
+            ? 'portfolioOccupancy occupied'
+            : 'portfolioOccupancy vacant'
+        }
+      >
+        <i></i>
+        {occupied ? 'Occupied' : 'Vacant'}
+      </span>
+    </div>
+
+    
 
                       <div className="portfolioCardContent">
                         <div className="portfolioCardAddress">
