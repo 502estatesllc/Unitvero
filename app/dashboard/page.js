@@ -17,7 +17,7 @@ const [applications, setApplications] = useState([]);
     const [showApplicationForm, setShowApplicationForm] = useState(false);
 const [selectedApplication, setSelectedApplication] = useState(null);
   const r = useRouter();
-l
+  
   async function load() {
     const s = supabase();
 
