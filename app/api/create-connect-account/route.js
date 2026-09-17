@@ -18,7 +18,11 @@ export async function POST(request) {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-          'Content-Type': 'application/json'
+          'headers: {
+  Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+  'Content-Type': 'application/json',
+  'Stripe-Version': '2026-08-26.dahlia'
+},Content-Type': 'application/json'
         },
         body: JSON.stringify({
           contact_email: email,
