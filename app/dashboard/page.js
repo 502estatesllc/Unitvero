@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [address, setAddress] = useState('');
   const [view, setView] = useState('overview');
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedTenancy, setSelectedTenancy] = useState(null);
   const r = useRouter();
 
   async function load() {
@@ -119,6 +120,24 @@ export default function Dashboard() {
   await load();
   alert('Property updated successfully!');
   setView('propertyDetails');
+}
+  async function loadTenancy(propertyId) {
+  const s = supabase();
+
+  const { data, error } = await s
+    .from('tenancies')
+    .select('*')
+    .eq('property_id', propertyId)
+    .eq('status', 'active')
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    alert('Could not load tenant: ' + error.message);
+    return;
+  }
+
+  setSelectedTenancy(data || null);
 }
   async function out() {
     await supabase().auth.signOut();
@@ -305,9 +324,10 @@ export default function Dashboard() {
           className="dashboardPropertyCard"
           key={p.id}
           onClick={() => {
-            setSelectedProperty(p);
-            setView('propertyDetails');
-          }}
+  setSelectedProperty(p);
+  loadTenancy(p.id);
+  setView('propertyDetails');
+}}
         >
           <div className="propertyPhoto">
   {p.image_url ? (
@@ -562,6 +582,7 @@ export default function Dashboard() {
                 key={p.id}
                 onClick={() => {
                   setSelectedProperty(p);
+                  loadTenancy(p.id);
                   setView('propertyDetails');
                 }}
                 style={{ cursor: 'pointer' }}
@@ -628,17 +649,21 @@ export default function Dashboard() {
         <small>EXPECTED PER MONTH</small>
       </article>
 
-      <article>
-        <span>Occupancy</span>
-        <b>Vacant</b>
-        <small>NO TENANT ASSIGNED</small>
-      </article>
+     <article>
+  <span>Occupancy</span>
+  <b>{selectedTenancy ? 'Occupied' : 'Vacant'}</b>
+  <small>
+    {selectedTenancy ? 'ACTIVE TENANT' : 'NO TENANT ASSIGNED'}
+  </small>
+</article>
 
       <article>
-        <span>Lease</span>
-        <b>—</b>
-        <small>NO ACTIVE LEASE</small>
-      </article>
+  <span>Lease</span>
+  <b>{selectedTenancy ? 'Active' : '—'}</b>
+  <small>
+    {selectedTenancy ? 'ACTIVE LEASE' : 'NO ACTIVE LEASE'}
+  </small>
+</article>
 
       <article>
         <span>Maintenance</span>
@@ -675,18 +700,29 @@ export default function Dashboard() {
       <section className="propertyDetailsCard">
         <h2>Current Tenant</h2>
 
-        <div className="propertyDetailsEmpty">
-          <span>♙</span>
-          <b>No tenant assigned</b>
-          <p>Add a tenant to begin tracking rent and lease information.</p>
-          <button
-  type="button"
-  className="viewAllButton"
-  onClick={() => setView('addTenant')}
->
-  + Add Tenant
-</button>
-        </div>
+        {selectedTenancy ? (
+  <div className="propertyDetailsEmpty">
+    <span>♙</span>
+    <b>{selectedTenancy.tenant_email}</b>
+    <p>
+      ${Number(selectedTenancy.monthly_rent || 0).toLocaleString()} / month
+    </p>
+    <small>ACTIVE TENANT</small>
+  </div>
+) : (
+  <div className="propertyDetailsEmpty">
+    <span>♙</span>
+    <b>No tenant assigned</b>
+    <p>Add a tenant to begin tracking rent and lease information.</p>
+    <button
+      type="button"
+      className="viewAllButton"
+      onClick={() => setView('addTenant')}
+    >
+      + Add Tenant
+    </button>
+  </div>
+)}
       </section>
     </div>
   </section>
@@ -772,6 +808,7 @@ export default function Dashboard() {
         );
 
         form.reset();
+        await loadTenancy(selectedProperty.id);
         setView('propertyDetails');
       }}
     >
@@ -877,7 +914,7 @@ onClick={saveProperty}
 >
   Save Changes
 </button>
-    onClick={saveProperty}
+    
   </section>
 )}  
 {view === 'tenants' && (
