@@ -3915,3 +3915,181 @@ textarea:focus-visible,
     animation-iteration-count: 1 !important;
   }
 }
+
+/* =========================================================
+   PROPERTIES — FINAL CARD READABILITY
+   ========================================================= */
+
+.portfolioPropertyCard .portfolioCardContent {
+  padding: 22px 21px 20px;
+}
+
+.portfolioPropertyCard .portfolioCardAddress {
+  margin-bottom: 18px;
+}
+
+.portfolioPropertyCard .portfolioCardAddress small {
+  display: block;
+  margin-bottom: 6px;
+  color: #98a2b3;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+}
+
+.portfolioPropertyCard .portfolioCardAddress h2,
+.portfolioPropertyCard .portfolioCardAddress h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 760;
+}
+
+.portfolioPropertyCard .portfolioCardAddress p {
+  margin: 6px 0 0;
+  color: #7f8b9c;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Rent amount */
+
+.portfolioPropertyCard .portfolioRentAmount {
+  margin: 2px 0 18px;
+}
+
+.portfolioPropertyCard .portfolioRentAmount > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #98a2b3;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+}
+
+.portfolioPropertyCard .portfolioRentAmount > div {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.portfolioPropertyCard .portfolioRentAmount b {
+  color: #172033;
+  font-size: 21px;
+  line-height: 1.1;
+  font-weight: 780;
+}
+
+.portfolioPropertyCard .portfolioRentAmount small {
+  color: #98a2b3;
+  font-size: 10px;
+  font-weight: 550;
+}
+
+/* Tenant + lease information */
+
+.portfolioPropertyCard .portfolioCardDetails {
+  margin: 0 0 18px;
+  padding: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  border-top: 1px solid #edf0f4;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.portfolioPropertyCard .portfolioCardDetails > div {
+  min-width: 0;
+}
+
+.portfolioPropertyCard .portfolioCardDetails span {
+  display: block;
+  margin: 0 0 6px;
+  color: #98a2b3;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.portfolioPropertyCard .portfolioCardDetails b {
+  display: block;
+  margin: 0;
+  color: #344054;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+}
+
+/* Bottom status + button */
+
+.portfolioPropertyCard .portfolioCardFooter {
+  margin-top: auto;
+  padding-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 0;
+}
+
+.portfolioPropertyCard .portfolioCardFooter > span {
+  color: #98a2b3;
+  font-size: 9px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.portfolioPropertyCard .portfolioCardFooter button {
+  min-height: 34px;
+  padding: 0 11px;
+  flex: 0 0 auto;
+  border: 1px solid #dce3eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.portfolioPropertyCard .portfolioCardFooter button:hover {
+  border-color: #b9c9df;
+  background: #f8fbff;
+  color: #2563eb;
+}
+
+/* Give each card enough room for separated information */
+
+.portfolioPropertyCard {
+  min-height: 385px;
+}
+
+/* Occupied property gets subtle emphasis */
+
+.portfolioPropertyCard:has(.portfolioOccupancy.occupied) {
+  border-color: #cbded4;
+}
+
+@media (max-width: 1200px) {
+  .portfolioPropertyCard {
+    min-height: 370px;
+  }
+}
+
+@media (max-width: 650px) {
+  .portfolioPropertyCard {
+    min-height: 360px;
+  }
+
+  .portfolioPropertyCard .portfolioCardDetails {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
