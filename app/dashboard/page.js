@@ -2236,13 +2236,12 @@ selectedPropertyPayments.length === 0 ? (
 )}
 {view === 'editProperty' && selectedProperty && (
           <section className="panel">
-            <button
-              type="button"
-              onClick={() => setView('propertyDetails')}
-}
-            >
-              ← Back to Property
-            </button>
+         <button
+  type="button"
+  onClick={() => setView('propertyDetails')}
+>
+  ← Back to Property
+</button>
 
             <small>EDIT PROPERTY</small>
             <h1>{selectedProperty.address}</h1>
