@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!secretKey) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured.' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json();
     const email = body?.email;
 
@@ -17,23 +26,17 @@ export async function POST(request) {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-          'headers: {
-  Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-  'Content-Type': 'application/json',
-  'Stripe-Version': '2026-08-26.dahlia'
-},Content-Type': 'application/json'
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+          'Stripe-Version': '2026-08-26.dahlia'
         },
         body: JSON.stringify({
           contact_email: email,
           display_name: 'Unitvero Landlord',
-
           dashboard: 'express',
-
           identity: {
             country: 'us'
           },
-
           defaults: {
             currency: 'usd',
             responsibilities: {
@@ -41,7 +44,6 @@ export async function POST(request) {
               losses_collector: 'application'
             }
           },
-
           configuration: {
             merchant: {
               capabilities: {
@@ -56,7 +58,6 @@ export async function POST(request) {
               }
             }
           },
-
           include: [
             'configuration.merchant',
             'identity',
