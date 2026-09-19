@@ -133,17 +133,250 @@ export async function POST(request) {
       );
     }
 
-    const origin = new URL(request.url).origin;
+   const origin = new URL(request.url).origin;
 
-    const inviteUrl =
-      `${origin}/tenant-invite?token=${encodeURIComponent(inviteToken)}`;
+const inviteUrl =
+  `${origin}/tenant-invite?token=${encodeURIComponent(inviteToken)}`;
 
-    return Response.json({
-      success: true,
-      message: "Tenant invitation created.",
-      invitation,
-      inviteUrl,
-    });
+/*
+=========================================================
+SEND TENANT INVITATION EMAIL
+=========================================================
+*/
+
+if (!process.env.RESEND_API_KEY) {
+  console.error("RESEND_API_KEY is missing.");
+
+  return Response.json(
+    {
+      error:
+        "The invitation was created, but email delivery is not configured.",
+    },
+    { status: 500 },
+  );
+}
+
+const safeTenantName = tenantName
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&#039;");
+
+const safeAddress = (property.address || "your rental property")
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&#039;");
+
+const emailResponse = await fetch("https://api.resend.com/emails", {
+  method: "POST",
+
+  headers: {
+    Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+
+  body: JSON.stringify({
+    /*
+     * We will replace this with your Unitvero domain email
+     * after the domain is verified in Resend.
+     */
+    from: "Unitvero <onboarding@resend.dev>",
+
+    to: [tenantEmail],
+
+    subject: `${tenantName}, you've been invited to Unitvero`,
+
+    html: `
+      <!doctype html>
+      <html>
+        <body
+          style="
+            margin:0;
+            padding:0;
+            background:#f4f8f6;
+            font-family:Arial,Helvetica,sans-serif;
+            color:#183b32;
+          "
+        >
+          <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="padding:40px 16px;"
+          >
+            <tr>
+              <td align="center">
+
+                <table
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="
+                    max-width:600px;
+                    background:#ffffff;
+                    border:1px solid #e3ebe8;
+                    border-radius:18px;
+                    overflow:hidden;
+                  "
+                >
+
+                  <tr>
+                    <td
+                      style="
+                        padding:32px 36px 18px;
+                      "
+                    >
+                      <div
+                        style="
+                          font-size:18px;
+                          font-weight:800;
+                          letter-spacing:3px;
+                          color:#173f35;
+                        "
+                      >
+                        UNITVERO
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td style="padding:10px 36px 36px;">
+
+                      <div
+                        style="
+                          display:inline-block;
+                          padding:7px 11px;
+                          background:#eaf7f3;
+                          color:#27836b;
+                          border-radius:999px;
+                          font-size:11px;
+                          font-weight:700;
+                          letter-spacing:1px;
+                        "
+                      >
+                        TENANT INVITATION
+                      </div>
+
+                      <h1
+                        style="
+                          margin:18px 0 12px;
+                          font-size:30px;
+                          line-height:1.2;
+                          color:#173f35;
+                        "
+                      >
+                        Welcome, ${safeTenantName}
+                      </h1>
+
+                      <p
+                        style="
+                          margin:0 0 22px;
+                          color:#667a74;
+                          line-height:1.7;
+                          font-size:15px;
+                        "
+                      >
+                        Your landlord has invited you to Unitvero,
+                        where you can securely access information
+                        connected to your rental.
+                      </p>
+
+                      <div
+                        style="
+                          background:#f7faf9;
+                          border:1px solid #e5ece9;
+                          border-radius:12px;
+                          padding:18px;
+                          margin-bottom:25px;
+                        "
+                      >
+                        <div
+                          style="
+                            font-size:12px;
+                            color:#788a84;
+                            margin-bottom:6px;
+                          "
+                        >
+                          PROPERTY
+                        </div>
+
+                        <div
+                          style="
+                            font-size:16px;
+                            font-weight:700;
+                            color:#173f35;
+                          "
+                        >
+                          ${safeAddress}
+                        </div>
+                      </div>
+
+                      <a
+                        href="${inviteUrl}"
+                        style="
+                          display:inline-block;
+                          background:#2a8b72;
+                          color:#ffffff;
+                          text-decoration:none;
+                          padding:14px 24px;
+                          border-radius:10px;
+                          font-size:15px;
+                          font-weight:700;
+                        "
+                      >
+                        Accept Invitation
+                      </a>
+
+                      <p
+                        style="
+                          margin:25px 0 0;
+                          color:#8a9894;
+                          line-height:1.6;
+                          font-size:12px;
+                        "
+                      >
+                        This secure invitation expires in 7 days and
+                        is tied to ${tenantEmail}.
+                      </p>
+
+                    </td>
+                  </tr>
+
+                </table>
+
+              </td>
+            </tr>
+          </table>
+        </body>
+      </html>
+    `,
+  }),
+});
+
+const emailResult = await emailResponse.json();
+
+if (!emailResponse.ok) {
+  console.error("Resend email error:", emailResult);
+
+  return Response.json(
+    {
+      error:
+        emailResult?.message ||
+        "The invitation was created, but the email could not be sent.",
+    },
+    { status: 500 },
+  );
+}
+
+return Response.json({
+  success: true,
+  message: "Tenant invitation created and email sent.",
+  invitation,
+  emailSent: true,
+});
   } catch (error) {
     console.error("Create tenant invitation error:", error);
 
