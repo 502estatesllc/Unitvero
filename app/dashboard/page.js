@@ -11385,198 +11385,6 @@ export default function Dashboard() {
       )}
 
       <style jsx global>{`
-/* =========================================================
-   UNITVERO PREMIUM PORTAL — visual layer
-   Existing functionality remains unchanged.
-   ========================================================= */
-
-.unitveroModern {
-  --uv-bg: #f4f8f8 !important;
-  --uv-card: #ffffff !important;
-  --uv-text: #142433 !important;
-  --uv-muted: #64748b !important;
-  --uv-border: #d9e5e7 !important;
-  --uv-teal: #0f9f8f !important;
-  --uv-teal-dark: #087f73 !important;
-  --uv-blue: #5f8fd8 !important;
-  --uv-blue-soft: #edf4ff !important;
-  background: var(--uv-bg) !important;
-  color: var(--uv-text) !important;
-}
-
-.unitveroModern .sidebar {
-  background: linear-gradient(180deg, #102238 0%, #142b42 100%) !important;
-  border-right: 1px solid rgba(255,255,255,.08) !important;
-  box-shadow: 12px 0 35px rgba(11,23,39,.08) !important;
-}
-
-.unitveroModern .sidebarBrand {
-  padding: 25px 20px 22px !important;
-}
-
-.unitveroModern .sidebarBrand .logo {
-  color: #ffffff !important;
-  font-size: 27px !important;
-  letter-spacing: -.055em !important;
-}
-
-.unitveroModern .sidebarBrand .logo span {
-  color: #25c2ae !important;
-}
-
-.unitveroModern .brandLabel {
-  color: #a9bdc9 !important;
-  letter-spacing: .12em !important;
-}
-
-.unitveroModern .sidebarNav a {
-  margin: 3px 10px !important;
-  min-height: 44px !important;
-  border-radius: 12px !important;
-  color: #c9d6df !important;
-  transition: background .18s ease, color .18s ease, transform .18s ease !important;
-}
-
-.unitveroModern .sidebarNav a:hover {
-  background: rgba(255,255,255,.07) !important;
-  color: #ffffff !important;
-  transform: translateX(2px);
-}
-
-.unitveroModern .sidebarNav a.active {
-  background: linear-gradient(90deg, rgba(15,159,143,.22), rgba(15,159,143,.08)) !important;
-  color: #ffffff !important;
-  box-shadow: inset 3px 0 0 #19b6a3 !important;
-}
-
-.unitveroModern .navSection {
-  color: #8198a8 !important;
-  letter-spacing: .11em !important;
-  font-size: 10px !important;
-  font-weight: 900 !important;
-}
-
-.unitveroModern .main,
-.unitveroModern .content,
-.unitveroModern .dashboardMain {
-  background: #f4f8f8 !important;
-}
-
-.unitveroModern .commandCard,
-.unitveroModern .panel,
-.unitveroModern .card,
-.unitveroModern .featureCard,
-.unitveroModern .statCard {
-  background: #ffffff !important;
-  border: 1px solid #d9e5e7 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 10px 30px rgba(15,35,48,.055) !important;
-}
-
-.unitveroModern .commandCardHeader {
-  border-bottom-color: #e4ecee !important;
-}
-
-.unitveroModern h1,
-.unitveroModern h2,
-.unitveroModern h3 {
-  letter-spacing: -.025em;
-}
-
-.unitveroModern button.primary,
-.unitveroModern .primary {
-  background: linear-gradient(135deg, #0f9f8f, #087f73) !important;
-  border-color: transparent !important;
-  box-shadow: 0 8px 18px rgba(15,159,143,.18) !important;
-}
-
-.unitveroModern button.primary:hover,
-.unitveroModern .primary:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
-}
-
-.unitveroModern input,
-.unitveroModern select,
-.unitveroModern textarea {
-  border-color: #d5e1e5 !important;
-  border-radius: 11px !important;
-  background: #ffffff !important;
-}
-
-.unitveroModern input:focus,
-.unitveroModern select:focus,
-.unitveroModern textarea:focus {
-  outline: none !important;
-  border-color: #69b9af !important;
-  box-shadow: 0 0 0 3px rgba(15,159,143,.12) !important;
-}
-
-/* Make dashboard graphs visibly contained. */
-.unitveroModern .recharts-wrapper,
-.unitveroModern .chart,
-.unitveroModern [class*="chart"] {
-  border-radius: 16px;
-}
-
-.unitveroModern .overviewChart,
-.unitveroModern .dashboardChart,
-.unitveroModern .chartCard {
-  border: 1px solid #cbdde1 !important;
-  background: #ffffff !important;
-  border-radius: 18px !important;
-  box-shadow: 0 12px 32px rgba(15,35,48,.06) !important;
-}
-
-/* Premium stat cards. */
-.unitveroModern .statCard,
-.unitveroModern .commandMetric,
-.unitveroModern .overviewMetric {
-  min-height: 125px;
-  position: relative;
-  overflow: hidden;
-}
-
-.unitveroModern .statCard::after,
-.unitveroModern .commandMetric::after,
-.unitveroModern .overviewMetric::after {
-  content: "";
-  position: absolute;
-  width: 110px;
-  height: 110px;
-  right: -42px;
-  top: -42px;
-  border-radius: 50%;
-  background: rgba(15,159,143,.06);
-  pointer-events: none;
-}
-
-/* Premium Pro callout if the existing upgrade button is present. */
-.unitveroModern .sidebar button[style*="linear-gradient"] {
-  background: linear-gradient(135deg, #0f9f8f, #087f73) !important;
-  box-shadow: 0 10px 22px rgba(15,159,143,.18) !important;
-}
-
-/* Softer blue throughout existing blue UI without changing functionality. */
-.unitveroModern a,
-.unitveroModern .link,
-.unitveroModern .secondaryButton {
-  color: #4f7fbe;
-}
-
-/* Mobile polish. */
-@media (max-width: 900px) {
-  .unitveroModern .sidebar {
-    box-shadow: 0 8px 25px rgba(11,23,39,.12) !important;
-  }
-
-  .unitveroModern .commandCard,
-  .unitveroModern .panel,
-  .unitveroModern .card {
-    border-radius: 15px !important;
-  }
-}
-
         .unitveroModern {
           font-family:
             Inter,
@@ -11878,6 +11686,122 @@ export default function Dashboard() {
             bottom: 82px;
           }
         }
+
+/* UNITVERO PREMIUM THEME — BLACK + GOLD */
+.unitveroModern{
+  --uv-black:#050607 !important;
+  --uv-panel:#0b0d0e !important;
+  --uv-panel2:#111415 !important;
+  --uv-gold:#f1c75b !important;
+  --uv-gold2:#d8a93e !important;
+  --uv-text:#f5f2e9 !important;
+  --uv-muted:#a8aaa7 !important;
+  --uv-border:rgba(241,199,91,.24) !important;
+  background:#070809 !important;
+  color:var(--uv-text) !important;
+}
+.unitveroModern .sidebar{
+  background:linear-gradient(180deg,#050607 0%,#0d0f10 100%) !important;
+  border-right:1px solid rgba(241,199,91,.18) !important;
+  box-shadow:10px 0 35px rgba(0,0,0,.28) !important;
+}
+.unitveroModern .sidebarBrand .logo{color:#fff !important}
+.unitveroModern .sidebarBrand .logo span{color:var(--uv-gold) !important}
+.unitveroModern .brandLabel{color:#8f918e !important}
+.unitveroModern .sidebarNav a{color:#b8bab6 !important;border-radius:11px !important}
+.unitveroModern .sidebarNav a:hover{
+  background:rgba(241,199,91,.07) !important;
+  color:#fff !important;
+}
+.unitveroModern .sidebarNav a.active{
+  background:linear-gradient(90deg,rgba(241,199,91,.18),rgba(241,199,91,.05)) !important;
+  color:#fff !important;
+  box-shadow:inset 3px 0 0 var(--uv-gold) !important;
+}
+.unitveroModern .navSection{color:#777b78 !important}
+.unitveroModern .main,
+.unitveroModern .content,
+.unitveroModern .dashboardMain{background:#070809 !important}
+.unitveroModern .commandCard,
+.unitveroModern .panel,
+.unitveroModern .card,
+.unitveroModern .featureCard,
+.unitveroModern .statCard,
+.unitveroModern .marketInsightsCard{
+  background:linear-gradient(145deg,#0c0f10,#111415) !important;
+  border:1px solid var(--uv-border) !important;
+  border-radius:17px !important;
+  box-shadow:0 14px 40px rgba(0,0,0,.22) !important;
+  color:#f5f2e9 !important;
+}
+.unitveroModern .commandCardHeader,
+.unitveroModern .marketInsightsHeader{border-bottom-color:rgba(241,199,91,.13) !important}
+.unitveroModern h1,.unitveroModern h2,.unitveroModern h3,
+.unitveroModern b{color:#f5f2e9}
+.unitveroModern p,.unitveroModern small,
+.unitveroModern .commandCard p{color:#9ea39f}
+.unitveroModern button.primary,
+.unitveroModern .primary{
+  background:linear-gradient(135deg,#f6d777,#d8a93e) !important;
+  color:#111 !important;
+  border:1px solid #f8dc88 !important;
+  box-shadow:0 8px 22px rgba(216,169,62,.18) !important;
+}
+.unitveroModern .commandTextButton,
+.unitveroModern a,
+.unitveroModern .link{color:#f1c75b !important}
+.unitveroModern .commandSectionIcon,
+.unitveroModern .commandEmptyIcon{
+  background:rgba(241,199,91,.09) !important;
+  color:#f1c75b !important;
+  border-color:rgba(241,199,91,.18) !important;
+}
+.unitveroModern input,
+.unitveroModern select,
+.unitveroModern textarea{
+  background:#0b0d0e !important;
+  color:#f5f2e9 !important;
+  border-color:rgba(241,199,91,.22) !important;
+}
+.unitveroModern input::placeholder,
+.unitveroModern textarea::placeholder{color:#727773 !important}
+.unitveroModern input:focus,
+.unitveroModern select:focus,
+.unitveroModern textarea:focus{
+  border-color:#f1c75b !important;
+  box-shadow:0 0 0 3px rgba(241,199,91,.10) !important;
+}
+.unitveroModern .dashboardHeaderTools select,
+.unitveroModern .languageSelect,
+.unitveroModern .privacyButton{
+  background:#0d1011 !important;
+  color:#eee9dc !important;
+  border-color:rgba(241,199,91,.22) !important;
+}
+.unitveroModern .overviewChart,
+.unitveroModern .dashboardChart,
+.unitveroModern .chartCard,
+.unitveroModern .recharts-wrapper{
+  border:1px solid rgba(241,199,91,.30) !important;
+  background:#0a0c0d !important;
+  border-radius:17px !important;
+}
+.unitveroModern .helpPanel{
+  background:#0b0d0e !important;
+  color:#f5f2e9 !important;
+  border:1px solid rgba(241,199,91,.28) !important;
+  box-shadow:0 20px 50px rgba(0,0,0,.35) !important;
+}
+.unitveroModern .helpPanelHeader{border-bottom-color:rgba(241,199,91,.14) !important}
+.unitveroModern .helpMessage{background:#141718 !important;border-color:rgba(241,199,91,.12) !important;color:#eee9dc !important}
+.unitveroModern .helpMessage.user{background:#8e6a1e !important;color:#fff !important}
+.unitveroModern .helpComposer{border-top-color:rgba(241,199,91,.14) !important}
+.unitveroModern .helpComposer button{background:#f1c75b !important;color:#111 !important}
+.unitveroModern .helpLauncher{
+  background:linear-gradient(135deg,#f6d777,#d8a93e) !important;
+  color:#111 !important;
+}
+
       `}</style>
     </div>
   );
@@ -12709,6 +12633,69 @@ function TenantStyles() {
       .utSettings{padding:0 20px}.utSettingRow{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:17px 0;border-bottom:1px solid #e9eeec}.utSettingRow:last-child{border-bottom:0}.utSettingIcon{width:36px;height:36px;border-radius:9px;background:#edf6f3;color:#267b67;display:grid;place-items:center}.utSettingRow strong{font-size:12px}.utSettingRow p{font-size:10px;color:#82908c;margin:3px 0 0}.utEmptyCard{max-width:800px;margin:80px auto;background:#fff;border:1px solid #e1e8e5;border-radius:16px;text-align:center;padding:60px 25px}.utEmptyIcon{width:48px;height:48px;margin:auto;background:#edf6f3;border-radius:13px;display:grid;place-items:center;color:#267b67}.utEmptyCard h2{font-size:18px}.utEmptyCard p{font-size:12px;color:#80908b}.utLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#f4f7f6;color:#163b32;font-family:Inter,ui-sans-serif,system-ui}.utLoading .utLogo{font-size:30px}.utLoading p{font-size:12px;color:#80908b}
       @media(max-width:1000px){.utShell{grid-template-columns:1fr}.utSidebar{position:static;height:auto;min-height:auto;padding:18px}.utPortalLabel{margin-bottom:12px}.utNav{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr)}.utNav button{grid-template-columns:1fr;text-align:center;justify-items:center;height:52px;gap:3px}.utNav button b{position:absolute}.utUser{margin-top:14px}.utMain{padding:24px}.utMetricGrid{grid-template-columns:repeat(2,1fr)}}
       @media(max-width:700px){.utMain{padding:18px 14px 40px}.utHeader{display:block}.utHeaderActions{margin-top:14px;flex-wrap:wrap}.utHeader h1{font-size:25px}.utNav{grid-template-columns:repeat(3,1fr)}.utPropertyTop{display:block}.utRentBlock{text-align:left;margin-top:20px}.utPropertyActions{flex-wrap:wrap}.utMetricGrid,.utTwoCol,.utPaymentGrid,.utDetails{grid-template-columns:1fr}.utBubble{max-width:85%}.utSettingRow{grid-template-columns:36px 1fr}.utSettingRow>:last-child{grid-column:2}.utLeaseHeader{align-items:flex-start}.utHeaderActions select,.utHeaderActions button{flex:1}.utPropertyCard{padding:21px}}
+
+/* UNITVERO TENANT PREMIUM — BLACK + GOLD */
+.utShell{
+  background:#070809 !important;
+  color:#f5f2e9 !important;
+}
+.utSidebar{
+  background:linear-gradient(180deg,#050607,#0d0f10) !important;
+  border-right:1px solid rgba(241,199,91,.18) !important;
+}
+.utLogo{color:#fff !important}
+.utLogo span{color:#f1c75b !important}
+.utPortalLabel,.utUserText span,.utEyebrow{color:#8f918e !important}
+.utNav button{
+  color:#b8bab6 !important;
+  border-radius:11px !important;
+}
+.utNav button:hover{background:rgba(241,199,91,.07) !important;color:#fff !important}
+.utNav button.active{
+  background:linear-gradient(90deg,rgba(241,199,91,.18),rgba(241,199,91,.05)) !important;
+  color:#fff !important;
+  box-shadow:inset 3px 0 0 #f1c75b !important;
+}
+.utMain{background:#070809 !important}
+.utCard,.utMetricGrid article,.utEmptyCard{
+  background:linear-gradient(145deg,#0c0f10,#111415) !important;
+  border:1px solid rgba(241,199,91,.22) !important;
+  color:#f5f2e9 !important;
+  box-shadow:0 14px 38px rgba(0,0,0,.22) !important;
+}
+.utPropertyCard{
+  background:linear-gradient(135deg,#17130a,#0d0f10 70%) !important;
+  border:1px solid rgba(241,199,91,.32) !important;
+}
+.utMetricIcon,.utCount,.utQuickList button>span,
+.utEmptyInline>div,.utSettingIcon{
+  background:rgba(241,199,91,.09) !important;
+  color:#f1c75b !important;
+  border-color:rgba(241,199,91,.18) !important;
+}
+.utMetricGrid strong,.utCardHead h2,.utLeaseHeader h3,
+.utDetails strong,.utQuickList b,.utPropertyCard h2,
+.utHeader h1,.utPageTitle h2{color:#f5f2e9 !important}
+.utHeader p,.utPageTitle p,.utPropertyCard p,.utRentBlock span,
+.utRentBlock small,.utMetricGrid small,.utFeed p,.utFeed small,
+.utQuickList small,.utEmptyInline,.utEmptyCard p{color:#9ea39f !important}
+.utPrimary{
+  background:linear-gradient(135deg,#f6d777,#d8a93e) !important;
+  color:#111 !important;
+  border:1px solid #f8dc88 !important;
+}
+.utSecondary,.utHeaderActions select,.utHeaderActions button,
+.utSettings select{
+  background:#0d1011 !important;
+  color:#eee9dc !important;
+  border-color:rgba(241,199,91,.22) !important;
+}
+.utComposer{background:#0b0d0e !important;border-top-color:rgba(241,199,91,.14) !important}
+.utComposer input{background:#0b0d0e !important;color:#f5f2e9 !important;border-color:rgba(241,199,91,.22) !important}
+.utBubble{background:#141718 !important;color:#eee9dc !important;border-color:rgba(241,199,91,.13) !important}
+.utBubble.mine{background:#8e6a1e !important;border-color:#a47c22 !important;color:#fff !important}
+.utStatus{background:rgba(241,199,91,.10) !important;color:#f1c75b !important}
+
     `}</style>
   );
 }
