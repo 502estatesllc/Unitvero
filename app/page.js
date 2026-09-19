@@ -126,21 +126,21 @@ export default function Home() {
             <article className="activityCard">
               <small>RECENT ACTIVITY</small>
               <div>
-                <i className="green">✓</i>
+                <i className="#f4c84f">✓</i>
                 <span>
                   <b>Rent received</b>
                   <small>Today</small>
                 </span>
               </div>
               <div>
-                <i className="blue">✉</i>
+                <i className="#f4c84f">✉</i>
                 <span>
                   <b>New tenant message</b>
                   <small>2 hours ago</small>
                 </span>
               </div>
               <div>
-                <i className="orange">◇</i>
+                <i className="#f4c84f">◇</i>
                 <span>
                   <b>Maintenance updated</b>
                   <small>Yesterday</small>
@@ -302,25 +302,25 @@ export default function Home() {
           justify-content: center;
           gap: 12px;
           flex-wrap: wrap;
-          border: 1px solid #bfe9e3;
+          border: 1px solid #5b5135;
           border-radius: 14px;
-          background: linear-gradient(90deg, #f0fdfa, #ffffff);
-          color: #173042;
+          background: linear-gradient(90deg, #11100b, #ffffff);
+          color: #f7f6f1;
           box-shadow: 0 8px 28px rgba(15, 159, 143, 0.08);
         }
         .launchOfferBadge {
           padding: 5px 9px;
           border-radius: 999px;
-          background: #0f9f8f;
+          background: #f4c84f;
           color: #ffffff;
           font-size: 10px;
           font-weight: 900;
           letter-spacing: .08em;
         }
         .launchOffer strong { font-size: 14px; }
-        .launchOffer > span:not(.launchOfferBadge) { color: #5c6b7a; font-size: 13px; }
+        .launchOffer > span:not(.launchOfferBadge) { color: #8f918d; font-size: 13px; }
         .launchOffer a {
-          color: #087f73;
+          color: #f4c84f;
           font-weight: 900;
           font-size: 13px;
         }
@@ -333,23 +333,23 @@ export default function Home() {
         }
         .audienceCard {
           padding: 32px;
-          border: 1px solid #d8e4e7;
+          border: 1px solid #39362d;
           border-radius: 24px;
           background: rgba(255,255,255,.92);
           box-shadow: 0 18px 45px rgba(11, 23, 39, .07);
         }
         .audienceCard h2 {
           margin: 8px 0 10px;
-          color: #122235;
+          color: #f7f6f1;
           font-size: clamp(25px, 3vw, 36px);
           letter-spacing: -.035em;
         }
         .audienceCard p {
           margin: 0 0 20px;
-          color: #617083;
+          color: #92948f;
           line-height: 1.7;
         }
-        .textButton { color: #087f73; font-weight: 900; }
+        .textButton { color: #f4c84f; font-weight: 900; }
         .proSection {
           width: min(1180px, calc(100% - 40px));
           margin: 70px auto;
@@ -358,7 +358,7 @@ export default function Home() {
           grid-template-columns: 1.2fr .8fr;
           gap: 30px;
           border-radius: 28px;
-          background: linear-gradient(135deg, #102238, #16314d);
+          background: linear-gradient(135deg, #0b0c0d, #11100b);
           color: white;
           box-shadow: 0 24px 60px rgba(11, 23, 39, .18);
         }
@@ -367,7 +367,7 @@ export default function Home() {
           font-size: clamp(30px, 4vw, 48px);
           letter-spacing: -.04em;
         }
-        .proSection p { color: #d6e2eb; line-height: 1.7; max-width: 650px; }
+        .proSection p { color: #aaa9a1; line-height: 1.7; max-width: 650px; }
         .proChecklist {
           display: grid;
           gap: 12px;
@@ -377,10 +377,10 @@ export default function Home() {
           border-radius: 20px;
           background: rgba(255,255,255,.07);
         }
-        .proChecklist div { color: #edf7f5; font-weight: 700; }
+        .proChecklist div { color: #eeeade; font-weight: 700; }
         .proChecklist .primaryButton {
           margin-top: 8px;
-          background: #16b3a1 !important;
+          background: #f4c84f !important;
           color: #fff !important;
         }
         @media (max-width: 760px) {
@@ -397,8 +397,8 @@ export default function Home() {
         }
         body {
           margin: 0;
-          background: #f8fafc;
-          color: #172033;
+          background: #080909;
+          color: #f7f6f1;
         }
         a {
           color: inherit;
@@ -420,7 +420,7 @@ export default function Home() {
               rgba(15, 159, 143, 0.12),
               transparent 28%
             ),
-            #f8fafc;
+            #080909;
         }
         .topNav {
           width: min(1180px, calc(100% - 40px));
@@ -437,7 +437,7 @@ export default function Home() {
           letter-spacing: -0.06em;
         }
         .brand span {
-          color: #0f9f8f;
+          color: #f4c84f;
         }
         .navLinks,
         .navActions {
@@ -494,7 +494,7 @@ export default function Home() {
         }
         .eyebrow {
           display: inline-block;
-          color: #0f9f8f;
+          color: #f4c84f;
           font-size: 12px;
           font-weight: 900;
           letter-spacing: 0.12em;
@@ -508,7 +508,7 @@ export default function Home() {
         }
         .hero h1 span {
           display: block;
-          color: #0f9f8f;
+          color: #f4c84f;
         }
         .heroCopy > p {
           max-width: 590px;
@@ -674,15 +674,15 @@ export default function Home() {
           font-style: normal;
           font-size: 11px;
         }
-        .activityCard i.green {
+        .activityCard i.#f4c84f {
           background: #e3f8ef;
           color: #14845f;
         }
-        .activityCard i.blue {
+        .activityCard i.#f4c84f {
           background: #e7efff;
-          color: #0f9f8f;
+          color: #f4c84f;
         }
-        .activityCard i.orange {
+        .activityCard i.#f4c84f {
           background: #fff0df;
           color: #cf741f;
         }
@@ -812,7 +812,7 @@ export default function Home() {
           padding: 24px 8px 0 0;
         }
         .stepsGrid article > span {
-          color: #0f9f8f;
+          color: #f4c84f;
           font-weight: 900;
         }
         .stepsGrid h3 {
@@ -1158,9 +1158,9 @@ export default function Home() {
 .homePage .progressTrack span{
   background:linear-gradient(90deg,#dcae36,#f7d46b) !important;
 }
-.homePage .activityCard i.green,
-.homePage .activityCard i.blue,
-.homePage .activityCard i.orange{
+.homePage .activityCard i.#f4c84f,
+.homePage .activityCard i.#f4c84f,
+.homePage .activityCard i.#f4c84f{
   background:rgba(244,200,79,.10) !important;
   color:#f4c84f !important;
 }
@@ -1257,6 +1257,96 @@ export default function Home() {
   .homePage .securitySection,
   .homePage .proSection,
   .homePage .metricsStrip{width:min(100% - 24px,1180px) !important}
+}
+
+
+/* FINAL PALETTE LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
+.unitveroModern,
+.unitveroModern *{
+  --blue:#f4c84f !important;
+  --green:#f4c84f !important;
+  --orange:#f4c84f !important;
+  --purple:#f4c84f !important;
+  --teal:#f4c84f !important;
+  --cyan:#f4c84f !important;
+}
+.unitveroModern .green,
+.unitveroModern .blue,
+.unitveroModern .orange,
+.unitveroModern .purple,
+.unitveroModern .teal,
+.unitveroModern .cyan{
+  color:#f4c84f !important;
+  background-color:rgba(244,200,79,.08) !important;
+  border-color:rgba(244,200,79,.20) !important;
+}
+.unitveroModern [class*="blue"],
+.unitveroModern [class*="green"],
+.unitveroModern [class*="orange"],
+.unitveroModern [class*="purple"],
+.unitveroModern [class*="teal"],
+.unitveroModern [class*="cyan"]{
+  color:#f4c84f !important;
+  border-color:rgba(244,200,79,.20) !important;
+}
+.unitveroModern svg [fill],
+.unitveroModern svg [stroke]{
+  stroke:#f4c84f !important;
+  fill:currentColor !important;
+}
+
+
+/* FONT LOCK — INTER, matching the generated reference */
+html, body,
+.unitveroModern,
+.unitveroModern *,
+.homePage,
+.homePage *{
+  font-family:Inter,Arial,sans-serif !important;
+  font-synthesis:none !important;
+}
+
+
+/* FINAL DESIGN LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
+.homePage,
+.homePage * {
+  --blue:#f4c84f !important;
+  --green:#f4c84f !important;
+  --orange:#f4c84f !important;
+  --purple:#f4c84f !important;
+  --teal:#f4c84f !important;
+  --cyan:#f4c84f !important;
+}
+.homePage .securitySection h2,
+.homePage .securitySection p,
+.homePage .sectionHeading h2,
+.homePage .sectionHeading p,
+.homePage .audienceCard h2,
+.homePage .featureGrid h3,
+.homePage .stepsGrid h3,
+.homePage footer p {
+  color:#f7f6f1 !important;
+}
+.homePage .securitySection p,
+.homePage .sectionHeading p,
+.homePage .audienceCard p,
+.homePage .featureGrid p,
+.homePage .stepsGrid p,
+.homePage footer p {
+  color:#9b9d99 !important;
+}
+.homePage .securitySection h2,
+.homePage .audienceCard h2,
+.homePage .sectionHeading h2,
+.homePage .featureGrid h3,
+.homePage .stepsGrid h3 {
+  text-shadow:none !important;
+}
+.homePage .eyebrow,
+.homePage .textButton,
+.homePage .featureIcon,
+.homePage .stepsGrid article > span {
+  color:#f4c84f !important;
 }
 
       `}</style>
