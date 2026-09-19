@@ -16,7 +16,6 @@ export default function Dashboard() {
   const [tenancies, setTenancies] = useState([]);
   const [editingTenancy, setEditingTenancy] = useState(null);
   const [applications, setApplications] = useState([]);
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
 
   const [propertySearch, setPropertySearch] = useState('');
@@ -321,32 +320,6 @@ if (paymentSettingsError) {
     alert('Property added successfully!');
     setAddress('');
     await load();
-  }
-
-  async function saveProperty() {
-    const rentInput = document.getElementById('editRent');
-    const monthlyRent = Number(rentInput.value);
-
-    const s = supabase();
-
-    const { data, error } = await s
-      .from('properties')
-      .update({
-        monthly_rent: monthlyRent
-      })
-      .eq('id', selectedProperty.id)
-      .select()
-      .maybeSingle();
-
-    if (error) {
-      alert('Could not update property: ' + error.message);
-      return;
-    }
-
-    setSelectedProperty(data);
-    await load();
-    alert('Property updated successfully!');
-    setView('propertyDetails');
   }
 
   async function loadTenancy(propertyId) {
@@ -3964,7 +3937,6 @@ return (
                 type="button"
                 className="primary"
                 onClick={() => {
-                  setShowApplicationForm(true);
                   setView('newApplication');
                 }}
               >
@@ -4088,7 +4060,6 @@ return (
                     type="button"
                     className="primary"
                     onClick={() => {
-                      setShowApplicationForm(true);
                       setView('newApplication');
                     }}
                   >
@@ -4206,7 +4177,6 @@ return (
               type="button"
               className="propertyBackButton"
               onClick={() => {
-                setShowApplicationForm(false);
                 setView('applications');
               }}
             >
@@ -4357,8 +4327,6 @@ return (
                 ]);
 
                 setSelectedApplication(data);
-                setShowApplicationForm(false);
-
                 alert(
                   'Rental application created successfully!'
                 );
@@ -4668,7 +4636,6 @@ return (
                 <button
                   type="button"
                   onClick={() => {
-                    setShowApplicationForm(false);
                     setView('applications');
                   }}
                 >
