@@ -1,1438 +1,1784 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
-const features = [
-  { icon: "⌁", title: "Rent Collection", text: "Get paid on time, every time. Track charges, payments, balances, autopay, and payout activity." },
-  { icon: "⚒", title: "Maintenance", text: "Submit, track, photograph, and organize repair requests from one place." },
-  { icon: "⌕", title: "Tenant Screening", text: "Keep applications and renter information organized as you move applicants through your leasing workflow." },
-  { icon: "▤", title: "Lease Management", text: "Create, organize, share, and track leases and important rental documents." },
-  { icon: "▣", title: "Financial Reports", text: "Track income, expenses, cash flow, bookkeeping records, and portfolio performance." },
-  { icon: "▱", title: "Secure Messaging", text: "Stay connected with tenants through organized in-app conversations and announcements." },
-  { icon: "◎", title: "Property Insights", text: "See property information, market-rent data, and portfolio-level insights in one dashboard." },
-  { icon: "▦", title: "Tenant Portal", text: "Give renters a dedicated place to pay rent, request maintenance, view documents, and message you." },
-];
+const gold = "#FFD84A";
+const gold2 = "#F5C842";
+const black = "#050606";
+const panel = "#0B0D0D";
+const border = "rgba(255,216,74,.72)";
 
-export default function Home() {
-  const [showDemo, setShowDemo] = useState(false);
+function Icon({ type }) {
+  const common = {
+    width: 32,
+    height: 32,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  };
 
+  const icons = {
+    rent: (
+      <>
+        <rect x="4" y="5" width="16" height="14" rx="2" />
+        <path d="M8 9h8M8 13h8M8 16h4" />
+      </>
+    ),
+    maintenance: (
+      <>
+        <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-3 3-2.3-2.3 3-3Z" />
+      </>
+    ),
+    screening: (
+      <>
+        <circle cx="10.5" cy="10.5" r="5.5" />
+        <path d="m15 15 5 5" />
+      </>
+    ),
+    lease: (
+      <>
+        <path d="M6 3h9l3 3v15H6z" />
+        <path d="M15 3v4h4M9 11h6M9 15h6M9 18h4" />
+      </>
+    ),
+    reports: (
+      <>
+        <path d="M5 19V9M10 19V5M15 19v-7M20 19V3" />
+      </>
+    ),
+    messages: (
+      <>
+        <path d="M4 5h16v11H8l-4 4z" />
+        <path d="M8 9h8M8 12h5" />
+      </>
+    ),
+    check: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8 12 2.5 2.5L16 9" />
+      </>
+    ),
+    crown: (
+      <>
+        <path d="m4 7 4 3 4-6 4 6 4-3-2 12H6z" />
+        <path d="M6 19h12" />
+      </>
+    ),
+    arrow: (
+      <>
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </>
+    ),
+    play: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m10 8 6 4-6 4z" fill="currentColor" stroke="none" />
+      </>
+    ),
+  };
+
+  return <svg {...common}>{icons[type]}</svg>;
+}
+
+function Logo() {
   return (
-    <main className="homePage">
-      <nav className="topNav">
-        <Link className="brand" href="/" aria-label="Unitvero home">
-          unit<span>vero</span>
+    <div className="logo">
+      <div className="logoMark">
+        <span />
+      </div>
+      <span>Unitvero</span>
+    </div>
+  );
+}
+
+function Feature({ icon, title, text }) {
+  return (
+    <div className="feature">
+      <div className="featureIcon">
+        <Icon type={icon} />
+      </div>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </div>
+  );
+}
+
+function CheckItem({ children }) {
+  return (
+    <li>
+      <span className="check">
+        <Icon type="check" />
+      </span>
+      {children}
+    </li>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <main className="site">
+      <header className="topbar">
+        <Link href="/" className="brandLink">
+          <Logo />
         </Link>
 
-        <div className="navLinks">
+        <nav className="nav">
           <a href="#features">Features</a>
-          <a href="#how-it-works">How it works</a>
-          <a href="#security">Security</a>
-        </div>
+          <a href="#pricing">Pricing</a>
+          <a href="#resources">Resources</a>
+          <a href="#about">About</a>
+        </nav>
 
-        <div className="navActions">
-          <Link className="signIn" href="/login">
-            Sign in
+        <div className="topActions">
+          <Link href="/login" className="loginButton">
+            Log In
           </Link>
-          <Link className="primaryButton small" href="/signup">
-            Get started
+          <Link href="/login" className="getStarted">
+            Get Started <Icon type="arrow" />
           </Link>
         </div>
-      </nav>
+      </header>
 
-      <div className="launchOffer">
-        <span className="launchOfferBadge">LIMITED LAUNCH OFFER</span>
-        <strong>Get 1 month of Unitvero Pro FREE</strong>
-        <span>Try the full Pro experience before your regular plan begins.</span>
-        <Link href="/signup">Claim your free month →</Link>
-      </div>
-
+      {/* HERO */}
       <section className="hero">
-        <div className="heroCopy">
-          <span className="eyebrow">THE MODERN WAY TO MANAGE RENTALS</span>
+        <div className="heroImage" />
+
+        <div className="heroOverlay" />
+
+        <div className="heroContent">
+          <div className="eyebrow">
+            PROPERTY MANAGEMENT MADE SIMPLE
+          </div>
+
           <h1>
-            Everything for your rentals.
-            <span> All in one place.</span>
+            Smarter
+            <br />
+            Property
+            <br />
+            <span>Management</span>
+            <br />
+            Starts Here.
           </h1>
-          <p>
-            Manage properties, collect rent, organize documents, track maintenance, communicate with tenants, and keep your rental business organized from one premium workspace.
+
+          <p className="heroText">
+            Everything landlords and tenants need in one modern platform.
+            Manage properties, collect rent, handle maintenance, track
+            finances, and stay connected — all in one place.
           </p>
 
-          <div className="heroActions">
-            <Link className="primaryButton" href="/signup">
-              Start free — 1 month of Pro <span>→</span>
+          <div className="heroButtons">
+            <Link href="/login" className="primaryButton">
+              Get Started
+              <Icon type="arrow" />
             </Link>
-            <a className="secondaryButton" href="#features">
-              Explore features
+
+            <a href="#demo" className="secondaryButton">
+              <span className="playCircle">
+                <Icon type="play" />
+              </span>
+              Watch Demo
             </a>
           </div>
 
-          <div className="trustRow">
-            <span>✓ 1 month of Pro free</span>
-            <span>✓ Landlord + tenant portals</span>
-            <span>✓ Built for phone + desktop</span>
+          <div className="heroNote">
+            <span>1 Month of Pro Free</span>
+            <b>•</b>
+            <span>No Credit Card Required</span>
           </div>
         </div>
 
-        <div
-          className="dashboardPreview"
-          aria-label="Unitvero dashboard preview"
-        >
-          <div className="previewTop">
-            <div>
-              <span className="previewLogo">u</span>
-              <b>Portfolio Overview</b>
-            </div>
-            <span className="previewAvatar">LA</span>
+        <div className="revenueCard">
+          <div className="smallLabel">Monthly Revenue</div>
+          <strong>$48,750</strong>
+          <span className="growth">↑ 12% from last month</span>
+
+          <div className="miniBars">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+        </div>
+
+        <div className="occupancyCard">
+          <div>
+            <div className="smallLabel">Occupancy Rate</div>
+            <strong>92%</strong>
+            <span className="growth">↑ 4% from last month</span>
           </div>
 
-          <div className="previewStats">
-            <article>
-              <span>Properties</span>
-              <b>6</b>
-              <small>8 rentable units</small>
-            </article>
-            <article>
-              <span>Occupancy</span>
-              <b>88%</b>
-              <small>7 occupied</small>
-            </article>
-            <article>
-              <span>Monthly rent</span>
-              <b>$7,000</b>
-              <small>Expected</small>
-            </article>
+          <div className="ring">
+            <span>92%</span>
           </div>
+        </div>
 
-          <div className="previewGrid">
-            <article className="collectionCard">
-              <div className="previewCardTitle">
-                <div>
-                  <small>THIS MONTH</small>
-                  <b>Rent collection</b>
-                </div>
-                <strong>82%</strong>
-              </div>
-              <div className="progressTrack">
-                <span />
-              </div>
-              <div className="moneyRow">
-                <span>Collected</span>
-                <b>$5,740</b>
-              </div>
-              <div className="moneyRow">
-                <span>Outstanding</span>
-                <b>$1,260</b>
-              </div>
-            </article>
-
-            <article className="activityCard">
-              <small>RECENT ACTIVITY</small>
-              <div>
-                <i className="#f4c84f">✓</i>
-                <span>
-                  <b>Rent received</b>
-                  <small>Today</small>
-                </span>
-              </div>
-              <div>
-                <i className="#f4c84f">✉</i>
-                <span>
-                  <b>New tenant message</b>
-                  <small>2 hours ago</small>
-                </span>
-              </div>
-              <div>
-                <i className="#f4c84f">◇</i>
-                <span>
-                  <b>Maintenance updated</b>
-                  <small>Yesterday</small>
-                </span>
-              </div>
-            </article>
-          </div>
-
-          <div className="previewFooter">
-            <span>Portfolio health</span>
-            <div>
-              <i />
-              <b>Looking good</b>
-            </div>
+        <div className="propertyCard">
+          <img src="/unitvero-hero-house.png" alt="Property" />
+          <div>
+            <small>Property Managed</small>
+            <strong>1234 Maple St.</strong>
+            <span>Unit 2A</span>
           </div>
         </div>
       </section>
 
-      <section className="metricsStrip">
-        <div>
-          <b>One dashboard</b>
-          <span>for your entire rental business</span>
-        </div>
-        <div>
-          <b>Real-time visibility</b>
-          <span>into rent and occupancy</span>
-        </div>
-        <div>
-          <b>Less busywork</b>
-          <span>and fewer scattered records</span>
-        </div>
-      </section>
-
-      <section className="audienceSection">
-        <div className="audienceCard">
-          <span className="eyebrow">FOR LANDLORDS</span>
-          <h2>Run your portfolio like a business.</h2>
-          <p>Properties, tenants, rent, maintenance, documents, bookkeeping, communication and portfolio insights in one place.</p>
-          <Link href="/signup" className="textButton">Create a landlord account →</Link>
-        </div>
-        <div className="audienceCard">
-          <span className="eyebrow">FOR TENANTS</span>
-          <h2>A better rental experience.</h2>
-          <p>Pay rent, submit maintenance requests, view documents, receive announcements and message your landlord from one secure portal.</p>
-          <Link href="/signup" className="textButton">Create a tenant account →</Link>
-        </div>
-      </section>
-
+      {/* FEATURES */}
       <section className="featuresSection" id="features">
-        <div className="sectionHeading">
-          <span className="eyebrow">EVERYTHING IN ONE PLACE</span>
-          <h2>Built to make landlording feel manageable</h2>
-          <p>
-            From your first property to a growing portfolio, Unitvero keeps the
-            important work organized and easy to find.
-          </p>
-        </div>
-
-        <div className="featureGrid">
-          {features.map((feature) => (
-            <article key={feature.title}>
-              <span className="featureIcon">{feature.icon}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="stepsSection" id="how-it-works">
-        <div className="sectionHeading left">
-          <span className="eyebrow">GET STARTED QUICKLY</span>
-          <h2>Your portfolio, organized in three steps</h2>
-        </div>
-
-        <div className="stepsGrid">
-          <article>
-            <span>01</span>
-            <h3>Add your properties</h3>
-            <p>Enter each address, unit, and expected monthly rent.</p>
-          </article>
-          <article>
-            <span>02</span>
-            <h3>Connect tenants and leases</h3>
-            <p>Keep renter details, lease dates, and rent records together.</p>
-          </article>
-          <article>
-            <span>03</span>
-            <h3>Manage from one dashboard</h3>
-            <p>
-              Monitor payments, messages, applications, and property activity.
-            </p>
-          </article>
+        <div className="featuresGrid">
+          <Feature
+            icon="rent"
+            title="Rent Collection"
+            text="Get paid on time, every time."
+          />
+          <Feature
+            icon="maintenance"
+            title="Maintenance"
+            text="Submit & track requests easily."
+          />
+          <Feature
+            icon="screening"
+            title="Tenant Screening"
+            text="Find reliable tenants."
+          />
+          <Feature
+            icon="lease"
+            title="Lease Management"
+            text="Create, sign, and store leases."
+          />
+          <Feature
+            icon="reports"
+            title="Financial Reports"
+            text="Track income, expenses, and profit."
+          />
+          <Feature
+            icon="messages"
+            title="Secure Messaging"
+            text="Stay connected in one place."
+          />
         </div>
       </section>
 
-      <section className="securitySection" id="security">
-        <div className="securityIcon">◎</div>
-        <div>
-          <span className="eyebrow">PRIVACY BUILT IN</span>
-          <h2>Your rental information belongs to you</h2>
-          <p>
-            Unitvero is designed to keep each landlord&apos;s portfolio
-            separate, protect sensitive financial information, and give you
-            control over what appears on screen.
-          </p>
-        </div>
-        <Link className="secondaryButton light" href="/signup">
-          Create your account
-        </Link>
-      </section>
+      {/* LANDLORD / TENANT */}
+      <section className="audienceSection" id="about">
+        <div className="audienceCard">
+          <div className="audienceCopy">
+            <div className="sectionEyebrow">FOR LANDLORDS</div>
 
-      <section className="proSection" id="pro">
-        <div>
-          <span className="eyebrow">UNITVERO PRO</span>
-          <h2>Try the complete experience for 1 month free.</h2>
-          <p>Explore advanced bookkeeping, professional documents, eSignatures, maintenance accounting, advanced rental tools and more during your free first month.</p>
-        </div>
-        <div className="proChecklist">
-          <div>✓ Advanced bookkeeping</div>
-          <div>✓ Professional documents + eSign</div>
-          <div>✓ Maintenance accounting</div>
-          <div>✓ Advanced rental tools</div>
-          <Link className="primaryButton" href="/signup">Start my free month <span>→</span></Link>
-        </div>
-      </section>
+            <h2>
+              More Control.
+              <br />
+              Less Work.
+            </h2>
 
-      <section className="finalCta">
-        <span className="eyebrow">READY TO GET ORGANIZED?</span>
-        <h2>Manage your rentals with confidence.</h2>
-        <p>
-          Everything you need to stay on top of your portfolio—without the
-          clutter.
-        </p>
-        <Link className="primaryButton inverse" href="/signup">
-          Get started with Unitvero <span>→</span>
-        </Link>
-      </section>
+            <ul>
+              <CheckItem>Track rent & expenses</CheckItem>
+              <CheckItem>Manage properties</CheckItem>
+              <CheckItem>Screen tenants</CheckItem>
+              <CheckItem>Handle maintenance</CheckItem>
+              <CheckItem>Generate reports</CheckItem>
+              <CheckItem>Use on web & mobile</CheckItem>
+            </ul>
 
-      
-      {showDemo && (
-        <div className="uvDemoOverlay" role="dialog" aria-modal="true" aria-label="Unitvero feature demo">
-          <div className="uvDemoModal">
-            <button type="button" className="uvDemoClose" onClick={() => setShowDemo(false)} aria-label="Close demo">×</button>
-            <div className="uvDemoHeading">
-              <span className="sectionTag">UNITVERO DEMO</span>
-              <h2>See Unitvero in action.</h2>
-              <p>Explore rent collection, property management, tenants, maintenance, bookkeeping, documents, messaging, and the tenant portal.</p>
-            </div>
-            <div className="uvDemoVideo">
-              <video controls playsInline preload="metadata">
-                <source src="/unitvero-demo.mp4" type="video/mp4" />
-              </video>
-              <div className="uvDemoFallback">
-                <span>▶</span>
-                <b>Unitvero Feature Demo</b>
-                <small>Add the finished walkthrough video as <strong>public/unitvero-demo.mp4</strong>.</small>
-              </div>
-            </div>
-            <div className="uvDemoFeatures">
-              <span>Rent Collection</span>
-              <span>Properties</span>
-              <span>Tenants</span>
-              <span>Maintenance</span>
-              <span>Bookkeeping</span>
-              <span>Documents &amp; Leases</span>
-              <span>Messaging</span>
-              <span>Tenant Portal</span>
-            </div>
+            <Link href="/login" className="smallPrimary">
+              Get Started as a Landlord
+              <Icon type="arrow" />
+            </Link>
+          </div>
+
+          <div className="phoneArea landlordPhone">
+            <div className="phoneGlow" />
+            <img
+              src="/unitvero-landlord-phone.png"
+              alt="Unitvero landlord mobile app"
+            />
           </div>
         </div>
-      )}
 
-<footer>
-        <Link className="brand" href="/">
-          unit<span>vero</span>
+        <div className="audienceCard">
+          <div className="audienceCopy">
+            <div className="sectionEyebrow">FOR TENANTS</div>
+
+            <h2>
+              A Better Renting
+              <br />
+              Experience.
+            </h2>
+
+            <ul>
+              <CheckItem>Pay rent online</CheckItem>
+              <CheckItem>Submit maintenance requests</CheckItem>
+              <CheckItem>Access documents</CheckItem>
+              <CheckItem>Receive notifications</CheckItem>
+              <CheckItem>Communicate with your landlord</CheckItem>
+              <CheckItem>Stay organized</CheckItem>
+            </ul>
+
+            <Link href="/login" className="smallPrimary">
+              Get Started as a Tenant
+              <Icon type="arrow" />
+            </Link>
+          </div>
+
+          <div className="phoneArea tenantPhone">
+            <div className="phoneGlow" />
+            <img
+              src="/unitvero-tenant-phone.png"
+              alt="Unitvero tenant mobile app"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* PRO */}
+      <section className="proSection" id="pricing">
+        <div className="crownBox">
+          <Icon type="crown" />
+        </div>
+
+        <div className="proText">
+          <div className="sectionEyebrow">UNITVERO PRO</div>
+          <h2>Try Unitvero Pro Free for 1 Month</h2>
+          <p>
+            Unlock advanced features and take your property management to the
+            next level.
+          </p>
+        </div>
+
+        <div className="proFeatures">
+          <span>▣ Advanced Reports</span>
+          <span>◉ Priority Support</span>
+          <span>♙ Unlimited Properties</span>
+          <span>⌁ Custom Branding</span>
+        </div>
+
+        <Link href="/login" className="proButton">
+          Get 1 Month Free
+          <Icon type="arrow" />
         </Link>
-        <p>Property management made clearer.</p>
-        <div>
-          <Link href="/login">Sign in</Link>
+      </section>
+
+      {/* EXTRA FEATURES */}
+      <section className="toolsSection" id="resources">
+        <div className="sectionHeading">
+          <div className="sectionEyebrow">BUILT FOR REAL LANDLORDS</div>
+          <h2>Everything You Need to Run Your Rentals.</h2>
+          <p>
+            Unitvero brings your properties, tenants, documents, communication,
+            payments, and maintenance together.
+          </p>
+        </div>
+
+        <div className="toolsGrid">
+          <div className="toolCard">
+            <Icon type="lease" />
+            <h3>Landlord Documents</h3>
+            <p>
+              Create and organize leases, notices, letters, forms, and other
+              rental documents.
+            </p>
+          </div>
+
+          <div className="toolCard">
+            <Icon type="messages" />
+            <h3>Tenant Alerts</h3>
+            <p>
+              Send important announcements, reminders, notices, and alerts to
+              tenants.
+            </p>
+          </div>
+
+          <div className="toolCard">
+            <Icon type="maintenance" />
+            <h3>Maintenance Management</h3>
+            <p>
+              Track maintenance requests from submission through completion.
+            </p>
+          </div>
+
+          <div className="toolCard">
+            <Icon type="reports" />
+            <h3>Financial Tracking</h3>
+            <p>
+              Monitor rent, expenses, outstanding balances, and portfolio
+              performance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* DEMO */}
+      <section className="demoSection" id="demo">
+        <div className="demoContent">
+          <div className="sectionEyebrow">SEE UNITVERO IN ACTION</div>
+
+          <h2>
+            Property management
+            <br />
+            made simple.
+          </h2>
+
+          <p>
+            See how landlords can manage properties, collect rent, communicate
+            with tenants, create documents, handle maintenance, and stay
+            organized from one place.
+          </p>
+
+          <Link href="/login" className="primaryButton">
+            Start Managing
+            <Icon type="arrow" />
+          </Link>
+        </div>
+
+        <div className="videoBox">
+          <div className="videoPlay">
+            <Icon type="play" />
+          </div>
+          <span>Unitvero Product Demo</span>
+          <small>Watch the full platform walkthrough</small>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="testimonialSection">
+        <div className="sectionHeading">
+          <h2>Trusted by Landlords and Tenants</h2>
+          <p>See what our users are saying about Unitvero.</p>
+        </div>
+
+        <div className="testimonialGrid">
+          <div className="testimonial">
+            <div className="avatar">LR</div>
+            <div>
+              <strong>Landon R.</strong>
+              <small>Property Owner</small>
+            </div>
+
+            <p>
+              “Unitvero has made managing my properties so much easier.
+              Everything I need is in one place.”
+            </p>
+
+            <div className="stars">★★★★★</div>
+          </div>
+
+          <div className="testimonial">
+            <div className="avatar">TM</div>
+            <div>
+              <strong>Tyesha M.</strong>
+              <small>Tenant</small>
+            </div>
+
+            <p>
+              “I love how easy it is to pay rent and submit maintenance
+              requests! Great app!”
+            </p>
+
+            <div className="stars">★★★★★</div>
+          </div>
+
+          <div className="testimonial">
+            <div className="avatar">MT</div>
+            <div>
+              <strong>Marcus T.</strong>
+              <small>Real Estate Investor</small>
+            </div>
+
+            <p>
+              “Clean, modern, and powerful. Exactly what I needed to manage my
+              portfolio.”
+            </p>
+
+            <div className="stars">★★★★★</div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="footerBrand">
+          <Logo />
+          <p>Manage Today. Build Tomorrow.</p>
+        </div>
+
+        <div className="footerLinks">
           <a href="#features">Features</a>
-          <a href="#security">Privacy</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#resources">Resources</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
+        </div>
+
+        <div className="socials">
+          <a href="#" aria-label="Instagram">
+            Instagram
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            LinkedIn
+          </a>
+          <a href="#" aria-label="Facebook">
+            Facebook
+          </a>
+        </div>
+
+        <div className="storeButtons">
+          <div className="store">
+            <small>Download on the</small>
+            <strong>App Store</strong>
+          </div>
+
+          <div className="store">
+            <small>GET IT ON</small>
+            <strong>Google Play</strong>
+          </div>
+        </div>
+
+        <div className="copyright">
+          © 2026 Unitvero. All rights reserved.
         </div>
       </footer>
 
       <style jsx global>{`
-        .launchOffer {
-          width: min(1180px, calc(100% - 40px));
-          margin: 8px auto 0;
-          padding: 12px 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          flex-wrap: wrap;
-          border: 1px solid #5b5135;
-          border-radius: 14px;
-          background: linear-gradient(90deg, #11100b, #ffffff);
-          color: #f7f6f1;
-          box-shadow: 0 8px 28px rgba(15, 159, 143, 0.08);
-        }
-        .launchOfferBadge {
-          padding: 5px 9px;
-          border-radius: 999px;
-          background: #f4c84f;
-          color: #ffffff;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: .08em;
-        }
-        .launchOffer strong { font-size: 14px; }
-        .launchOffer > span:not(.launchOfferBadge) { color: #8f918d; font-size: 13px; }
-        .launchOffer a {
-          color: #f4c84f;
-          font-weight: 900;
-          font-size: 13px;
-        }
-        .audienceSection {
-          width: min(1180px, calc(100% - 40px));
-          margin: 70px auto 0;
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-        }
-        .audienceCard {
-          padding: 32px;
-          border: 1px solid #39362d;
-          border-radius: 24px;
-          background: rgba(255,255,255,.92);
-          box-shadow: 0 18px 45px rgba(11, 23, 39, .07);
-        }
-        .audienceCard h2 {
-          margin: 8px 0 10px;
-          color: #f7f6f1;
-          font-size: clamp(25px, 3vw, 36px);
-          letter-spacing: -.035em;
-        }
-        .audienceCard p {
-          margin: 0 0 20px;
-          color: #92948f;
-          line-height: 1.7;
-        }
-        .textButton { color: #f4c84f; font-weight: 900; }
-        .proSection {
-          width: min(1180px, calc(100% - 40px));
-          margin: 70px auto;
-          padding: 38px;
-          display: grid;
-          grid-template-columns: 1.2fr .8fr;
-          gap: 30px;
-          border-radius: 28px;
-          background: linear-gradient(135deg, #0b0c0d, #11100b);
-          color: white;
-          box-shadow: 0 24px 60px rgba(11, 23, 39, .18);
-        }
-        .proSection h2 {
-          margin: 8px 0 12px;
-          font-size: clamp(30px, 4vw, 48px);
-          letter-spacing: -.04em;
-        }
-        .proSection p { color: #aaa9a1; line-height: 1.7; max-width: 650px; }
-        .proChecklist {
-          display: grid;
-          gap: 12px;
-          align-content: center;
-          padding: 22px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 20px;
-          background: rgba(255,255,255,.07);
-        }
-        .proChecklist div { color: #eeeade; font-weight: 700; }
-        .proChecklist .primaryButton {
-          margin-top: 8px;
-          background: #f4c84f !important;
-          color: #fff !important;
-        }
-        @media (max-width: 760px) {
-          .audienceSection, .proSection { grid-template-columns: 1fr; }
-          .launchOffer { justify-content: flex-start; }
-        }
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
+        :root {
+          --black: #050606;
+          --panel: #0b0d0d;
+          --gold: #ffd84a;
+          --gold2: #f5c842;
+          --white: #f7f5ef;
+          --muted: #b8b7ae;
+          --border: rgba(255, 216, 74, 0.72);
+        }
 
         * {
           box-sizing: border-box;
         }
+
         html {
           scroll-behavior: smooth;
         }
+
         body {
           margin: 0;
-          background: #080909;
-          color: #f7f6f1;
+          padding: 0;
+          background: var(--black);
+          color: var(--white);
+          font-family: "Inter", Arial, sans-serif;
         }
+
         a {
           color: inherit;
           text-decoration: none;
         }
-        .homePage {
+
+        .site {
           min-height: 100vh;
-          overflow: hidden;
-          font-family:
-            Inter,
-            ui-sans-serif,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
           background:
             radial-gradient(
-              circle at 82% 8%,
-              rgba(15, 159, 143, 0.12),
-              transparent 28%
+              circle at 80% 10%,
+              rgba(255, 216, 74, 0.07),
+              transparent 25%
             ),
-            #080909;
+            var(--black);
+          overflow: hidden;
         }
-        .topNav {
-          width: min(1180px, calc(100% - 40px));
-          min-height: 76px;
-          margin: 0 auto;
+
+        .topbar {
+          height: 82px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 20;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 28px;
+          padding: 0 44px;
+          gap: 40px;
         }
-        .brand {
-          font-size: 25px;
-          font-weight: 900;
-          letter-spacing: -0.06em;
+
+        .brandLink {
+          display: block;
         }
-        .brand span {
-          color: #f4c84f;
-        }
-        .navLinks,
-        .navActions {
+
+        .logo {
           display: flex;
           align-items: center;
-          gap: 26px;
+          gap: 10px;
+          font-size: 27px;
+          font-weight: 800;
+          letter-spacing: -1px;
+          white-space: nowrap;
         }
-        .navLinks a,
-        .signIn {
-          color: #536176;
+
+        .logoMark {
+          width: 37px;
+          height: 37px;
+          position: relative;
+          border: 5px solid var(--gold);
+          border-bottom: 0;
+          border-radius: 7px 7px 3px 3px;
+          transform: translateY(2px);
+        }
+
+        .logoMark:before {
+          content: "";
+          position: absolute;
+          left: 5px;
+          right: 5px;
+          bottom: -1px;
+          height: 20px;
+          border-left: 5px solid var(--gold);
+          border-right: 5px solid var(--gold);
+        }
+
+        .logoMark span {
+          position: absolute;
+          width: 11px;
+          height: 11px;
+          background: var(--gold);
+          transform: rotate(45deg);
+          top: -8px;
+          left: 8px;
+        }
+
+        .nav {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 42px;
+          margin-left: auto;
+        }
+
+        .nav a {
           font-size: 14px;
-          font-weight: 700;
+          color: #eee;
+          transition: color 0.2s ease;
         }
+
+        .nav a:hover {
+          color: var(--gold);
+        }
+
+        .topActions {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+
+        .loginButton,
+        .getStarted {
+          height: 46px;
+          padding: 0 27px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .loginButton {
+          border: 1px solid var(--border);
+          background: rgba(0, 0, 0, 0.38);
+        }
+
+        .getStarted {
+          background: linear-gradient(180deg, #ffe46f, #f8c92f);
+          color: #080808;
+          min-width: 165px;
+        }
+
+        .getStarted svg,
+        .primaryButton svg,
+        .smallPrimary svg,
+        .proButton svg {
+          width: 20px;
+          height: 20px;
+          margin-left: 10px;
+        }
+
+        .hero {
+          min-height: 650px;
+          height: 650px;
+          position: relative;
+          isolation: isolate;
+          border-bottom: 1px solid rgba(255, 216, 74, 0.35);
+        }
+
+        .heroImage {
+          position: absolute;
+          inset: 0;
+          z-index: -3;
+          background-image: url("/unitvero-hero-house.png");
+          background-size: cover;
+          background-position: center right;
+          transform: scale(1.02);
+        }
+
+        .heroOverlay {
+          position: absolute;
+          inset: 0;
+          z-index: -2;
+          background:
+            linear-gradient(
+              90deg,
+              rgba(5, 6, 6, 0.98) 0%,
+              rgba(5, 6, 6, 0.91) 24%,
+              rgba(5, 6, 6, 0.54) 48%,
+              rgba(5, 6, 6, 0.12) 80%
+            ),
+            linear-gradient(
+              180deg,
+              rgba(0, 0, 0, 0.52),
+              rgba(0, 0, 0, 0.1) 45%,
+              rgba(0, 0, 0, 0.75)
+            );
+        }
+
+        .heroContent {
+          position: absolute;
+          left: 4.3%;
+          top: 140px;
+          width: 500px;
+          z-index: 5;
+        }
+
+        .eyebrow,
+        .sectionEyebrow {
+          color: var(--gold);
+          font-weight: 800;
+          font-size: 12px;
+          letter-spacing: 0.3px;
+        }
+
+        .eyebrow {
+          display: inline-flex;
+          border: 1px solid var(--gold);
+          border-radius: 30px;
+          padding: 8px 15px;
+          margin-bottom: 17px;
+        }
+
+        .hero h1 {
+          margin: 0;
+          font-size: clamp(54px, 5vw, 76px);
+          line-height: 0.96;
+          letter-spacing: -4px;
+          font-weight: 900;
+        }
+
+        .hero h1 span {
+          color: var(--gold);
+        }
+
+        .heroText {
+          max-width: 470px;
+          margin: 22px 0 19px;
+          color: #f0f0eb;
+          font-size: 15px;
+          line-height: 1.5;
+        }
+
+        .heroButtons {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
+
         .primaryButton,
-        .secondaryButton {
-          min-height: 50px;
-          padding: 0 20px;
-          border-radius: 13px;
+        .secondaryButton,
+        .smallPrimary,
+        .proButton {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 12px;
-          font-weight: 800;
-          transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-        }
-        .primaryButton {
-          background: #2859c5;
-          color: #fff;
-          box-shadow: 0 12px 28px rgba(40, 89, 197, 0.25);
-        }
-        .primaryButton:hover,
-        .secondaryButton:hover {
-          transform: translateY(-2px);
-        }
-        .primaryButton.small {
-          min-height: 42px;
-          padding: 0 16px;
-          font-size: 14px;
-        }
-        .secondaryButton {
-          border: 1px solid #d8e0eb;
-          background: #fff;
-          color: #24334b;
-        }
-        .hero {
-          width: min(1180px, calc(100% - 40px));
-          margin: 72px auto 80px;
-          display: grid;
-          grid-template-columns: minmax(0, 0.88fr) minmax(530px, 1.12fr);
-          align-items: center;
-          gap: 66px;
-        }
-        .eyebrow {
-          display: inline-block;
-          color: #f4c84f;
-          font-size: 12px;
-          font-weight: 900;
-          letter-spacing: 0.12em;
-        }
-        .hero h1 {
-          max-width: 630px;
-          margin: 17px 0 22px;
-          font-size: clamp(48px, 6vw, 76px);
-          line-height: 0.99;
-          letter-spacing: -0.055em;
-        }
-        .hero h1 span {
-          display: block;
-          color: #f4c84f;
-        }
-        .heroCopy > p {
-          max-width: 590px;
-          margin: 0;
-          color: #617086;
-          font-size: 18px;
-          line-height: 1.7;
-        }
-        .heroActions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          margin-top: 30px;
-        }
-        .trustRow {
-          margin-top: 24px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 14px;
-          color: #64748b;
-          font-size: 12px;
+          border-radius: 10px;
           font-weight: 700;
         }
-        .dashboardPreview {
-          position: relative;
-          border: 1px solid #dce4ef;
-          border-radius: 24px;
-          background: #fff;
-          padding: 22px;
-          box-shadow: 0 35px 80px rgba(29, 50, 85, 0.16);
+
+        .primaryButton {
+          min-height: 48px;
+          padding: 0 24px;
+          background: linear-gradient(180deg, #ffe46f, #f5c431);
+          color: #080808;
         }
-        .dashboardPreview:before {
-          content: "";
+
+        .secondaryButton {
+          min-height: 48px;
+          padding: 0 22px;
+          border: 1px solid var(--gold);
+          background: rgba(0, 0, 0, 0.45);
+        }
+
+        .playCircle {
+          display: grid;
+          place-items: center;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: var(--gold);
+          color: #111;
+          margin-right: 9px;
+        }
+
+        .playCircle svg {
+          width: 15px;
+          height: 15px;
+        }
+
+        .heroNote {
+          display: flex;
+          gap: 9px;
+          margin-top: 10px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .heroNote b {
+          color: var(--gold);
+        }
+
+        .revenueCard,
+        .occupancyCard,
+        .propertyCard {
           position: absolute;
-          inset: -18px;
-          z-index: -1;
-          border-radius: 36px;
-          background: linear-gradient(
-            135deg,
-            rgba(53, 103, 218, 0.12),
-            rgba(33, 177, 132, 0.08)
-          );
+          z-index: 6;
+          border: 1px solid var(--border);
+          background: rgba(8, 9, 9, 0.82);
+          box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
+          backdrop-filter: blur(10px);
         }
-        .previewTop,
-        .previewTop > div,
-        .previewCardTitle,
-        .previewFooter,
-        .previewFooter > div,
-        .moneyRow {
+
+        .revenueCard {
+          top: 128px;
+          left: 37%;
+          width: 235px;
+          min-height: 115px;
+          padding: 17px;
+          border-radius: 14px;
+        }
+
+        .smallLabel {
+          font-size: 12px;
+          color: #ddd;
+          margin-bottom: 5px;
+        }
+
+        .revenueCard strong {
+          display: block;
+          font-size: 30px;
+          line-height: 1;
+          margin-bottom: 10px;
+        }
+
+        .growth {
+          color: #baff72;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .miniBars {
+          position: absolute;
+          right: 17px;
+          bottom: 17px;
+          height: 52px;
+          display: flex;
+          gap: 4px;
+          align-items: flex-end;
+        }
+
+        .miniBars i {
+          width: 7px;
+          display: block;
+          background: var(--gold);
+          border-radius: 2px 2px 0 0;
+        }
+
+        .miniBars i:nth-child(1) {
+          height: 18px;
+        }
+
+        .miniBars i:nth-child(2) {
+          height: 25px;
+        }
+
+        .miniBars i:nth-child(3) {
+          height: 31px;
+        }
+
+        .miniBars i:nth-child(4) {
+          height: 38px;
+        }
+
+        .miniBars i:nth-child(5) {
+          height: 45px;
+        }
+
+        .miniBars i:nth-child(6) {
+          height: 52px;
+        }
+
+        .occupancyCard {
+          right: 4%;
+          top: 226px;
+          width: 255px;
+          padding: 17px 20px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: space-between;
         }
-        .previewTop > div {
-          justify-content: flex-start;
-          gap: 10px;
+
+        .occupancyCard strong {
+          display: block;
+          font-size: 30px;
+          margin: 4px 0 7px;
         }
-        .previewLogo {
-          width: 32px;
-          height: 32px;
-          display: grid;
-          place-items: center;
-          border-radius: 9px;
-          background: #2859c5;
-          color: #fff;
-          font-weight: 900;
-        }
-        .previewAvatar {
-          width: 34px;
-          height: 34px;
-          display: grid;
-          place-items: center;
+
+        .ring {
+          width: 84px;
+          height: 84px;
           border-radius: 50%;
-          background: #ecf2ff;
-          color: #315da8;
-          font-size: 11px;
-          font-weight: 900;
-        }
-        .previewStats {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
-          margin: 20px 0;
+          place-items: center;
+          background: conic-gradient(
+            var(--gold) 0 92%,
+            rgba(255, 255, 255, 0.15) 92% 100%
+          );
+          position: relative;
         }
-        .previewStats article {
-          border: 1px solid #e6ebf2;
-          border-radius: 14px;
-          padding: 14px;
-          background: #fbfcfe;
+
+        .ring:before {
+          content: "";
+          position: absolute;
+          inset: 9px;
+          border-radius: 50%;
+          background: #111;
         }
-        .previewStats span,
-        .previewStats small {
-          display: block;
-          color: #7a8799;
-          font-size: 10px;
+
+        .ring span {
+          position: relative;
+          z-index: 2;
+          font-weight: 700;
+          font-size: 14px;
         }
-        .previewStats b {
-          display: block;
-          margin: 6px 0 4px;
-          font-size: 21px;
-        }
-        .previewGrid {
-          display: grid;
-          grid-template-columns: 1.05fr 0.95fr;
-          gap: 12px;
-        }
-        .previewGrid > article {
-          min-width: 0;
-          border: 1px solid #e6ebf2;
-          border-radius: 15px;
-          padding: 16px;
-        }
-        .previewCardTitle small,
-        .activityCard > small {
-          display: block;
-          color: #8390a2;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-        }
-        .previewCardTitle b {
-          display: block;
-          margin-top: 4px;
-          font-size: 13px;
-        }
-        .previewCardTitle strong {
-          color: #1f9b72;
-          font-size: 18px;
-        }
-        .progressTrack {
-          height: 7px;
-          margin: 18px 0;
-          overflow: hidden;
-          border-radius: 999px;
-          background: #e8edf3;
-        }
-        .progressTrack span {
-          display: block;
-          width: 82%;
-          height: 100%;
-          background: #28a47a;
-        }
-        .moneyRow {
-          margin-top: 9px;
-          color: #66758a;
-          font-size: 11px;
-        }
-        .moneyRow b {
-          color: #233149;
-        }
-        .activityCard > div {
+
+        .propertyCard {
+          right: 14%;
+          bottom: 50px;
+          width: 360px;
+          min-height: 102px;
+          padding: 10px;
           display: flex;
           align-items: center;
-          gap: 9px;
-          margin-top: 12px;
+          gap: 15px;
+          border-radius: 15px;
         }
-        .activityCard i {
-          width: 29px;
-          height: 29px;
-          display: grid;
-          place-items: center;
-          border-radius: 9px;
-          font-style: normal;
+
+        .propertyCard img {
+          width: 91px;
+          height: 78px;
+          object-fit: cover;
+          border-radius: 10px;
+        }
+
+        .propertyCard small {
+          display: block;
+          color: #ddd;
           font-size: 11px;
+          margin-bottom: 5px;
         }
-        .activityCard i.#f4c84f {
-          background: #e3f8ef;
-          color: #14845f;
+
+        .propertyCard strong {
+          display: block;
+          font-size: 17px;
         }
-        .activityCard i.#f4c84f {
-          background: #e7efff;
-          color: #f4c84f;
+
+        .propertyCard span {
+          font-size: 15px;
+          display: block;
+          margin-top: 2px;
         }
-        .activityCard i.#f4c84f {
-          background: #fff0df;
-          color: #cf741f;
+
+        .featuresSection {
+          padding: 0 3%;
+          position: relative;
+          z-index: 10;
+          margin-top: 0;
         }
-        .activityCard span {
+
+        .featuresGrid {
+          max-width: 1200px;
+          margin: -1px auto 0;
+          padding: 16px 15px 18px;
           display: grid;
-          gap: 2px;
+          grid-template-columns: repeat(6, 1fr);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          background: rgba(8, 9, 9, 0.94);
+        }
+
+        .feature {
+          text-align: center;
+          padding: 0 13px;
           min-width: 0;
         }
-        .activityCard b {
+
+        .featureIcon {
+          width: 66px;
+          height: 66px;
+          border-radius: 11px;
+          margin: 0 auto 8px;
+          display: grid;
+          place-items: center;
+          color: var(--gold);
+          border: 1px solid rgba(255, 255, 255, 0.13);
+          background: linear-gradient(145deg, #171919, #090a0a);
+        }
+
+        .featureIcon svg {
+          width: 34px;
+          height: 34px;
+        }
+
+        .feature h3 {
+          margin: 0 0 6px;
+          font-size: 15px;
+          letter-spacing: -0.4px;
+        }
+
+        .feature p {
+          margin: 0;
+          color: #ddd;
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .audienceSection {
+          max-width: 1200px;
+          margin: 14px auto 0;
+          padding: 0 0 0;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .audienceCard {
+          min-height: 345px;
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          overflow: hidden;
+          position: relative;
+          background:
+            radial-gradient(
+              circle at 85% 60%,
+              rgba(255, 216, 74, 0.11),
+              transparent 35%
+            ),
+            #090a0a;
+          display: flex;
+        }
+
+        .audienceCopy {
+          width: 57%;
+          padding: 17px 0 17px 21px;
+          position: relative;
+          z-index: 5;
+        }
+
+        .audienceCopy h2 {
+          font-size: 29px;
+          line-height: 1;
+          letter-spacing: -1.6px;
+          margin: 8px 0 12px;
+        }
+
+        .audienceCopy ul {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .audienceCopy li {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin: 6px 0;
+          font-size: 12px;
+        }
+
+        .check {
+          width: 22px;
+          height: 22px;
+          flex: 0 0 22px;
+          border-radius: 50%;
+          background: #ffdf70;
+          color: #171717;
+          display: grid;
+          place-items: center;
+        }
+
+        .check svg {
+          width: 15px;
+          height: 15px;
+        }
+
+        .smallPrimary {
+          margin-top: 12px;
+          padding: 11px 14px;
+          font-size: 11px;
+          background: linear-gradient(180deg, #ffe46f, #f5c431);
+          color: #090909;
+        }
+
+        .phoneArea {
+          position: absolute;
+          right: -10px;
+          bottom: -26px;
+          width: 51%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+        }
+
+        .phoneArea img {
+          position: relative;
+          z-index: 2;
+          width: 255px;
+          max-width: none;
+          transform: rotate(6deg);
+          filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.6));
+        }
+
+        .tenantPhone img {
+          transform: rotate(6deg);
+        }
+
+        .phoneGlow {
+          position: absolute;
+          width: 240px;
+          height: 240px;
+          border-radius: 50%;
+          background: rgba(255, 216, 74, 0.16);
+          filter: blur(55px);
+        }
+
+        .proSection {
+          max-width: 1200px;
+          margin: 15px auto 0;
+          min-height: 100px;
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          background:
+            linear-gradient(
+              90deg,
+              rgba(255, 216, 74, 0.08),
+              rgba(0, 0, 0, 0.15)
+            ),
+            #0a0b0b;
+          padding: 14px 20px;
+          display: grid;
+          grid-template-columns: 72px 1fr auto auto;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .crownBox {
+          color: var(--gold);
+        }
+
+        .crownBox svg {
+          width: 58px;
+          height: 58px;
+        }
+
+        .proText h2 {
+          margin: 3px 0 3px;
+          font-size: 19px;
+        }
+
+        .proText p {
+          margin: 0;
+          color: #ccc;
+          font-size: 11px;
+        }
+
+        .proFeatures {
+          display: flex;
+          gap: 18px;
+          color: #eee;
           font-size: 10px;
           white-space: nowrap;
         }
-        .activityCard small {
-          color: #8a96a7;
-          font-size: 9px;
+
+        .proButton {
+          min-height: 42px;
+          padding: 0 20px;
+          background: linear-gradient(180deg, #ffe46f, #f5c431);
+          color: #090909;
+          font-size: 12px;
+          white-space: nowrap;
         }
-        .previewFooter {
-          margin-top: 14px;
-          padding: 12px 14px;
-          border-radius: 12px;
-          background: #f4f7fb;
-          color: #64748b;
-          font-size: 11px;
+
+        .toolsSection,
+        .testimonialSection {
+          max-width: 1200px;
+          margin: 65px auto 0;
         }
-        .previewFooter > div {
-          gap: 7px;
-          color: #237d60;
+
+        .sectionHeading h2 {
+          font-size: 31px;
+          margin: 6px 0;
+          letter-spacing: -1.4px;
         }
-        .previewFooter i {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          background: #28a47a;
-        }
-        .metricsStrip {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          background: #172d57;
-          color: #fff;
-        }
-        .metricsStrip > div {
-          padding: 26px;
-          text-align: center;
-          border-right: 1px solid rgba(255, 255, 255, 0.12);
-        }
-        .metricsStrip b,
-        .metricsStrip span {
-          display: block;
-        }
-        .metricsStrip span {
-          margin-top: 5px;
-          color: #b8c6dc;
+
+        .sectionHeading p {
+          color: #c8c8c2;
+          margin: 0;
           font-size: 13px;
         }
-        .featuresSection,
-        .stepsSection {
-          width: min(1120px, calc(100% - 40px));
-          margin: 0 auto;
-          padding: 110px 0;
+
+        .toolsGrid {
+          margin-top: 20px;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
         }
-        .sectionHeading {
-          max-width: 720px;
-          margin: 0 auto 50px;
-          text-align: center;
+
+        .toolCard {
+          min-height: 190px;
+          padding: 22px;
+          border: 1px solid rgba(255, 216, 74, 0.35);
+          border-radius: 14px;
+          background: linear-gradient(145deg, #111313, #080909);
         }
-        .sectionHeading.left {
-          max-width: 680px;
-          margin-left: 0;
-          text-align: left;
+
+        .toolCard > svg {
+          color: var(--gold);
+          width: 35px;
+          height: 35px;
         }
-        .sectionHeading h2,
-        .securitySection h2,
-        .finalCta h2 {
-          margin: 12px 0;
-          font-size: clamp(34px, 4vw, 50px);
-          letter-spacing: -0.04em;
-        }
-        .sectionHeading p,
-        .securitySection p,
-        .finalCta p {
-          color: #66758a;
+
+        .toolCard h3 {
+          margin: 15px 0 7px;
           font-size: 17px;
-          line-height: 1.7;
         }
-        .featureGrid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-        }
-        .featureGrid article {
-          border: 1px solid #e1e7ef;
-          border-radius: 18px;
-          background: #fff;
-          padding: 26px;
-          box-shadow: 0 10px 28px rgba(31, 50, 81, 0.05);
-        }
-        .featureIcon {
-          width: 44px;
-          height: 44px;
-          display: grid;
-          place-items: center;
-          border-radius: 13px;
-          background: #edf3ff;
-          color: #315da8;
-          font-weight: 900;
-        }
-        .featureGrid h3 {
-          margin: 18px 0 8px;
-          font-size: 18px;
-        }
-        .featureGrid p,
-        .stepsGrid p {
+
+        .toolCard p {
+          color: #bbb;
+          font-size: 12px;
+          line-height: 1.5;
           margin: 0;
-          color: #6b788b;
-          line-height: 1.65;
         }
-        .stepsSection {
-          padding-top: 40px;
-        }
-        .stepsGrid {
+
+        .demoSection {
+          max-width: 1200px;
+          margin: 65px auto 0;
+          min-height: 380px;
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
+          grid-template-columns: 1fr 1fr;
+          background:
+            radial-gradient(
+              circle at 80% 50%,
+              rgba(255, 216, 74, 0.15),
+              transparent 35%
+            ),
+            #090a0a;
         }
-        .stepsGrid article {
-          border-top: 2px solid #d9e3f3;
-          padding: 24px 8px 0 0;
-        }
-        .stepsGrid article > span {
-          color: #f4c84f;
-          font-weight: 900;
-        }
-        .stepsGrid h3 {
-          margin: 18px 0 9px;
-        }
-        .securitySection {
-          width: min(1120px, calc(100% - 40px));
-          margin: 20px auto 110px;
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-          align-items: center;
-          gap: 28px;
-          border-radius: 24px;
-          padding: 36px;
-          background: #172d57;
-          color: #fff;
-        }
-        .securitySection h2 {
-          margin: 8px 0;
-          font-size: clamp(28px, 3vw, 40px);
-        }
-        .securitySection p {
-          max-width: 710px;
-          margin: 0;
-          color: #bdc9dc;
-          font-size: 15px;
-        }
-        .securityIcon {
-          width: 58px;
-          height: 58px;
-          display: grid;
-          place-items: center;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.1);
-          font-size: 25px;
-        }
-        .secondaryButton.light {
-          border-color: rgba(255, 255, 255, 0.25);
-          background: transparent;
-          color: #fff;
-        }
-        .finalCta {
-          padding: 100px 20px;
-          text-align: center;
-          background: linear-gradient(135deg, #2859c5, #173b88);
-          color: #fff;
-        }
-        .finalCta .eyebrow {
-          color: #c9d9ff;
-        }
-        .finalCta h2 {
-          margin-top: 14px;
-        }
-        .finalCta p {
-          color: #d2ddf4;
-        }
-        .primaryButton.inverse {
-          margin-top: 16px;
-          background: #fff;
-          color: #214da9;
-        }
-        footer {
-          width: min(1120px, calc(100% - 40px));
-          min-height: 100px;
-          margin: 0 auto;
+
+        .demoContent {
+          padding: 55px;
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
+          justify-content: center;
+          flex-direction: column;
         }
-        footer p {
-          color: #738196;
+
+        .demoContent h2 {
+          margin: 10px 0 15px;
+          font-size: 43px;
+          line-height: 1;
+          letter-spacing: -2px;
+        }
+
+        .demoContent p {
+          color: #c9c9c2;
+          max-width: 470px;
+          line-height: 1.55;
           font-size: 13px;
         }
-        footer > div {
+
+        .demoContent .primaryButton {
+          width: fit-content;
+          margin-top: 10px;
+        }
+
+        .videoBox {
+          margin: 30px;
+          border: 1px solid rgba(255, 216, 74, 0.55);
+          border-radius: 14px;
           display: flex;
-          gap: 20px;
-          color: #536176;
-          font-size: 13px;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 320px;
+          background:
+            linear-gradient(
+              rgba(0, 0, 0, 0.4),
+              rgba(0, 0, 0, 0.85)
+            ),
+            url("/unitvero-hero-house.png") center / cover;
+        }
+
+        .videoPlay {
+          width: 72px;
+          height: 72px;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          background: var(--gold);
+          color: #050505;
+          margin-bottom: 13px;
+          box-shadow: 0 0 45px rgba(255, 216, 74, 0.4);
+        }
+
+        .videoPlay svg {
+          width: 34px;
+          height: 34px;
+        }
+
+        .videoBox span {
+          font-size: 16px;
           font-weight: 700;
         }
-        @media (max-width: 960px) {
-          .navLinks {
-            display: none;
+
+        .videoBox small {
+          margin-top: 5px;
+          color: #ccc;
+          font-size: 11px;
+        }
+
+        .testimonialGrid {
+          margin-top: 20px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 14px;
+        }
+
+        .testimonial {
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 13px;
+          background: #0b0d0d;
+          padding: 20px;
+          display: grid;
+          grid-template-columns: 48px 1fr;
+          column-gap: 12px;
+        }
+
+        .avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #f3d36c, #8f7c35);
+          color: #111;
+          display: grid;
+          place-items: center;
+          font-weight: 800;
+        }
+
+        .testimonial strong {
+          display: block;
+          font-size: 13px;
+          margin-top: 5px;
+        }
+
+        .testimonial small {
+          display: block;
+          color: #bbb;
+          font-size: 10px;
+          margin-top: 2px;
+        }
+
+        .testimonial p {
+          grid-column: 1 / -1;
+          color: #e4e4df;
+          line-height: 1.5;
+          font-size: 13px;
+          margin: 17px 0 10px;
+        }
+
+        .stars {
+          grid-column: 1 / -1;
+          color: var(--gold);
+          letter-spacing: 2px;
+        }
+
+        .footer {
+          max-width: 1280px;
+          margin: 65px auto 0;
+          border-top: 1px solid rgba(255, 216, 74, 0.38);
+          padding: 25px 30px 20px;
+          display: grid;
+          grid-template-columns: 1.3fr 1fr auto auto;
+          align-items: center;
+          gap: 30px;
+        }
+
+        .footerBrand .logo {
+          font-size: 25px;
+        }
+
+        .footerBrand p {
+          color: #bbb;
+          font-size: 11px;
+          margin: 5px 0 0;
+        }
+
+        .footerLinks {
+          display: flex;
+          gap: 18px;
+          flex-wrap: wrap;
+        }
+
+        .footerLinks a {
+          font-size: 11px;
+          color: #ccc;
+        }
+
+        .socials {
+          display: flex;
+          gap: 12px;
+        }
+
+        .socials a {
+          width: 30px;
+          height: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          font-size: 0;
+        }
+
+        .socials a:after {
+          font-size: 11px;
+          font-weight: 800;
+        }
+
+        .socials a:nth-child(1):after {
+          content: "IG";
+        }
+
+        .socials a:nth-child(2):after {
+          content: "in";
+        }
+
+        .socials a:nth-child(3):after {
+          content: "f";
+        }
+
+        .storeButtons {
+          display: flex;
+          gap: 8px;
+        }
+
+        .store {
+          min-width: 120px;
+          border: 1px solid #aaa;
+          border-radius: 7px;
+          padding: 7px 11px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .store small {
+          font-size: 7px;
+          color: #ccc;
+        }
+
+        .store strong {
+          font-size: 13px;
+        }
+
+        .copyright {
+          grid-column: 1 / -1;
+          color: #777;
+          font-size: 9px;
+          padding-top: 8px;
+        }
+
+        @media (max-width: 1000px) {
+          .topbar {
+            padding: 0 25px;
           }
-          .hero {
-            grid-template-columns: 1fr;
-            margin-top: 48px;
+
+          .nav {
+            gap: 20px;
           }
-          .heroCopy {
-            text-align: center;
+
+          .heroContent {
+            left: 4%;
           }
-          .heroCopy > p {
-            margin-left: auto;
-            margin-right: auto;
+
+          .revenueCard {
+            left: 47%;
           }
-          .heroActions,
-          .trustRow {
-            justify-content: center;
+
+          .propertyCard {
+            right: 4%;
           }
-          .dashboardPreview {
-            width: min(620px, 100%);
-            margin: 0 auto;
+
+          .audienceSection,
+          .proSection,
+          .toolsSection,
+          .testimonialSection,
+          .demoSection {
+            margin-left: 20px;
+            margin-right: 20px;
           }
-          .featureGrid {
-            grid-template-columns: repeat(2, 1fr);
+
+          .proSection {
+            grid-template-columns: 60px 1fr;
           }
-          .securitySection {
-            grid-template-columns: auto 1fr;
-          }
-          .securitySection .secondaryButton {
+
+          .proFeatures {
             grid-column: 2;
-            justify-self: start;
+          }
+
+          .proButton {
+            grid-column: 2;
+            width: fit-content;
+          }
+
+          .footer {
+            margin-left: 20px;
+            margin-right: 20px;
           }
         }
-        @media (max-width: 650px) {
-          .topNav {
-            width: min(100% - 28px, 1180px);
+
+        @media (max-width: 760px) {
+          .topbar {
+            height: 70px;
+            padding: 0 18px;
           }
-          .signIn {
+
+          .logo {
+            font-size: 22px;
+          }
+
+          .nav {
             display: none;
           }
+
+          .topActions {
+            margin-left: auto;
+          }
+
+          .loginButton {
+            display: none;
+          }
+
+          .getStarted {
+            min-width: 120px;
+            padding: 0 15px;
+          }
+
           .hero {
-            width: min(100% - 28px, 1180px);
-            margin-bottom: 56px;
-            gap: 42px;
+            min-height: 820px;
+            height: auto;
           }
+
+          .heroContent {
+            position: relative;
+            top: auto;
+            left: auto;
+            padding: 125px 22px 40px;
+            width: 100%;
+          }
+
           .hero h1 {
-            font-size: 46px;
+            font-size: 54px;
+            letter-spacing: -3px;
           }
-          .heroCopy > p {
-            font-size: 16px;
+
+          .heroText {
+            font-size: 14px;
           }
-          .heroActions {
-            display: grid;
+
+          .heroImage {
+            background-position: 68% center;
           }
-          .dashboardPreview {
-            padding: 14px;
-            border-radius: 18px;
+
+          .heroOverlay {
+            background:
+              linear-gradient(
+                180deg,
+                rgba(5, 6, 6, 0.96) 0%,
+                rgba(5, 6, 6, 0.68) 45%,
+                rgba(5, 6, 6, 0.9) 100%
+              );
           }
-          .previewStats {
+
+          .revenueCard {
+            top: auto;
+            left: 22px;
+            bottom: 190px;
+            width: 200px;
+          }
+
+          .occupancyCard {
+            top: auto;
+            right: 22px;
+            bottom: 78px;
+            width: 215px;
+          }
+
+          .propertyCard {
+            display: none;
+          }
+
+          .featuresGrid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px 5px;
+          }
+
+          .audienceSection {
+            grid-template-columns: 1fr;
+            margin-top: 15px;
+          }
+
+          .audienceCard {
+            min-height: 400px;
+          }
+
+          .audienceCopy {
+            width: 58%;
+          }
+
+          .phoneArea {
+            width: 48%;
+          }
+
+          .phoneArea img {
+            width: 220px;
+          }
+
+          .proSection {
+            grid-template-columns: 50px 1fr;
+          }
+
+          .proFeatures {
+            display: none;
+          }
+
+          .proButton {
+            grid-column: 2;
+          }
+
+          .toolsGrid {
             grid-template-columns: 1fr 1fr;
           }
-          .previewStats article:last-child {
-            grid-column: 1 / -1;
-          }
-          .previewGrid {
+
+          .demoSection {
             grid-template-columns: 1fr;
           }
-          .metricsStrip,
-          .featureGrid,
-          .stepsGrid {
+
+          .demoContent {
+            padding: 35px 25px;
+          }
+
+          .demoContent h2 {
+            font-size: 34px;
+          }
+
+          .videoBox {
+            min-height: 250px;
+          }
+
+          .testimonialGrid {
             grid-template-columns: 1fr;
           }
-          .metricsStrip > div {
-            border-right: 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-          }
-          .featuresSection,
-          .stepsSection {
-            width: min(100% - 28px, 1120px);
-            padding: 76px 0;
-          }
-          .securitySection {
-            width: min(100% - 28px, 1120px);
+
+          .footer {
             grid-template-columns: 1fr;
-            padding: 28px;
           }
-          .securitySection .secondaryButton {
-            grid-column: auto;
-            justify-self: stretch;
+
+          .copyright {
+            grid-column: 1;
           }
-          footer {
-            width: min(100% - 28px, 1120px);
+        }
+
+        @media (max-width: 470px) {
+          .hero h1 {
+            font-size: 47px;
+          }
+
+          .heroButtons {
             flex-direction: column;
-            padding: 30px 0;
+            align-items: stretch;
+          }
+
+          .primaryButton,
+          .secondaryButton {
+            width: 100%;
+          }
+
+          .featuresGrid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .featureIcon {
+            width: 55px;
+            height: 55px;
+          }
+
+          .feature h3 {
+            font-size: 12px;
+          }
+
+          .feature p {
+            font-size: 10px;
+          }
+
+          .audienceCard {
+            min-height: 430px;
+          }
+
+          .audienceCopy {
+            width: 64%;
+          }
+
+          .audienceCopy h2 {
+            font-size: 25px;
+          }
+
+          .phoneArea {
+            width: 43%;
+            right: -30px;
+          }
+
+          .phoneArea img {
+            width: 190px;
+          }
+
+          .toolsGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .proText h2 {
+            font-size: 15px;
           }
         }
-
-/* =========================================================
-   UNITVERO HOME — EXACT REFERENCE DIRECTION
-   Premium black + gold, Inter font, compact SaaS layout.
-   ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-.homePage{
-  --black:#060708;
-  --black2:#0b0d0e;
-  --panel:#101314;
-  --panel2:#141718;
-  --gold:#f4c84f;
-  --gold2:#dcae36;
-  --white:#f7f6f1;
-  --muted:#9b9d99;
-  --line:rgba(244,200,79,.24);
-  min-height:100vh !important;
-  background:
-    radial-gradient(circle at 70% 8%,rgba(244,200,79,.09),transparent 25%),
-    radial-gradient(circle at 15% 40%,rgba(244,200,79,.045),transparent 25%),
-    #060708 !important;
-  color:var(--white) !important;
-  font-family:Inter,Arial,sans-serif !important;
-}
-.homePage *{font-family:Inter,Arial,sans-serif !important;box-sizing:border-box}
-.homePage .topNav{
-  width:min(1180px,calc(100% - 36px)) !important;
-  margin:0 auto !important;
-  min-height:72px !important;
-  border-bottom:1px solid rgba(244,200,79,.12) !important;
-}
-.homePage .brand{
-  color:#fff !important;
-  font-size:21px !important;
-  font-weight:900 !important;
-  letter-spacing:-.055em !important;
-}
-.homePage .brand::before{
-  content:"⌂";
-  display:inline-grid;
-  place-items:center;
-  width:27px;height:27px;
-  margin-right:8px;
-  border:1px solid var(--gold);
-  border-radius:8px;
-  color:var(--gold);
-  font-size:16px;
-  vertical-align:-4px;
-}
-.homePage .brand span{color:var(--gold) !important}
-.homePage .navLinks a{
-  color:#aeb2ae !important;
-  font-size:12px !important;
-}
-.homePage .navLinks a:hover{color:#fff !important}
-.homePage .signIn{
-  border:1px solid rgba(244,200,79,.34) !important;
-  color:#f7f6f1 !important;
-  background:#0d1011 !important;
-  border-radius:9px !important;
-}
-.homePage .primaryButton{
-  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
-  color:#111 !important;
-  border:1px solid #f8dc88 !important;
-  border-radius:9px !important;
-  font-weight:900 !important;
-  box-shadow:0 9px 22px rgba(220,174,54,.15) !important;
-}
-.homePage .launchOffer{
-  width:min(1120px,calc(100% - 36px)) !important;
-  margin:15px auto 0 !important;
-  padding:10px 14px !important;
-  background:linear-gradient(90deg,#151208,#0c0e0f) !important;
-  border:1px solid rgba(244,200,79,.34) !important;
-  border-radius:11px !important;
-  color:#eee9dc !important;
-}
-.homePage .launchOfferBadge{
-  background:#f4c84f !important;
-  color:#111 !important;
-}
-.homePage .launchOffer a{color:#f4c84f !important}
-.homePage .hero{
-  width:min(1180px,calc(100% - 36px)) !important;
-  margin:28px auto 0 !important;
-  display:grid !important;
-  grid-template-columns:.88fr 1.12fr !important;
-  gap:22px !important;
-  align-items:stretch !important;
-}
-.homePage .heroCopy{
-  padding:32px 10px 20px 2px !important;
-}
-.homePage .eyebrow{
-  color:#f4c84f !important;
-  letter-spacing:.12em !important;
-  font-size:9px !important;
-  font-weight:900 !important;
-}
-.homePage .hero h1{
-  color:#fff !important;
-  font-size:clamp(42px,5.3vw,72px) !important;
-  line-height:.98 !important;
-  letter-spacing:-.065em !important;
-  margin:12px 0 18px !important;
-  max-width:600px !important;
-}
-.homePage .hero h1 span{color:#f4c84f !important}
-.homePage .heroCopy>p{
-  color:#a4a7a3 !important;
-  font-size:14px !important;
-  line-height:1.65 !important;
-  max-width:560px !important;
-}
-.homePage .secondaryButton{
-  background:#0d1011 !important;
-  color:#eee9dc !important;
-  border:1px solid rgba(244,200,79,.27) !important;
-  border-radius:9px !important;
-}
-.homePage .trustRow span{color:#969a96 !important;font-size:10px !important}
-.homePage .dashboardPreview{
-  min-height:430px !important;
-  padding:18px !important;
-  border:1px solid rgba(244,200,79,.40) !important;
-  border-radius:16px !important;
-  background:
-    linear-gradient(145deg,rgba(244,200,79,.06),transparent 30%),
-    #0a0c0d !important;
-  box-shadow:0 28px 70px rgba(0,0,0,.34) !important;
-}
-.homePage .previewTop{
-  padding-bottom:12px !important;
-  border-bottom:1px solid rgba(244,200,79,.14) !important;
-}
-.homePage .previewLogo{
-  background:#f4c84f !important;
-  color:#111 !important;
-}
-.homePage .previewStats{
-  gap:8px !important;
-  margin-top:12px !important;
-}
-.homePage .previewStats article,
-.homePage .collectionCard,
-.homePage .activityCard{
-  background:#101314 !important;
-  border:1px solid rgba(244,200,79,.20) !important;
-  border-radius:10px !important;
-  color:#f7f6f1 !important;
-}
-.homePage .previewStats article span,
-.homePage .previewStats article small,
-.homePage .activityCard>small,
-.homePage .moneyRow span{color:#8f9490 !important}
-.homePage .previewStats article b{color:#fff !important}
-.homePage .previewStats article b,
-.homePage .collectionCard strong{color:#f4c84f !important}
-.homePage .progressTrack{
-  background:#1a1d1e !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.homePage .progressTrack span{
-  background:linear-gradient(90deg,#dcae36,#f7d46b) !important;
-}
-.homePage .activityCard i.#f4c84f,
-.homePage .activityCard i.#f4c84f,
-.homePage .activityCard i.#f4c84f{
-  background:rgba(244,200,79,.10) !important;
-  color:#f4c84f !important;
-}
-.homePage .previewFooter{
-  border-top-color:rgba(244,200,79,.13) !important;
-  color:#949893 !important;
-}
-.homePage .previewFooter b{color:#f4c84f !important}
-.homePage .metricsStrip{
-  width:min(1180px,calc(100% - 36px)) !important;
-  margin:18px auto 0 !important;
-  background:#0b0d0e !important;
-  border:1px solid rgba(244,200,79,.18) !important;
-  border-radius:12px !important;
-}
-.homePage .metricsStrip div{border-color:rgba(244,200,79,.12) !important}
-.homePage .metricsStrip b{color:#f4c84f !important}
-.homePage .metricsStrip span{color:#858a86 !important}
-.homePage .audienceSection,
-.homePage .featuresSection,
-.homePage .stepsSection,
-.homePage .securitySection,
-.homePage .proSection{
-  width:min(1180px,calc(100% - 36px)) !important;
-}
-.homePage .audienceCard,
-.homePage .featureGrid article,
-.homePage .stepsGrid article{
-  background:linear-gradient(145deg,#0d1011,#121516) !important;
-  border:1px solid rgba(244,200,79,.20) !important;
-  color:#f7f6f1 !important;
-  border-radius:13px !important;
-}
-.homePage .audienceCard h2,
-.homePage .sectionHeading h2,
-.homePage .featureGrid h3,
-.homePage .stepsGrid h3{
-  color:#f7f6f1 !important;
-}
-.homePage .audienceCard p,
-.homePage .sectionHeading p,
-.homePage .featureGrid p,
-.homePage .stepsGrid p{
-  color:#949893 !important;
-}
-.homePage .textButton{color:#f4c84f !important}
-.homePage .featureIcon{
-  background:rgba(244,200,79,.08) !important;
-  color:#f4c84f !important;
-  border:1px solid rgba(244,200,79,.18) !important;
-}
-.homePage .securitySection{
-  background:#101314 !important;
-  border:1px solid rgba(244,200,79,.22) !important;
-}
-.homePage .securityIcon{color:#f4c84f !important}
-.homePage .proSection{
-  background:linear-gradient(135deg,#171306,#0c0e0f 68%) !important;
-  border:1px solid rgba(244,200,79,.48) !important;
-  color:#fff !important;
-  border-radius:16px !important;
-}
-.homePage .proSection h2{color:#fff !important}
-.homePage .proSection p{color:#a7aaa5 !important}
-.homePage .proChecklist{
-  background:rgba(0,0,0,.24) !important;
-  border-color:rgba(244,200,79,.18) !important;
-}
-.homePage .proChecklist div{color:#eee9dc !important}
-.homePage .finalCta{
-  background:linear-gradient(135deg,#f4c84f,#dcae36) !important;
-  color:#111 !important;
-  border-radius:16px !important;
-}
-.homePage .finalCta h2,
-.homePage .finalCta p{color:#111 !important}
-.homePage footer{
-  border-top-color:rgba(244,200,79,.15) !important;
-  color:#858a86 !important;
-}
-.homePage footer a{color:#aeb1ac !important}
-.homePage footer .brand{color:#fff !important}
-@media(max-width:850px){
-  .homePage .hero{grid-template-columns:1fr !important}
-  .homePage .heroCopy{padding-top:18px !important}
-}
-@media(max-width:650px){
-  .homePage .navLinks{display:none !important}
-  .homePage .hero h1{font-size:44px !important}
-  .homePage .hero,
-  .homePage .audienceSection,
-  .homePage .featuresSection,
-  .homePage .stepsSection,
-  .homePage .securitySection,
-  .homePage .proSection,
-  .homePage .metricsStrip{width:min(100% - 24px,1180px) !important}
-}
-
-
-/* FINAL PALETTE LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
-.unitveroModern,
-.unitveroModern *{
-  --blue:#f4c84f !important;
-  --green:#f4c84f !important;
-  --orange:#f4c84f !important;
-  --purple:#f4c84f !important;
-  --teal:#f4c84f !important;
-  --cyan:#f4c84f !important;
-}
-.unitveroModern .green,
-.unitveroModern .blue,
-.unitveroModern .orange,
-.unitveroModern .purple,
-.unitveroModern .teal,
-.unitveroModern .cyan{
-  color:#f4c84f !important;
-  background-color:rgba(244,200,79,.08) !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern [class*="blue"],
-.unitveroModern [class*="green"],
-.unitveroModern [class*="orange"],
-.unitveroModern [class*="purple"],
-.unitveroModern [class*="teal"],
-.unitveroModern [class*="cyan"]{
-  color:#f4c84f !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern svg [fill],
-.unitveroModern svg [stroke]{
-  stroke:#f4c84f !important;
-  fill:currentColor !important;
-}
-
-
-/* FONT LOCK — INTER, matching the generated reference */
-html, body,
-.unitveroModern,
-.unitveroModern *,
-.homePage,
-.homePage *{
-  font-family:Inter,Arial,sans-serif !important;
-  font-synthesis:none !important;
-}
-
-      
-
-        /* UNITVERO HOMEPAGE — FINAL REFERENCE LOCK */
-        body{background:#030404!important;color:#f5f2e9!important}
-        .homePage,.unitveroHome{background:#030404!important;color:#f5f2e9!important}
-        .homePage *,.unitveroHome *{font-family:Inter,Arial,sans-serif!important}
-        .homePage .blue,.homePage .green,.homePage .teal,.homePage .cyan,
-        .homePage .purple,.homePage .orange{
-          color:#f4c84f!important;background-color:transparent!important;
-          border-color:rgba(244,200,79,.25)!important;
-        }
-        .heroImage,.heroVisual,.luxuryHouse,.houseScene{min-height:560px!important}
-        .luxuryHouse,.houseScene{
-          border:1px solid rgba(244,200,79,.28)!important;
-          border-radius:14px!important;
-          overflow:hidden!important;
-          transform:scale(1.02);
-          background:
-            linear-gradient(rgba(3,4,4,.15),rgba(3,4,4,.32)),
-            url("/images/unitvero-house.jpg") center/cover no-repeat,
-            linear-gradient(145deg,#3b3527,#090b0c)!important;
-        }
-        .phone{
-          width:170px!important;height:315px!important;
-          transform:rotate(5deg) scale(1.08)!important;
-        }
-        .phoneTenant{transform:rotate(-5deg) scale(1.08)!important}
-        .portalCard{min-height:350px!important}
-        .propertyPhoto{
-          background:
-            url("/images/unitvero-house.jpg") center/cover no-repeat,
-            linear-gradient(135deg,#4b4a40,#181a19)!important;
-        }
-        .uvDemoOverlay{
-          position:fixed!important;inset:0!important;z-index:99999!important;
-          display:grid!important;place-items:center!important;padding:24px!important;
-          background:rgba(0,0,0,.84)!important;backdrop-filter:blur(10px)!important;
-        }
-        .uvDemoModal{
-          position:relative!important;width:min(1000px,100%)!important;
-          max-height:92vh!important;overflow:auto!important;
-          padding:28px!important;border-radius:18px!important;
-          background:#090a0a!important;
-          border:1px solid rgba(244,200,79,.5)!important;
-          box-shadow:0 35px 100px rgba(0,0,0,.75)!important;
-        }
-        .uvDemoClose{
-          position:absolute!important;right:14px!important;top:12px!important;
-          width:38px!important;height:38px!important;border-radius:50%!important;
-          border:1px solid rgba(244,200,79,.35)!important;background:#111313!important;
-          color:#f4c84f!important;font-size:27px!important;cursor:pointer!important;
-        }
-        .uvDemoHeading{padding-right:45px!important;margin-bottom:16px!important}
-        .uvDemoHeading h2{margin:5px 0!important;color:#fff!important;font-size:30px!important;letter-spacing:-.04em!important}
-        .uvDemoHeading p{margin:0!important;color:#969893!important;font-size:11px!important;line-height:1.6!important}
-        .uvDemoVideo{
-          position:relative!important;min-height:450px!important;
-          border:1px solid rgba(244,200,79,.25)!important;border-radius:12px!important;
-          overflow:hidden!important;background:#020303!important;
-        }
-        .uvDemoVideo video{display:block!important;width:100%!important;height:450px!important;background:#020303!important}
-        .uvDemoFallback{
-          position:absolute!important;inset:0!important;display:flex!important;
-          flex-direction:column!important;align-items:center!important;justify-content:center!important;
-          gap:8px!important;background:rgba(2,3,3,.78)!important;text-align:center!important;
-          pointer-events:none!important;
-        }
-        .uvDemoFallback span{
-          width:66px!important;height:66px!important;border-radius:50%!important;
-          display:grid!important;place-items:center!important;
-          background:#f4c84f!important;color:#111!important;font-size:22px!important;
-        }
-        .uvDemoFallback b{color:#fff!important;font-size:17px!important}
-        .uvDemoFallback small{color:#8e918b!important;font-size:9px!important}
-        .uvDemoFallback strong{color:#f4c84f!important}
-        .uvDemoFeatures{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-top:13px!important}
-        .uvDemoFeatures span{
-          padding:8px 10px!important;border-radius:7px!important;
-          background:#101212!important;border:1px solid rgba(244,200,79,.18)!important;
-          color:#b9b8b0!important;font-size:8px!important;
-        }
-        .socials a{color:#f4c84f!important}
-        @media(max-width:700px){
-          .heroImage,.heroVisual,.luxuryHouse,.houseScene{min-height:430px!important}
-          .phone{transform:scale(1)!important}.phoneTenant{transform:scale(1)!important}
-          .uvDemoOverlay{padding:12px!important}.uvDemoModal{padding:18px!important}
-          .uvDemoVideo{min-height:240px!important}.uvDemoVideo video{height:240px!important}
-        }
-        `}
-        </style>
+      `}</style>
     </main>
   );
 }
