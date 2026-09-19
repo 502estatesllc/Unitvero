@@ -44,6 +44,7 @@ const COPY = {
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
+  const [accountReady, setAccountReady] = useState(false);
   const [props, setProps] = useState([]);
   const [units, setUnits] = useState([]);
   const [address, setAddress] = useState("");
@@ -110,13 +111,21 @@ export default function Dashboard() {
       .eq("id", user.id)
       .single();
 
-    setProfile(
+    const resolvedProfile =
       p || {
         id: user.id,
         full_name: user.user_metadata?.full_name || "",
         role: user.user_metadata?.role || "landlord",
-      },
-    );
+      };
+
+    setProfile(resolvedProfile);
+    setAccountReady(true);
+
+    // Tenant accounts use the dedicated tenant portal below.
+    // Do not run landlord-only queries for tenant users.
+    if (String(resolvedProfile?.role || "").toLowerCase() === "tenant") {
+      return;
+    }
 
     const { data: properties, error } = await s
       .from("properties")
@@ -524,6 +533,60 @@ export default function Dashboard() {
     }
 
     alert(`${tenantName} was deleted successfully.`);
+  }
+
+  async function openOrCreateConversation(tenancyId) {
+    if (!tenancyId) return;
+
+    const tenancy = tenancies.find((item) => item.id === tenancyId);
+    if (!tenancy) {
+      alert("Tenant record could not be found.");
+      return;
+    }
+
+    const existing = conversations.find(
+      (conversation) => conversation.tenancy_id === tenancyId,
+    );
+
+    if (existing) {
+      setSelectedConversation(existing);
+      setCommunicationTab("messages");
+      setView("messages");
+      return;
+    }
+
+    const property = props.find(
+      (item) => item.id === tenancy.property_id,
+    );
+
+    if (!property?.landlord_id) {
+      alert("Property owner information could not be found.");
+      return;
+    }
+
+    const s = supabase();
+
+    const { data, error } = await s
+      .from("conversations")
+      .insert({
+        landlord_id: property.landlord_id,
+        property_id: tenancy.property_id,
+        tenancy_id: tenancy.id,
+        subject: tenancy.tenant_name || tenancy.tenant_email || "Tenant",
+        updated_at: new Date().toISOString(),
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      alert("Could not start conversation: " + error.message);
+      return;
+    }
+
+    setConversations((current) => [data, ...current]);
+    setSelectedConversation(data);
+    setCommunicationTab("messages");
+    setView("messages");
   }
 
   async function sendMessage(e) {
@@ -1003,6 +1066,39 @@ export default function Dashboard() {
   }
 
   const selectedInsights = propertyInsights(selectedProperty);
+
+  if (!accountReady) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        background: "#f5f7f6",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: "#163d34",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 28, fontWeight: 850, letterSpacing: "-1px" }}>
+            unit<span style={{ color: "#2c9b7d" }}>vero</span>
+          </div>
+          <p style={{ color: "#6f7f7a" }}>Loading your workspace…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (String(profile?.role || "").toLowerCase() === "tenant") {
+    return (
+      <TenantPortal
+        profile={profile}
+        language={language}
+        changeLanguage={changeLanguage}
+        privacyMode={privacyMode}
+        togglePrivacy={togglePrivacy}
+        onSignOut={out}
+      />
+    );
+  }
 
   return (
     <div className={`app unitveroModern ${privacyMode ? "privacyOn" : ""}`}>
@@ -8054,3 +8150,535 @@ export default function Dashboard() {
     </div>
   );
 }
+
+function TenantPortal({
+  profile,
+  language,
+  changeLanguage,
+  privacyMode,
+  togglePrivacy,
+  onSignOut,
+}) {
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("home");
+  const [tenancy, setTenancy] = useState(null);
+  const [property, setProperty] = useState(null);
+  const [unit, setUnit] = useState(null);
+  const [conversations, setConversations] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [notice, setNotice] = useState("");
+
+  const words = {
+    en: {
+      home: "Home",
+      payments: "Payments",
+      lease: "Lease",
+      messages: "Messages",
+      maintenance: "Maintenance",
+      documents: "Documents",
+      settings: "Settings",
+      hello: "Welcome home",
+      subtitle: "Everything about your rental, in one secure place.",
+      rent: "Monthly rent",
+      property: "Your property",
+      leaseDates: "Lease dates",
+      status: "Account status",
+      active: "Active",
+      payRent: "Pay rent",
+      contact: "Message landlord",
+      alerts: "Alerts & announcements",
+      noAlerts: "No new announcements.",
+      inbox: "Your messages",
+      noMessages: "No messages yet.",
+      send: "Send",
+      typeMessage: "Write a message…",
+      signOut: "Sign out",
+      privacy: "Privacy mode",
+      language: "Language",
+      notifications: "Phone notifications",
+      notifyCopy: "Push notification setup is being connected next. In-app unread alerts are active now.",
+      maintenanceCopy: "Maintenance requests will be available here without exposing landlord-only controls.",
+      docsCopy: "Lease files and shared documents will appear here.",
+      paymentCopy: "Online tenant rent payment will appear here once the tenant payment checkout is connected.",
+    },
+    es: {
+      home: "Inicio",
+      payments: "Pagos",
+      lease: "Contrato",
+      messages: "Mensajes",
+      maintenance: "Mantenimiento",
+      documents: "Documentos",
+      settings: "Ajustes",
+      hello: "Bienvenido a casa",
+      subtitle: "Todo sobre tu alquiler, en un solo lugar seguro.",
+      rent: "Renta mensual",
+      property: "Tu propiedad",
+      leaseDates: "Fechas del contrato",
+      status: "Estado de la cuenta",
+      active: "Activo",
+      payRent: "Pagar renta",
+      contact: "Enviar mensaje",
+      alerts: "Alertas y anuncios",
+      noAlerts: "No hay anuncios nuevos.",
+      inbox: "Tus mensajes",
+      noMessages: "Aún no hay mensajes.",
+      send: "Enviar",
+      typeMessage: "Escribe un mensaje…",
+      signOut: "Cerrar sesión",
+      privacy: "Modo privado",
+      language: "Idioma",
+      notifications: "Notificaciones del teléfono",
+      notifyCopy: "La configuración de notificaciones push se conectará a continuación. Las alertas dentro de la app ya están activas.",
+      maintenanceCopy: "Las solicitudes de mantenimiento estarán disponibles aquí sin mostrar controles del propietario.",
+      docsCopy: "Los contratos y documentos compartidos aparecerán aquí.",
+      paymentCopy: "El pago de renta en línea aparecerá aquí cuando conectemos el pago para inquilinos.",
+    },
+  };
+
+  const tx = (key) => words[language]?.[key] || words.en[key] || key;
+
+  async function loadTenant() {
+    setLoading(true);
+    setNotice("");
+    const s = supabase();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await s.auth.getUser();
+
+    if (userError || !user) {
+      setNotice("Your session expired. Please sign in again.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: tenancyData, error: tenancyError } = await s
+      .from("tenancies")
+      .select("*")
+      .eq("tenant_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (tenancyError) {
+      setNotice("We could not load your rental yet: " + tenancyError.message);
+      setLoading(false);
+      return;
+    }
+
+    setTenancy(tenancyData || null);
+
+    if (!tenancyData) {
+      setLoading(false);
+      return;
+    }
+
+    const [
+      propertyResult,
+      conversationResult,
+      announcementResult,
+    ] = await Promise.all([
+      s.from("properties").select("*").eq("id", tenancyData.property_id).maybeSingle(),
+      s.from("conversations").select("*").eq("tenancy_id", tenancyData.id).order("updated_at", { ascending: false }),
+      s.from("announcements").select("*").or(
+        `tenancy_id.eq.${tenancyData.id},property_id.eq.${tenancyData.property_id}`
+      ).order("created_at", { ascending: false }),
+    ]);
+
+    if (propertyResult.data) setProperty(propertyResult.data);
+
+    if (tenancyData.unit_id) {
+      const { data: unitData } = await s
+        .from("units")
+        .select("*")
+        .eq("id", tenancyData.unit_id)
+        .maybeSingle();
+      setUnit(unitData || null);
+    }
+
+    const conversationRows = conversationResult.data || [];
+    setConversations(conversationRows);
+    setSelectedConversation((current) => current || conversationRows[0] || null);
+
+    if (conversationRows.length) {
+      const ids = conversationRows.map((item) => item.id);
+      const { data: messageRows } = await s
+        .from("messages")
+        .select("*")
+        .in("conversation_id", ids)
+        .order("created_at", { ascending: true });
+      setMessages(messageRows || []);
+    } else {
+      setMessages([]);
+    }
+
+    setAnnouncements(announcementResult.data || []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadTenant();
+  }, []);
+
+  async function ensureConversation() {
+    if (selectedConversation) return selectedConversation;
+    if (!tenancy || !property?.landlord_id) return null;
+
+    const s = supabase();
+    const { data, error } = await s
+      .from("conversations")
+      .insert({
+        landlord_id: property.landlord_id,
+        property_id: tenancy.property_id,
+        tenancy_id: tenancy.id,
+        subject: "Tenant conversation",
+        updated_at: new Date().toISOString(),
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      setNotice("Could not start the conversation: " + error.message);
+      return null;
+    }
+
+    setConversations([data]);
+    setSelectedConversation(data);
+    return data;
+  }
+
+  async function sendTenantMessage(e) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const messageText = form.message.value.trim();
+    if (!messageText) return;
+
+    const conversation = await ensureConversation();
+    if (!conversation) return;
+
+    const s = supabase();
+    const {
+      data: { user },
+    } = await s.auth.getUser();
+
+    const { error } = await s.from("messages").insert({
+      conversation_id: conversation.id,
+      landlord_id: property.landlord_id,
+      sender_type: "tenant",
+      sender_user_id: user.id,
+      message: messageText,
+    });
+
+    if (error) {
+      setNotice("Could not send your message: " + error.message);
+      return;
+    }
+
+    await s
+      .from("conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversation.id);
+
+    form.reset();
+    await loadTenant();
+    setView("messages");
+  }
+
+  const unreadMessages = messages.filter(
+    (message) => message.sender_type === "landlord" && !message.read_at,
+  ).length;
+
+  const money = (value) =>
+    privacyMode ? "••••" : `$${Number(value || 0).toLocaleString()}`;
+
+  const formatDate = (value) =>
+    value
+      ? new Date(`${value}T00:00:00`).toLocaleDateString(
+          language === "es" ? "es-US" : "en-US",
+          { month: "short", day: "numeric", year: "numeric" },
+        )
+      : "—";
+
+  if (loading) {
+    return (
+      <div className="tenantLoading">
+        <div className="tenantBrand">unit<span>vero</span></div>
+        <p>Loading your rental…</p>
+        <TenantStyles />
+      </div>
+    );
+  }
+
+  return (
+    <div className="tenantApp">
+      <TenantStyles />
+
+      <aside className="tenantSidebar">
+        <div>
+          <div className="tenantBrand">unit<span>vero</span></div>
+          <small className="tenantBrandSub">TENANT PORTAL</small>
+        </div>
+
+        <nav>
+          {[
+            ["home", "⌂", tx("home")],
+            ["payments", "$", tx("payments")],
+            ["lease", "▤", tx("lease")],
+            ["messages", "✉", tx("messages")],
+            ["maintenance", "◇", tx("maintenance")],
+            ["documents", "▧", tx("documents")],
+            ["settings", "⚙", tx("settings")],
+          ].map(([key, icon, label]) => (
+            <button
+              type="button"
+              key={key}
+              className={view === key ? "active" : ""}
+              onClick={() => setView(key)}
+            >
+              <span>{icon}</span>
+              <b>{label}</b>
+              {key === "messages" && unreadMessages > 0 && (
+                <i>{unreadMessages}</i>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="tenantAccount">
+          <div className="tenantAvatar">
+            {(profile?.full_name || tenancy?.tenant_name || "T").charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <b>{profile?.full_name || tenancy?.tenant_name || "Tenant"}</b>
+            <span>Tenant</span>
+          </div>
+          <button type="button" onClick={onSignOut} title={tx("signOut")}>↗</button>
+        </div>
+      </aside>
+
+      <main className="tenantMain">
+        <header className="tenantTopbar">
+          <div>
+            <small>TENANT DASHBOARD</small>
+            <h1>{tx("hello")}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}.</h1>
+            <p>{tx("subtitle")}</p>
+          </div>
+          <div className="tenantTools">
+            <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+            </select>
+            <button type="button" onClick={togglePrivacy}>
+              {privacyMode ? "◉" : "◎"} {tx("privacy")}
+            </button>
+            <button type="button" className="tenantBell" onClick={() => setView("messages")}>
+              ♢
+              {(unreadMessages + announcements.length) > 0 && (
+                <span>{unreadMessages + announcements.length}</span>
+              )}
+            </button>
+          </div>
+        </header>
+
+        {notice && <div className="tenantNotice">{notice}</div>}
+
+        {!tenancy ? (
+          <section className="tenantEmpty">
+            <div>⌂</div>
+            <h2>Your tenant account is ready</h2>
+            <p>No active rental is connected to this account yet. If you just accepted an invitation, refresh once or contact your landlord.</p>
+            <button type="button" onClick={loadTenant}>Refresh</button>
+          </section>
+        ) : (
+          <>
+            {view === "home" && (
+              <>
+                <section className="tenantHero">
+                  <div>
+                    <small>{tx("property")}</small>
+                    <h2>{property?.address || "Your rental property"}</h2>
+                    <p>
+                      {[unit?.unit_name, property?.city, property?.state, property?.zip_code]
+                        .filter(Boolean).join(" • ")}
+                    </p>
+                  </div>
+                  <div className="tenantHeroRent">
+                    <small>{tx("rent")}</small>
+                    <b>{money(tenancy.monthly_rent)}</b>
+                    <span>/ month</span>
+                  </div>
+                </section>
+
+                <div className="tenantStats">
+                  <article>
+                    <span>▤</span>
+                    <small>{tx("leaseDates")}</small>
+                    <b>{formatDate(tenancy.start_date)}</b>
+                    <p>{tenancy.end_date ? `to ${formatDate(tenancy.end_date)}` : "Open ended"}</p>
+                  </article>
+                  <article>
+                    <span>✓</span>
+                    <small>{tx("status")}</small>
+                    <b>{tx("active")}</b>
+                    <p>Your rental account is connected.</p>
+                  </article>
+                  <article className="tenantActionCard">
+                    <span>$</span>
+                    <small>{tx("payments")}</small>
+                    <b>{money(tenancy.monthly_rent)}</b>
+                    <button type="button" onClick={() => setView("payments")}>{tx("payRent")} →</button>
+                  </article>
+                  <article className="tenantActionCard">
+                    <span>✉</span>
+                    <small>{tx("messages")}</small>
+                    <b>{unreadMessages} unread</b>
+                    <button type="button" onClick={() => setView("messages")}>{tx("contact")} →</button>
+                  </article>
+                </div>
+
+                <section className="tenantPanel">
+                  <div className="tenantPanelHead">
+                    <div>
+                      <small>PROPERTY UPDATES</small>
+                      <h2>{tx("alerts")}</h2>
+                    </div>
+                    <span>{announcements.length}</span>
+                  </div>
+                  {announcements.length === 0 ? (
+                    <div className="tenantPanelEmpty">{tx("noAlerts")}</div>
+                  ) : (
+                    <div className="tenantAnnouncementList">
+                      {announcements.slice(0, 5).map((item) => (
+                        <article key={item.id}>
+                          <div className={`tenantPriority ${item.priority || "normal"}`}></div>
+                          <div>
+                            <b>{item.title}</b>
+                            <p>{item.message}</p>
+                            <small>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</small>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+
+            {view === "messages" && (
+              <section className="tenantPanel tenantMessages">
+                <div className="tenantPanelHead">
+                  <div><small>COMMUNICATION</small><h2>{tx("inbox")}</h2></div>
+                  <span>{unreadMessages}</span>
+                </div>
+                <div className="tenantMessageHistory">
+                  {messages.length === 0 ? (
+                    <div className="tenantPanelEmpty">{tx("noMessages")}</div>
+                  ) : (
+                    messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={message.sender_type === "tenant" ? "tenantBubble mine" : "tenantBubble"}
+                      >
+                        <small>{message.sender_type === "tenant" ? "You" : "Landlord"}</small>
+                        <p>{message.message}</p>
+                        <span>{message.created_at ? new Date(message.created_at).toLocaleString() : ""}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <form className="tenantMessageForm" onSubmit={sendTenantMessage}>
+                  <input name="message" placeholder={tx("typeMessage")} autoComplete="off" />
+                  <button type="submit">{tx("send")}</button>
+                </form>
+              </section>
+            )}
+
+            {view === "lease" && (
+              <section className="tenantPanel">
+                <div className="tenantPanelHead"><div><small>RENTAL AGREEMENT</small><h2>{tx("lease")}</h2></div></div>
+                <div className="tenantDetailGrid">
+                  <div><small>Property</small><b>{property?.address || "—"}</b></div>
+                  <div><small>Unit</small><b>{unit?.unit_name || "—"}</b></div>
+                  <div><small>Start date</small><b>{formatDate(tenancy.start_date)}</b></div>
+                  <div><small>End date</small><b>{tenancy.end_date ? formatDate(tenancy.end_date) : "Open ended"}</b></div>
+                  <div><small>Monthly rent</small><b>{money(tenancy.monthly_rent)}</b></div>
+                  <div><small>Status</small><b>{tenancy.status || "active"}</b></div>
+                </div>
+              </section>
+            )}
+
+            {view === "payments" && (
+              <section className="tenantPanel">
+                <div className="tenantPanelHead"><div><small>RENT CENTER</small><h2>{tx("payments")}</h2></div></div>
+                <div className="tenantFeaturePlaceholder">
+                  <span>$</span><h3>{money(tenancy.monthly_rent)} / month</h3><p>{tx("paymentCopy")}</p>
+                </div>
+              </section>
+            )}
+
+            {view === "maintenance" && (
+              <section className="tenantPanel">
+                <div className="tenantPanelHead"><div><small>PROPERTY CARE</small><h2>{tx("maintenance")}</h2></div></div>
+                <div className="tenantFeaturePlaceholder"><span>◇</span><h3>Maintenance center</h3><p>{tx("maintenanceCopy")}</p></div>
+              </section>
+            )}
+
+            {view === "documents" && (
+              <section className="tenantPanel">
+                <div className="tenantPanelHead"><div><small>SECURE FILES</small><h2>{tx("documents")}</h2></div></div>
+                <div className="tenantFeaturePlaceholder"><span>▧</span><h3>Documents</h3><p>{tx("docsCopy")}</p></div>
+              </section>
+            )}
+
+            {view === "settings" && (
+              <section className="tenantPanel">
+                <div className="tenantPanelHead"><div><small>ACCOUNT</small><h2>{tx("settings")}</h2></div></div>
+                <div className="tenantSettingsGrid">
+                  <article>
+                    <span>◉</span><div><b>{tx("notifications")}</b><p>{tx("notifyCopy")}</p></div>
+                  </article>
+                  <article>
+                    <span>◎</span><div><b>{tx("privacy")}</b><p>Hide rent and other financial amounts while using Unitvero in public.</p></div>
+                    <button type="button" onClick={togglePrivacy}>{privacyMode ? "On" : "Off"}</button>
+                  </article>
+                  <article>
+                    <span>文</span><div><b>{tx("language")}</b><p>Choose the language used in your tenant portal.</p></div>
+                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+                      <option value="en">English</option><option value="es">Español</option>
+                    </select>
+                  </article>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function TenantStyles() {
+  return (
+    <style jsx global>{`
+      .tenantApp{min-height:100vh;background:#f5f7f6;color:#183c34;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-columns:250px 1fr}
+      .tenantSidebar{background:#113c32;color:#fff;padding:28px 18px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh}
+      .tenantBrand{font-size:27px;font-weight:900;letter-spacing:-1.3px}.tenantBrand span{color:#57d4ad}.tenantBrandSub{display:block;margin-top:4px;color:#9ec8ba;font-size:9px;letter-spacing:2px;font-weight:800}
+      .tenantSidebar nav{display:flex;flex-direction:column;gap:5px;margin-top:38px;flex:1}.tenantSidebar nav button{border:0;background:transparent;color:#b9d0c8;border-radius:12px;padding:12px 13px;display:grid;grid-template-columns:25px 1fr auto;align-items:center;text-align:left;cursor:pointer}.tenantSidebar nav button:hover,.tenantSidebar nav button.active{background:#1d5548;color:#fff}.tenantSidebar nav button b{font-size:13px}.tenantSidebar nav button i{font-style:normal;background:#ff665e;color:#fff;border-radius:999px;min-width:20px;height:20px;display:grid;place-items:center;font-size:10px}
+      .tenantAccount{border-top:1px solid rgba(255,255,255,.12);padding-top:18px;display:grid;grid-template-columns:38px 1fr 30px;gap:10px;align-items:center}.tenantAvatar{width:38px;height:38px;border-radius:12px;background:#57d4ad;color:#113c32;display:grid;place-items:center;font-weight:900}.tenantAccount b,.tenantAccount span{display:block}.tenantAccount b{font-size:12px}.tenantAccount span{font-size:10px;color:#9ec8ba;text-transform:capitalize}.tenantAccount button{border:0;background:transparent;color:#c7ddd6;font-size:18px;cursor:pointer}
+      .tenantMain{padding:42px;max-width:1450px;width:100%;box-sizing:border-box}.tenantTopbar{display:flex;justify-content:space-between;gap:25px;align-items:flex-start;margin-bottom:28px}.tenantTopbar small,.tenantPanelHead small,.tenantHero small,.tenantStats small{font-size:9px;letter-spacing:1.6px;font-weight:850;color:#71827d}.tenantTopbar h1{font-size:34px;letter-spacing:-1.3px;margin:5px 0 4px}.tenantTopbar p{margin:0;color:#71827d}.tenantTools{display:flex;gap:8px;align-items:center}.tenantTools select,.tenantTools button{height:40px;border:1px solid #dce5e1;background:#fff;border-radius:10px;padding:0 12px;color:#31564d;font-weight:700}.tenantBell{position:relative;font-size:18px}.tenantBell span{position:absolute;right:-5px;top:-7px;background:#e85c54;color:#fff;border-radius:99px;font-size:9px;min-width:18px;height:18px;display:grid;place-items:center}
+      .tenantNotice{padding:12px 15px;border:1px solid #f1d4a5;background:#fff8e9;border-radius:12px;margin-bottom:18px;color:#7b5a22}.tenantHero{background:linear-gradient(135deg,#164b3f,#246b59);color:#fff;border-radius:22px;padding:30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 18px 40px rgba(19,61,52,.12)}.tenantHero small{color:#a9d1c4}.tenantHero h2{font-size:28px;margin:8px 0 5px}.tenantHero p{margin:0;color:#c4ded6}.tenantHeroRent{text-align:right}.tenantHeroRent b{display:block;font-size:34px;margin-top:5px}.tenantHeroRent span{color:#b7d7cd;font-size:12px}
+      .tenantStats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.tenantStats article,.tenantPanel{background:#fff;border:1px solid #e3e9e6;border-radius:17px;box-shadow:0 5px 20px rgba(28,63,54,.035)}.tenantStats article{padding:20px}.tenantStats article>span{display:grid;width:34px;height:34px;border-radius:10px;background:#edf7f3;place-items:center;margin-bottom:15px;color:#27856c}.tenantStats b{display:block;font-size:17px;margin:5px 0}.tenantStats p{font-size:11px;color:#7b8985;margin:0}.tenantActionCard button{border:0;background:transparent;padding:9px 0 0;color:#24836a;font-weight:800;cursor:pointer}
+      .tenantPanel{padding:24px;margin-top:16px}.tenantPanelHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.tenantPanelHead h2{margin:4px 0 0;font-size:21px}.tenantPanelHead>span{background:#edf7f3;color:#267c67;border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-size:11px;font-weight:850}.tenantPanelEmpty{text-align:center;padding:35px;color:#80908b}.tenantAnnouncementList article{display:grid;grid-template-columns:4px 1fr;gap:14px;padding:15px 0;border-top:1px solid #edf0ef}.tenantPriority{border-radius:99px;background:#56ad91}.tenantPriority.high,.tenantPriority.urgent{background:#df6c61}.tenantAnnouncementList b{font-size:13px}.tenantAnnouncementList p{margin:4px 0;color:#5e716b;font-size:13px}.tenantAnnouncementList small{color:#95a19d}
+      .tenantMessageHistory{min-height:320px;max-height:520px;overflow:auto;padding:10px;background:#f7f9f8;border-radius:14px}.tenantBubble{max-width:70%;background:#fff;border:1px solid #e3e9e6;padding:11px 13px;border-radius:14px 14px 14px 4px;margin:8px 0}.tenantBubble.mine{margin-left:auto;background:#1d6856;color:#fff;border-color:#1d6856;border-radius:14px 14px 4px 14px}.tenantBubble small,.tenantBubble span{font-size:9px;opacity:.7}.tenantBubble p{margin:4px 0;font-size:13px}.tenantMessageForm{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}.tenantMessageForm input{height:45px;border:1px solid #dfe7e3;border-radius:11px;padding:0 14px;font-size:13px}.tenantMessageForm button,.tenantEmpty button{border:0;background:#21836a;color:#fff;border-radius:11px;padding:0 20px;font-weight:800}
+      .tenantDetailGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.tenantDetailGrid div{padding:17px;background:#f7f9f8;border-radius:12px}.tenantDetailGrid small,.tenantDetailGrid b{display:block}.tenantDetailGrid small{color:#7e8d88;font-size:10px;margin-bottom:6px}.tenantFeaturePlaceholder,.tenantEmpty{text-align:center;padding:65px 20px}.tenantFeaturePlaceholder>span,.tenantEmpty>div{font-size:34px;color:#2b8a71}.tenantFeaturePlaceholder p,.tenantEmpty p{color:#778681;max-width:520px;margin:10px auto 18px;line-height:1.6}.tenantEmpty button{height:42px}.tenantSettingsGrid{display:grid;gap:10px}.tenantSettingsGrid article{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:15px;border:1px solid #e8edeb;border-radius:13px}.tenantSettingsGrid article>span{width:36px;height:36px;background:#edf7f3;border-radius:10px;display:grid;place-items:center}.tenantSettingsGrid b{font-size:13px}.tenantSettingsGrid p{margin:3px 0;color:#7c8b86;font-size:11px}.tenantSettingsGrid button,.tenantSettingsGrid select{border:1px solid #dfe7e3;background:#fff;border-radius:9px;padding:8px 10px}
+      .tenantLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#f5f7f6;color:#173e34;font-family:Inter,ui-sans-serif,system-ui}.tenantLoading .tenantBrand{font-size:30px}.tenantLoading p{color:#7a8b85}
+      @media(max-width:1000px){.tenantApp{grid-template-columns:1fr}.tenantSidebar{position:static;height:auto;min-height:auto;padding:18px}.tenantSidebar nav{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr)}.tenantSidebar nav button{grid-template-columns:1fr;text-align:center;justify-items:center;gap:4px}.tenantAccount{margin-top:15px}.tenantMain{padding:24px}.tenantStats{grid-template-columns:repeat(2,1fr)}}
+      @media(max-width:650px){.tenantSidebar nav{grid-template-columns:repeat(3,1fr)}.tenantMain{padding:17px}.tenantTopbar{display:block}.tenantTools{margin-top:15px;flex-wrap:wrap}.tenantTopbar h1{font-size:27px}.tenantHero{display:block;padding:23px}.tenantHeroRent{text-align:left;margin-top:24px}.tenantStats{grid-template-columns:1fr}.tenantDetailGrid{grid-template-columns:1fr}.tenantBubble{max-width:86%}}
+    `}</style>
+  );
+}
+
