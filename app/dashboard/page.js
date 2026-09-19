@@ -8579,7 +8579,23 @@ function TenantPortal({
     const form = e.currentTarget;
     const issue = form.issue.value.trim();
     const description = form.description.value.trim();
+    const photoFiles = Array.from(
+  form.maintenancePhotos?.files || []
+).slice(0, 5);
     if (!issue || !description) return setNotice("Enter a repair issue and description.");
+    if (photoFiles.length > 5) {
+  return setNotice("You can upload up to 5 photos.");
+}
+
+for (const file of photoFiles) {
+  if (!file.type.startsWith("image/")) {
+    return setNotice("Maintenance attachments must be images.");
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    return setNotice("Each photo must be 10 MB or smaller.");
+  }
+}
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
     const { error } = await s.from("maintenance_requests").insert({
@@ -8590,6 +8606,18 @@ function TenantPortal({
       tenant_id: user.id,
       issue,
       description,
+      <label>
+  Photos
+  <input
+    type="file"
+    name="maintenancePhotos"
+    accept="image/jpeg,image/png,image/webp"
+    multiple
+  />
+  <small>
+    Add up to 5 photos of the problem. JPG, PNG, or WEBP.
+  </small>
+</label>
       category: form.category.value,
       priority: form.priority.value,
       permission_to_enter: form.permissionToEnter.checked,
