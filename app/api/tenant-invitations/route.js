@@ -183,7 +183,7 @@ const emailResponse = await fetch("https://api.resend.com/emails", {
      * We will replace this with your Unitvero domain email
      * after the domain is verified in Resend.
      */
-    from: "Unitvero <onboarding@resend.dev>",
+   from: "Unitvero <invites@unitveroapp.com>",
 
     to: [tenantEmail],
 
