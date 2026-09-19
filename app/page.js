@@ -3,36 +3,14 @@
 import Link from "next/link";
 
 const features = [
-  {
-    icon: "⌂",
-    title: "Property management",
-    text: "Keep properties, units, tenants, leases, and documents organized in one place.",
-  },
-  {
-    icon: "$",
-    title: "Rent tracking",
-    text: "Track charges, payments, outstanding balances, and payout activity with clarity.",
-  },
-  {
-    icon: "✉",
-    title: "Tenant communication",
-    text: "Message tenants, share announcements, and keep important conversations together.",
-  },
-  {
-    icon: "◇",
-    title: "Maintenance requests",
-    text: "Stay ahead of repairs and keep every request connected to the correct property.",
-  },
-  {
-    icon: "▣",
-    title: "Rental applications",
-    text: "Review applicants and move qualified renters into your portfolio faster.",
-  },
-  {
-    icon: "◎",
-    title: "Portfolio insights",
-    text: "See occupancy, rent collection, property values, and market-rent comparisons.",
-  },
+  { icon: "⌁", title: "Rent Collection", text: "Get paid on time, every time. Track charges, payments, balances, autopay, and payout activity." },
+  { icon: "⚒", title: "Maintenance", text: "Submit, track, photograph, and organize repair requests from one place." },
+  { icon: "⌕", title: "Tenant Screening", text: "Keep applications and renter information organized as you move applicants through your leasing workflow." },
+  { icon: "▤", title: "Lease Management", text: "Create, organize, share, and track leases and important rental documents." },
+  { icon: "▣", title: "Financial Reports", text: "Track income, expenses, cash flow, bookkeeping records, and portfolio performance." },
+  { icon: "▱", title: "Secure Messaging", text: "Stay connected with tenants through organized in-app conversations and announcements." },
+  { icon: "◎", title: "Property Insights", text: "See property information, market-rent data, and portfolio-level insights in one dashboard." },
+  { icon: "▦", title: "Tenant Portal", text: "Give renters a dedicated place to pay rent, request maintenance, view documents, and message you." },
 ];
 
 export default function Home() {
@@ -1013,6 +991,274 @@ export default function Home() {
             padding: 30px 0;
           }
         }
+
+/* =========================================================
+   UNITVERO HOME — EXACT REFERENCE DIRECTION
+   Premium black + gold, Inter font, compact SaaS layout.
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+.homePage{
+  --black:#060708;
+  --black2:#0b0d0e;
+  --panel:#101314;
+  --panel2:#141718;
+  --gold:#f4c84f;
+  --gold2:#dcae36;
+  --white:#f7f6f1;
+  --muted:#9b9d99;
+  --line:rgba(244,200,79,.24);
+  min-height:100vh !important;
+  background:
+    radial-gradient(circle at 70% 8%,rgba(244,200,79,.09),transparent 25%),
+    radial-gradient(circle at 15% 40%,rgba(244,200,79,.045),transparent 25%),
+    #060708 !important;
+  color:var(--white) !important;
+  font-family:Inter,Arial,sans-serif !important;
+}
+.homePage *{font-family:Inter,Arial,sans-serif !important;box-sizing:border-box}
+.homePage .topNav{
+  width:min(1180px,calc(100% - 36px)) !important;
+  margin:0 auto !important;
+  min-height:72px !important;
+  border-bottom:1px solid rgba(244,200,79,.12) !important;
+}
+.homePage .brand{
+  color:#fff !important;
+  font-size:21px !important;
+  font-weight:900 !important;
+  letter-spacing:-.055em !important;
+}
+.homePage .brand::before{
+  content:"⌂";
+  display:inline-grid;
+  place-items:center;
+  width:27px;height:27px;
+  margin-right:8px;
+  border:1px solid var(--gold);
+  border-radius:8px;
+  color:var(--gold);
+  font-size:16px;
+  vertical-align:-4px;
+}
+.homePage .brand span{color:var(--gold) !important}
+.homePage .navLinks a{
+  color:#aeb2ae !important;
+  font-size:12px !important;
+}
+.homePage .navLinks a:hover{color:#fff !important}
+.homePage .signIn{
+  border:1px solid rgba(244,200,79,.34) !important;
+  color:#f7f6f1 !important;
+  background:#0d1011 !important;
+  border-radius:9px !important;
+}
+.homePage .primaryButton{
+  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
+  color:#111 !important;
+  border:1px solid #f8dc88 !important;
+  border-radius:9px !important;
+  font-weight:900 !important;
+  box-shadow:0 9px 22px rgba(220,174,54,.15) !important;
+}
+.homePage .launchOffer{
+  width:min(1120px,calc(100% - 36px)) !important;
+  margin:15px auto 0 !important;
+  padding:10px 14px !important;
+  background:linear-gradient(90deg,#151208,#0c0e0f) !important;
+  border:1px solid rgba(244,200,79,.34) !important;
+  border-radius:11px !important;
+  color:#eee9dc !important;
+}
+.homePage .launchOfferBadge{
+  background:#f4c84f !important;
+  color:#111 !important;
+}
+.homePage .launchOffer a{color:#f4c84f !important}
+.homePage .hero{
+  width:min(1180px,calc(100% - 36px)) !important;
+  margin:28px auto 0 !important;
+  display:grid !important;
+  grid-template-columns:.88fr 1.12fr !important;
+  gap:22px !important;
+  align-items:stretch !important;
+}
+.homePage .heroCopy{
+  padding:32px 10px 20px 2px !important;
+}
+.homePage .eyebrow{
+  color:#f4c84f !important;
+  letter-spacing:.12em !important;
+  font-size:9px !important;
+  font-weight:900 !important;
+}
+.homePage .hero h1{
+  color:#fff !important;
+  font-size:clamp(42px,5.3vw,72px) !important;
+  line-height:.98 !important;
+  letter-spacing:-.065em !important;
+  margin:12px 0 18px !important;
+  max-width:600px !important;
+}
+.homePage .hero h1 span{color:#f4c84f !important}
+.homePage .heroCopy>p{
+  color:#a4a7a3 !important;
+  font-size:14px !important;
+  line-height:1.65 !important;
+  max-width:560px !important;
+}
+.homePage .secondaryButton{
+  background:#0d1011 !important;
+  color:#eee9dc !important;
+  border:1px solid rgba(244,200,79,.27) !important;
+  border-radius:9px !important;
+}
+.homePage .trustRow span{color:#969a96 !important;font-size:10px !important}
+.homePage .dashboardPreview{
+  min-height:430px !important;
+  padding:18px !important;
+  border:1px solid rgba(244,200,79,.40) !important;
+  border-radius:16px !important;
+  background:
+    linear-gradient(145deg,rgba(244,200,79,.06),transparent 30%),
+    #0a0c0d !important;
+  box-shadow:0 28px 70px rgba(0,0,0,.34) !important;
+}
+.homePage .previewTop{
+  padding-bottom:12px !important;
+  border-bottom:1px solid rgba(244,200,79,.14) !important;
+}
+.homePage .previewLogo{
+  background:#f4c84f !important;
+  color:#111 !important;
+}
+.homePage .previewStats{
+  gap:8px !important;
+  margin-top:12px !important;
+}
+.homePage .previewStats article,
+.homePage .collectionCard,
+.homePage .activityCard{
+  background:#101314 !important;
+  border:1px solid rgba(244,200,79,.20) !important;
+  border-radius:10px !important;
+  color:#f7f6f1 !important;
+}
+.homePage .previewStats article span,
+.homePage .previewStats article small,
+.homePage .activityCard>small,
+.homePage .moneyRow span{color:#8f9490 !important}
+.homePage .previewStats article b{color:#fff !important}
+.homePage .previewStats article b,
+.homePage .collectionCard strong{color:#f4c84f !important}
+.homePage .progressTrack{
+  background:#1a1d1e !important;
+  border:1px solid rgba(244,200,79,.10) !important;
+}
+.homePage .progressTrack span{
+  background:linear-gradient(90deg,#dcae36,#f7d46b) !important;
+}
+.homePage .activityCard i.green,
+.homePage .activityCard i.blue,
+.homePage .activityCard i.orange{
+  background:rgba(244,200,79,.10) !important;
+  color:#f4c84f !important;
+}
+.homePage .previewFooter{
+  border-top-color:rgba(244,200,79,.13) !important;
+  color:#949893 !important;
+}
+.homePage .previewFooter b{color:#f4c84f !important}
+.homePage .metricsStrip{
+  width:min(1180px,calc(100% - 36px)) !important;
+  margin:18px auto 0 !important;
+  background:#0b0d0e !important;
+  border:1px solid rgba(244,200,79,.18) !important;
+  border-radius:12px !important;
+}
+.homePage .metricsStrip div{border-color:rgba(244,200,79,.12) !important}
+.homePage .metricsStrip b{color:#f4c84f !important}
+.homePage .metricsStrip span{color:#858a86 !important}
+.homePage .audienceSection,
+.homePage .featuresSection,
+.homePage .stepsSection,
+.homePage .securitySection,
+.homePage .proSection{
+  width:min(1180px,calc(100% - 36px)) !important;
+}
+.homePage .audienceCard,
+.homePage .featureGrid article,
+.homePage .stepsGrid article{
+  background:linear-gradient(145deg,#0d1011,#121516) !important;
+  border:1px solid rgba(244,200,79,.20) !important;
+  color:#f7f6f1 !important;
+  border-radius:13px !important;
+}
+.homePage .audienceCard h2,
+.homePage .sectionHeading h2,
+.homePage .featureGrid h3,
+.homePage .stepsGrid h3{
+  color:#f7f6f1 !important;
+}
+.homePage .audienceCard p,
+.homePage .sectionHeading p,
+.homePage .featureGrid p,
+.homePage .stepsGrid p{
+  color:#949893 !important;
+}
+.homePage .textButton{color:#f4c84f !important}
+.homePage .featureIcon{
+  background:rgba(244,200,79,.08) !important;
+  color:#f4c84f !important;
+  border:1px solid rgba(244,200,79,.18) !important;
+}
+.homePage .securitySection{
+  background:#101314 !important;
+  border:1px solid rgba(244,200,79,.22) !important;
+}
+.homePage .securityIcon{color:#f4c84f !important}
+.homePage .proSection{
+  background:linear-gradient(135deg,#171306,#0c0e0f 68%) !important;
+  border:1px solid rgba(244,200,79,.48) !important;
+  color:#fff !important;
+  border-radius:16px !important;
+}
+.homePage .proSection h2{color:#fff !important}
+.homePage .proSection p{color:#a7aaa5 !important}
+.homePage .proChecklist{
+  background:rgba(0,0,0,.24) !important;
+  border-color:rgba(244,200,79,.18) !important;
+}
+.homePage .proChecklist div{color:#eee9dc !important}
+.homePage .finalCta{
+  background:linear-gradient(135deg,#f4c84f,#dcae36) !important;
+  color:#111 !important;
+  border-radius:16px !important;
+}
+.homePage .finalCta h2,
+.homePage .finalCta p{color:#111 !important}
+.homePage footer{
+  border-top-color:rgba(244,200,79,.15) !important;
+  color:#858a86 !important;
+}
+.homePage footer a{color:#aeb1ac !important}
+.homePage footer .brand{color:#fff !important}
+@media(max-width:850px){
+  .homePage .hero{grid-template-columns:1fr !important}
+  .homePage .heroCopy{padding-top:18px !important}
+}
+@media(max-width:650px){
+  .homePage .navLinks{display:none !important}
+  .homePage .hero h1{font-size:44px !important}
+  .homePage .hero,
+  .homePage .audienceSection,
+  .homePage .featuresSection,
+  .homePage .stepsSection,
+  .homePage .securitySection,
+  .homePage .proSection,
+  .homePage .metricsStrip{width:min(100% - 24px,1180px) !important}
+}
+
       `}</style>
     </main>
   );
