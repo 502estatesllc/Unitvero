@@ -1190,6 +1190,17 @@ export default function Dashboard() {
 
 
   const unitveroLanguages = [
+    ["en", "English"],
+    ["es", "Español"],
+    ["fr", "Français"],
+    ["de", "Deutsch"],
+    ["pt", "Português"],
+    ["zh", "中文"],
+    ["ko", "한국어"],
+    ["vi", "Tiếng Việt"],
+    ["ar", "العربية"],
+    ["ru", "Русский"],
+  ];
 
   const unitveroProductionChecklist = [
     { id:"auth", label:"Authentication & profile setup", area:"Account", status:"built" },
@@ -1221,18 +1232,6 @@ export default function Dashboard() {
       pending:"Not finished",
     })[status] || status;
   }
-
-    ["en", "English"],
-    ["es", "Español"],
-    ["fr", "Français"],
-    ["de", "Deutsch"],
-    ["pt", "Português"],
-    ["zh", "中文"],
-    ["ko", "한국어"],
-    ["vi", "Tiếng Việt"],
-    ["ar", "العربية"],
-    ["ru", "Русский"],
-  ];
 
   const languageLabels = {
     en: {
