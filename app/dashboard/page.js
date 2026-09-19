@@ -3706,10 +3706,15 @@ try {
     type="button"
     className="primary"
     onClick={() => {
-      setSelectedProperty(null);
-      setSelectedUnit(null);
-      setView("addTenant");
-    }}
+  if (props.length === 0) {
+    alert("Add a property before inviting a tenant.");
+    return;
+  }
+
+  setSelectedProperty(props[0]);
+  setSelectedUnit(null);
+  setView("addTenant");
+}}
   >
     + Invite Tenant
   </button>
