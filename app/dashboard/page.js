@@ -8951,16 +8951,7 @@ async function createMaintenanceRequest(e) {
                       <select name="category" defaultValue="general"><option value="general">General</option><option value="plumbing">Plumbing</option><option value="electrical">Electrical</option><option value="hvac">Heating / Cooling</option><option value="appliance">Appliance</option><option value="pest">Pest</option><option value="other">Other</option></select>
                       <select name="priority" defaultValue="normal"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="emergency">Emergency</option></select>
                       <textarea name="description" rows="5" placeholder="Describe the problem and where it is located." required />
-              <label style={{display:"grid",gap:6}}>
-  <span>Photos</span>
-  <input
-    type="file"
-    name="maintenancePhotos"
-    accept="image/jpeg,image/png,image/webp"
-    multiple
-  />
-  <small>Add up to 5 photos of the problem.</small>
-</label>
+            
               <label style={{display:"grid",gap:6}}>
   <span>Photos</span>
   <input
