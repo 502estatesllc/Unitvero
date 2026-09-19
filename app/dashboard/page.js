@@ -3450,345 +3450,614 @@ export default function Dashboard() {
             );
           })()}
 
-        {view === "addTenant" && selectedProperty && (
+               {/* =========================================================
+            TENANT MANAGEMENT
+        ========================================================= */}
+
+        {view === "addTenant" && (
           <section className="panel">
             <button
               type="button"
-              onClick={() =>
-                setView(selectedUnit ? "unitDetails" : "propertyDetails")
-              }
+              onClick={() => {
+                setSelectedUnit(null);
+                setView("tenants");
+              }}
             >
-              ← Back to Property
+              ← Back to Tenants
             </button>
 
             <small>NEW TENANT</small>
-            <h1>Add Tenant</h1>
+            <h1>Invite Tenant</h1>
 
-            <p>
-              Add a tenant to {selectedProperty.address}
-              {selectedUnit ? ` • ${selectedUnit.unit_name}` : ""} and create
-              their invitation.
+            <p className="dashboardSubtitle">
+              Add the tenant's lease information and send them an invitation
+              to join Unitvero.
             </p>
-            <form
-              className="addTenantForm"
-              onSubmit={async (e) => {
-                e.preventDefault();
 
-                const form = e.currentTarget;
-                const s = supabase();
+            {props.length === 0 ? (
+              <div className="featureEmpty">
+                <div className="featureEmptyIcon">⌂</div>
+                <b>No properties available</b>
+                <span>Add a property before inviting a tenant.</span>
 
-                const {
-                  data: { user },
-                  error: userError,
-                } = await s.auth.getUser();
-
-                if (userError || !user) {
-                  alert(
-                    "Authentication error: " +
-                      (userError?.message || "No user found"),
-                  );
-                  return;
-                }
-
-                const tenantName = form.tenantName.value.trim();
-                const tenantEmail = form.tenantEmail.value.trim();
-                const tenantPhone = form.tenantPhone.value.trim();
-                const monthlyRent = Number(form.monthlyRent.value);
-                const startDate = form.startDate.value;
-                const endDate = form.endDate.value || null;
-
-                if (endDate && endDate < startDate) {
-                  alert(
-                    "Lease end date cannot be before the lease start date.",
-                  );
-                  return;
-                }
-
-                const { data: newTenancy, error: tenancyError } = await s
-                  .from("tenancies")
-                  .insert({
-                    property_id: selectedProperty.id,
-                    unit_id: selectedUnit?.id || null,
-                    tenant_email: tenantEmail,
-                    tenant_name: tenantName,
-                    tenant_phone: tenantPhone,
-                    monthly_rent: monthlyRent,
-                    start_date: startDate,
-                    end_date: endDate,
-                    status: "active",
-                  })
-                  .select()
-                  .single();
-
-                if (tenancyError) {
-                  alert("Could not add tenant: " + tenancyError.message);
-                  return;
-                }
-
-                if (selectedUnit) {
-                  const { error: unitError } = await s
-                    .from("units")
-                    .update({
-                      status: "occupied",
-                      updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", selectedUnit.id);
-
-                  if (unitError) {
-                    alert(
-                      "Tenant was added, but unit status could not be updated: " +
-                        unitError.message,
-                    );
-                  } else {
-                    setSelectedUnit((current) =>
-                      current
-                        ? {
-                            ...current,
-                            status: "occupied",
-                          }
-                        : current,
-                    );
-                  }
-                }
-
-               const {
-  data: { session },
-  error: sessionError,
-} = await s.auth.getSession();
-
-if (sessionError || !session?.access_token) {
-  alert(
-    tenantName +
-      " was added, but the invitation could not be created because your session expired.",
-  );
-  return;
-}
-
-let invitationError = null;
-let invitationData = null;
-
-try {
-  const invitationResponse = await fetch("/api/tenant-invitations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      propertyId: selectedProperty.id,
-      tenantName,
-      tenantEmail,
-    }),
-  });
-
-  invitationData = await invitationResponse.json();
-
-  if (!invitationResponse.ok) {
-    invitationError = new Error(
-      invitationData?.error || "Could not create tenant invitation.",
-    );
-  }
-} catch (error) {
-  invitationError = error;
-}
-
-                setSelectedTenancy(newTenancy);
-
-                await load();
-
-                if (invitationError) {
-                  alert(
-                    tenantName +
-                      " was added, but the invitation could not be created: " +
-                      invitationError.message,
-                  );
-
-                  setView(selectedUnit ? "unitDetails" : "propertyDetails");
-
-                  return;
-                }
-
-                alert(
-                  tenantName +
-                    " was added successfully. Invitation created for " +
-                    tenantEmail,
-                );
-
-                form.reset();
-
-                setView(selectedUnit ? "unitDetails" : "propertyDetails");
-              }}
-            >
-              <div className="tenantFormGrid">
-                <label>
-                  Full Name
-                  <input
-                    name="tenantName"
-                    type="text"
-                    placeholder="Tenant full name"
-                    required
-                  />
-                </label>
-
-                <label>
-                  Email Address
-                  <input
-                    name="tenantEmail"
-                    type="email"
-                    placeholder="tenant@email.com"
-                    required
-                  />
-                </label>
-
-                <label>
-                  Phone Number
-                  <input
-                    name="tenantPhone"
-                    type="tel"
-                    placeholder="(502) 555-1234"
-                  />
-                </label>
-
-                <label>
-                  Monthly Rent
-                  <input
-                    name="monthlyRent"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={selectedProperty.monthly_rent || ""}
-                    required
-                  />
-                </label>
-
-                <label>
-                  Lease Start Date
-                  <input name="startDate" type="date" required />
-                </label>
-
-                <label>
-                  Lease End Date
-                  <input name="endDate" type="date" />
-                </label>
-              </div>
-
-              <div className="tenantFormActions">
                 <button
                   type="button"
-                  onClick={() =>
-                    setView(selectedUnit ? "unitDetails" : "propertyDetails")
-                  }
+                  className="primary"
+                  onClick={() => setView("properties")}
                 >
-                  Cancel
-                </button>
-
-                <button type="submit" className="primary">
-                  Add Tenant & Create Invitation
+                  Go to Properties
                 </button>
               </div>
-            </form>
+            ) : (
+              <form
+                className="addTenantForm"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+
+                  const form = e.currentTarget;
+                  const submitButton = form.querySelector(
+                    'button[type="submit"]',
+                  );
+
+                  if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = "Creating invitation...";
+                  }
+
+                  try {
+                    const s = supabase();
+
+                    const {
+                      data: { user },
+                      error: userError,
+                    } = await s.auth.getUser();
+
+                    if (userError || !user) {
+                      throw new Error(
+                        userError?.message ||
+                          "Your session expired. Please sign in again.",
+                      );
+                    }
+
+                    const propertyId = form.propertyId.value;
+                    const unitId = form.unitId?.value || null;
+                    const tenantName = form.tenantName.value.trim();
+                    const tenantEmail = form.tenantEmail.value
+                      .trim()
+                      .toLowerCase();
+                    const tenantPhone = form.tenantPhone.value.trim();
+                    const monthlyRent = Number(form.monthlyRent.value || 0);
+                    const startDate = form.startDate.value;
+                    const endDate = form.endDate.value || null;
+
+                    if (!propertyId) {
+                      throw new Error("Select a property.");
+                    }
+
+                    if (!tenantName) {
+                      throw new Error("Enter the tenant's full name.");
+                    }
+
+                    if (!tenantEmail) {
+                      throw new Error("Enter the tenant's email address.");
+                    }
+
+                    if (!startDate) {
+                      throw new Error("Enter the lease start date.");
+                    }
+
+                    if (endDate && endDate < startDate) {
+                      throw new Error(
+                        "Lease end date cannot be before the lease start date.",
+                      );
+                    }
+
+                    const property = props.find(
+                      (item) => item.id === propertyId,
+                    );
+
+                    if (!property) {
+                      throw new Error("The selected property could not be found.");
+                    }
+
+                    const propertyUnits = unitsForProperty(propertyId);
+
+                    if (
+                      isMultiFamily(property) &&
+                      propertyUnits.length > 0 &&
+                      !unitId
+                    ) {
+                      throw new Error("Select a unit for this tenant.");
+                    }
+
+                    const chosenUnit = unitId
+                      ? units.find((item) => item.id === unitId)
+                      : null;
+
+                    const duplicateTenant = tenancies.find(
+                      (item) =>
+                        item.status === "active" &&
+                        (item.property_id === propertyId ||
+                          (unitId && item.unit_id === unitId)) &&
+                        item.tenant_email?.toLowerCase() === tenantEmail,
+                    );
+
+                    if (duplicateTenant) {
+                      throw new Error(
+                        "This tenant is already active at the selected property.",
+                      );
+                    }
+
+                    if (unitId) {
+                      const occupiedUnit = tenancies.find(
+                        (item) =>
+                          item.unit_id === unitId &&
+                          item.status === "active",
+                      );
+
+                      if (occupiedUnit) {
+                        throw new Error(
+                          "That unit already has an active tenant.",
+                        );
+                      }
+                    } else if (!isMultiFamily(property)) {
+                      const occupiedProperty = tenancies.find(
+                        (item) =>
+                          item.property_id === propertyId &&
+                          !item.unit_id &&
+                          item.status === "active",
+                      );
+
+                      if (occupiedProperty) {
+                        throw new Error(
+                          "That property already has an active tenant.",
+                        );
+                      }
+                    }
+
+                    const {
+                      data: { session },
+                      error: sessionError,
+                    } = await s.auth.getSession();
+
+                    if (sessionError || !session?.access_token) {
+                      throw new Error(
+                        "Your session expired. Please sign in again.",
+                      );
+                    }
+
+                    /*
+                     * Create the secure invitation FIRST.
+                     * We do not create the active tenancy unless the
+                     * invitation record was successfully created.
+                     */
+                    const invitationResponse = await fetch(
+                      "/api/tenant-invitations",
+                      {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${session.access_token}`,
+                        },
+                        body: JSON.stringify({
+                          propertyId,
+                          tenantName,
+                          tenantEmail,
+                        }),
+                      },
+                    );
+
+                    let invitationResult = {};
+
+                    try {
+                      invitationResult = await invitationResponse.json();
+                    } catch {
+                      invitationResult = {};
+                    }
+
+                    if (!invitationResponse.ok) {
+                      throw new Error(
+                        invitationResult?.error ||
+                          "Could not create the tenant invitation.",
+                      );
+                    }
+
+                    /*
+                     * Save the lease/tenancy information.
+                     */
+                    const { data: newTenancy, error: tenancyError } = await s
+                      .from("tenancies")
+                      .insert({
+                        property_id: propertyId,
+                        unit_id: unitId,
+                        tenant_email: tenantEmail,
+                        tenant_name: tenantName,
+                        tenant_phone: tenantPhone,
+                        monthly_rent: monthlyRent,
+                        start_date: startDate,
+                        end_date: endDate,
+                        status: "active",
+                      })
+                      .select()
+                      .single();
+
+                    if (tenancyError) {
+                      throw new Error(
+                        "Invitation was created, but the tenant record could not be saved: " +
+                          tenancyError.message,
+                      );
+                    }
+
+                    /*
+                     * Mark a selected unit occupied.
+                     */
+                    if (chosenUnit) {
+                      const { error: unitError } = await s
+                        .from("units")
+                        .update({
+                          status: "occupied",
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq("id", chosenUnit.id);
+
+                      if (unitError) {
+                        console.error(
+                          "Could not update unit status:",
+                          unitError,
+                        );
+                      }
+                    }
+
+                    setSelectedProperty(property);
+                    setSelectedUnit(chosenUnit || null);
+                    setSelectedTenancy(newTenancy);
+
+                    await load();
+
+                    form.reset();
+
+                    alert(
+                      `${tenantName} was added successfully.\n\n` +
+                        `Invitation created for ${tenantEmail}.`,
+                    );
+
+                    setSelectedUnit(null);
+                    setView("tenants");
+                  } catch (error) {
+                    console.error("Tenant invitation error:", error);
+
+                    alert(
+                      error?.message ||
+                        "Something went wrong while inviting the tenant.",
+                    );
+                  } finally {
+                    if (submitButton) {
+                      submitButton.disabled = false;
+                      submitButton.textContent =
+                        "Add Tenant & Create Invitation";
+                    }
+                  }
+                }}
+              >
+                <div className="tenantFormGrid">
+                  <label>
+                    Property
+                    <select
+                      name="propertyId"
+                      required
+                      defaultValue={selectedProperty?.id || ""}
+                      onChange={(e) => {
+                        const property = props.find(
+                          (item) => item.id === e.target.value,
+                        );
+
+                        setSelectedProperty(property || null);
+                        setSelectedUnit(null);
+                      }}
+                    >
+                      <option value="">Select property</option>
+
+                      {props.map((property) => (
+                        <option key={property.id} value={property.id}>
+                          {property.address}
+                          {property.city ? `, ${property.city}` : ""}
+                          {property.state ? ` ${property.state}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {selectedProperty &&
+                    unitsForProperty(selectedProperty.id).length > 0 && (
+                      <label>
+                        Unit
+                        <select
+                          name="unitId"
+                          value={selectedUnit?.id || ""}
+                          onChange={(e) => {
+                            const unit = units.find(
+                              (item) => item.id === e.target.value,
+                            );
+
+                            setSelectedUnit(unit || null);
+                          }}
+                          required={isMultiFamily(selectedProperty)}
+                        >
+                          <option value="">Select unit</option>
+
+                          {unitsForProperty(selectedProperty.id).map((unit) => {
+                            const activeTenant = tenancies.find(
+                              (item) =>
+                                item.unit_id === unit.id &&
+                                item.status === "active",
+                            );
+
+                            return (
+                              <option
+                                key={unit.id}
+                                value={unit.id}
+                                disabled={Boolean(activeTenant)}
+                              >
+                                {unit.unit_name}
+                                {activeTenant ? " — Occupied" : " — Available"}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </label>
+                    )}
+
+                  <label>
+                    Full Name
+                    <input
+                      name="tenantName"
+                      type="text"
+                      placeholder="Tenant full name"
+                      autoComplete="name"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Email Address
+                    <input
+                      name="tenantEmail"
+                      type="email"
+                      placeholder="tenant@email.com"
+                      autoComplete="email"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Phone Number
+                    <input
+                      name="tenantPhone"
+                      type="tel"
+                      placeholder="(502) 555-1234"
+                      autoComplete="tel"
+                    />
+                  </label>
+
+                  <label>
+                    Monthly Rent
+                    <input
+                      name="monthlyRent"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      key={
+                        selectedUnit?.id ||
+                        selectedProperty?.id ||
+                        "monthly-rent"
+                      }
+                      defaultValue={
+                        selectedUnit?.market_rent ||
+                        selectedProperty?.monthly_rent ||
+                        ""
+                      }
+                      placeholder="0.00"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Lease Start Date
+                    <input name="startDate" type="date" required />
+                  </label>
+
+                  <label>
+                    Lease End Date
+                    <input name="endDate" type="date" />
+                  </label>
+                </div>
+
+                {selectedProperty && (
+                  <div className="featureEmpty">
+                    <b>Invitation destination</b>
+
+                    <span>
+                      {selectedProperty.address}
+                      {selectedUnit
+                        ? ` • ${selectedUnit.unit_name}`
+                        : ""}
+                    </span>
+
+                    <span>
+                      The tenant will receive access to only the rental
+                      information connected to this tenancy.
+                    </span>
+                  </div>
+                )}
+
+                <div className="tenantFormActions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUnit(null);
+                      setView("tenants");
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button type="submit" className="primary">
+                    Add Tenant & Create Invitation
+                  </button>
+                </div>
+              </form>
+            )}
           </section>
         )}
 
         {view === "tenants" && (
           <section className="panel">
             <div className="dashboardHeader">
-  <div>
-    <small>TENANT MANAGEMENT</small>
-    <h1>Tenants</h1>
+              <div>
+                <small>TENANT MANAGEMENT</small>
 
-    <p className="dashboardSubtitle">
-      Manage active tenants across your rental portfolio.
-    </p>
-  </div>
+                <h1>Tenants</h1>
 
-  <button
-    type="button"
-    className="primary"
-    onClick={() => {
-  if (props.length === 0) {
-    alert("Add a property before inviting a tenant.");
-    return;
-  }
+                <p className="dashboardSubtitle">
+                  Manage tenants, leases and invitations across your rental
+                  portfolio.
+                </p>
+              </div>
 
-  setSelectedProperty(props[0]);
-  setSelectedUnit(null);
-  setView("addTenant");
-}}
-  >
-    + Invite Tenant
-  </button>
-</div>
-
-            <div className="activityList">
-              {tenancies.length === 0 && (
-                <div className="featureEmpty">
-                  <div className="featureEmptyIcon">♙</div>
-
-                  <b>No tenants yet</b>
-
-                  <span>Add a tenant from one of your property pages.</span>
-                </div>
-              )}
-
-              {tenancies.map((tenancy) => {
-                const property = props.find(
-                  (p) => p.id === tenancy.property_id,
-                );
-
-                return (
-                  <div className="activityRow" key={tenancy.id}>
-                    <div className="activityTypeIcon">♙</div>
-
-                    <div>
-                      <b>
-                        {tenancy.tenant_name ||
-                          tenancy.tenant_email ||
-                          "Tenant"}
-                      </b>
-
-                      <span>{property?.address || "Property"}</span>
-
-                      <span>{tenancy.tenant_email}</span>
-
-                      <span>
-                        ${Number(tenancy.monthly_rent || 0).toLocaleString()} /
-                        month
-                      </span>
-                    </div>
-
-                    <div>
-                      <small>{tenancy.status || "active"}</small>
-
-                      <button
-                        type="button"
-                        className="viewAllButton"
-                        onClick={() => {
-                          setEditingTenancy(tenancy);
-                          setView("editTenant");
-                        }}
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  setSelectedProperty(null);
+                  setSelectedUnit(null);
+                  setSelectedTenancy(null);
+                  setView("addTenant");
+                }}
+              >
+                + Invite Tenant
+              </button>
             </div>
+
+            {tenancies.length === 0 ? (
+              <div className="featureEmpty">
+                <div className="featureEmptyIcon">♙</div>
+
+                <b>No tenants yet</b>
+
+                <span>
+                  Invite your first tenant and connect them to a property.
+                </span>
+
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => {
+                    setSelectedProperty(null);
+                    setSelectedUnit(null);
+                    setSelectedTenancy(null);
+                    setView("addTenant");
+                  }}
+                >
+                  + Invite Tenant
+                </button>
+              </div>
+            ) : (
+              <div className="activityList">
+                {tenancies.map((tenancy) => {
+                  const property = props.find(
+                    (item) => item.id === tenancy.property_id,
+                  );
+
+                  const unit = units.find(
+                    (item) => item.id === tenancy.unit_id,
+                  );
+
+                  return (
+                    <div className="activityRow" key={tenancy.id}>
+                      <div className="activityTypeIcon">♙</div>
+
+                      <div>
+                        <b>
+                          {tenancy.tenant_name ||
+                            tenancy.tenant_email ||
+                            "Tenant"}
+                        </b>
+
+                        <span>
+                          {property?.address || "Property"}
+                          {unit ? ` • ${unit.unit_name}` : ""}
+                        </span>
+
+                        <span>{tenancy.tenant_email}</span>
+
+                        {tenancy.tenant_phone && (
+                          <span>{tenancy.tenant_phone}</span>
+                        )}
+
+                        <span>
+                          $
+                          {Number(
+                            tenancy.monthly_rent || 0,
+                          ).toLocaleString()}{" "}
+                          / month
+                        </span>
+                      </div>
+
+                      <div>
+                        <small>{tenancy.status || "active"}</small>
+
+                        <button
+                          type="button"
+                          className="viewAllButton"
+                          onClick={() => {
+                            setEditingTenancy(tenancy);
+                            setView("editTenant");
+                          }}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="viewAllButton"
+                          onClick={() =>
+                            openOrCreateConversation(tenancy.id)
+                          }
+                        >
+                          Message
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 
         {view === "editTenant" && editingTenancy && (
           <section className="panel">
-            <button type="button" onClick={() => setView("tenants")}>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingTenancy(null);
+                setView("tenants");
+              }}
+            >
               ← Back to Tenants
             </button>
 
             <small>EDIT TENANT</small>
 
-            <h1>{editingTenancy.tenant_name || editingTenancy.tenant_email}</h1>
+            <h1>
+              {editingTenancy.tenant_name ||
+                editingTenancy.tenant_email ||
+                "Tenant"}
+            </h1>
 
-            <p>Update tenant and lease information.</p>
+            <p className="dashboardSubtitle">
+              Update tenant contact and lease information.
+            </p>
 
             <form className="addTenantForm" onSubmit={saveTenant}>
               <div className="tenantFormGrid">
@@ -3854,7 +4123,13 @@ try {
               </div>
 
               <div className="tenantFormActions">
-                <button type="button" onClick={() => setView("tenants")}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTenancy(null);
+                    setView("tenants");
+                  }}
+                >
                   Cancel
                 </button>
 
