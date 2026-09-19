@@ -1343,7 +1343,8 @@ html, body,
   font-synthesis:none !important;
 }
 
-      `}
+      
+
         /* UNITVERO HOMEPAGE — FINAL REFERENCE LOCK */
         body{background:#030404!important;color:#f5f2e9!important}
         .homePage,.unitveroHome{background:#030404!important;color:#f5f2e9!important}
@@ -1430,8 +1431,8 @@ html, body,
           .uvDemoOverlay{padding:12px!important}.uvDemoModal{padding:18px!important}
           .uvDemoVideo{min-height:240px!important}.uvDemoVideo video{height:240px!important}
         }
-
-</style>
+        `}
+        </style>
     </main>
   );
 }
