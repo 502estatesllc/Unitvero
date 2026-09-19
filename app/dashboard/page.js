@@ -75,6 +75,10 @@ export default function Dashboard() {
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [maintenanceRequests, setMaintenanceRequests] = useState([]);
+  const [maintenanceExpenses, setMaintenanceExpenses] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [documentTemplates, setDocumentTemplates] = useState([]);
   const [communicationTab, setCommunicationTab] = useState("messages");
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [announcementAudience, setAnnouncementAudience] = useState("property");
@@ -320,6 +324,22 @@ export default function Dashboard() {
     } else {
       setAnnouncements(announcementData || []);
     }
+
+    const [maintenanceResult, expenseResult, documentResult, templateResult] = await Promise.all([
+      s.from("maintenance_requests").select("*").order("created_at", { ascending: false }),
+      s.from("maintenance_expenses").select("*").eq("landlord_id", user.id).order("expense_date", { ascending: false }),
+      s.from("documents").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }),
+      s.from("document_templates").select("*").eq("is_active", true).order("name", { ascending: true }),
+    ]);
+
+    if (maintenanceResult.error) console.error("Could not load maintenance:", maintenanceResult.error);
+    else setMaintenanceRequests(maintenanceResult.data || []);
+    if (expenseResult.error) console.error("Could not load maintenance expenses:", expenseResult.error);
+    else setMaintenanceExpenses(expenseResult.data || []);
+    if (documentResult.error) console.error("Could not load documents:", documentResult.error);
+    else setDocuments(documentResult.data || []);
+    if (templateResult.error) console.error("Could not load templates:", templateResult.error);
+    else setDocumentTemplates(templateResult.data || []);
   }
 
   useEffect(() => {
@@ -726,6 +746,44 @@ export default function Dashboard() {
 
     alert("Announcement created.");
   }
+  async function updateMaintenanceStatus(requestId, status) {
+    const s = supabase();
+    const patch = { status };
+    if (status === "completed") patch.completed_at = new Date().toISOString();
+    const { error } = await s.from("maintenance_requests").update(patch).eq("id", requestId);
+    if (error) return alert("Could not update maintenance request: " + error.message);
+    await load();
+  }
+
+  async function saveMaintenanceExpense(e, request) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return alert("Please sign in again.");
+    const payload = {
+      maintenance_request_id: request.id,
+      landlord_id: user.id,
+      property_id: request.property_id,
+      expense_date: form.expenseDate.value || new Date().toISOString().slice(0,10),
+      vendor_name: form.vendorName.value.trim() || null,
+      description: form.description.value.trim() || null,
+      labor_cost: Number(form.laborCost.value || 0),
+      material_cost: Number(form.materialCost.value || 0),
+      other_cost: Number(form.otherCost.value || 0),
+      category: "Repairs and maintenance",
+      include_in_tax_report: form.includeTax.checked,
+    };
+    const existing = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+    const query = existing
+      ? s.from("maintenance_expenses").update(payload).eq("id", existing.id)
+      : s.from("maintenance_expenses").insert(payload);
+    const { error } = await query;
+    if (error) return alert("Could not save repair expense: " + error.message);
+    alert("Repair expense saved.");
+    await load();
+  }
+
   async function connectStripeAccount() {
     try {
       const s = supabase();
@@ -1074,12 +1132,12 @@ export default function Dashboard() {
         display: "grid",
         placeItems: "center",
         background: "#f5f7f6",
-        fontFamily: "Avenir Next, Avenir, Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        color: "#101828",
+        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        color: "#163d34",
       }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 28, fontWeight: 850, letterSpacing: "-1px" }}>
-            unit<span style={{ color: "#2563EB" }}>vero</span>
+            unit<span style={{ color: "#2c9b7d" }}>vero</span>
           </div>
           <p style={{ color: "#6f7f7a" }}>Loading your workspace…</p>
         </div>
@@ -1104,7 +1162,9 @@ export default function Dashboard() {
     <div className={`app unitveroModern ${privacyMode ? "privacyOn" : ""}`}>
       <aside className="sidebar">
         <div className="sidebarBrand">
-          <b className="logo"><i className="uvBrandMark" aria-hidden="true">U</i><span className="uvWord">unit<span>vero</span></span></b>
+          <b className="logo">
+            unit<span>vero</span>
+          </b>
           <span className="brandLabel">PROPERTY MANAGEMENT</span>
         </div>
 
@@ -7780,15 +7840,54 @@ export default function Dashboard() {
           <section className="panel">
             <small>PROPERTY OPERATIONS</small>
             <h1>Maintenance</h1>
+            <p>Track repairs, completion dates, vendors, and landlord-only expenses for tax records.</p>
 
-            <p>Track maintenance requests across your rental portfolio.</p>
-
-            <div className="featureEmpty">
-              <div className="featureEmptyIcon">◇</div>
-              <b>No maintenance requests</b>
-
-              <span>New tenant maintenance requests will appear here.</span>
-            </div>
+            {maintenanceRequests.length === 0 ? (
+              <div className="featureEmpty">
+                <div className="featureEmptyIcon">◇</div>
+                <b>No maintenance requests</b>
+                <span>New tenant maintenance requests will appear here.</span>
+              </div>
+            ) : (
+              <div style={{display:"grid",gap:16,marginTop:22}}>
+                {maintenanceRequests.map((request) => {
+                  const prop = props.find(x => x.id === request.property_id);
+                  const tenant = tenancies.find(x => x.id === request.tenancy_id) || tenancies.find(x => x.tenant_id === request.tenant_id && x.property_id === request.property_id);
+                  const expense = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+                  return (
+                    <article key={request.id} className="commandCard">
+                      <div className="commandCardHeader">
+                        <div><span className="commandSectionIcon">◇</span><div>
+                          <h2>{request.issue || request.category || "Maintenance request"}</h2>
+                          <p>{prop?.address || "Property"} · {tenant?.tenant_name || tenant?.tenant_email || "Tenant"}</p>
+                        </div></div>
+                        <select value={request.status || "open"} onChange={(e)=>updateMaintenanceStatus(request.id,e.target.value)}>
+                          <option value="open">Submitted</option><option value="in_progress">In Progress</option>
+                          <option value="scheduled">Scheduled</option><option value="completed">Completed</option>
+                        </select>
+                      </div>
+                      <p>{request.description || "No description provided."}</p>
+                      <div className="documentStats" style={{marginTop:14}}>
+                        <article><span>Priority</span><b style={{fontSize:18}}>{request.priority || "normal"}</b><small>REQUEST</small></article>
+                        <article><span>Submitted</span><b style={{fontSize:15}}>{request.created_at ? new Date(request.created_at).toLocaleDateString() : "—"}</b><small>DATE</small></article>
+                        <article><span>Completed</span><b style={{fontSize:15}}>{request.completed_at ? new Date(request.completed_at).toLocaleDateString() : "—"}</b><small>DATE</small></article>
+                        <article><span>Repair Cost</span><b style={{fontSize:18}}>${Number(expense?.total_cost || 0).toFixed(2)}</b><small>LANDLORD ONLY</small></article>
+                      </div>
+                      <form onSubmit={(e)=>saveMaintenanceExpense(e,request)} style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:10,marginTop:16}}>
+                        <input name="vendorName" defaultValue={expense?.vendor_name || ""} placeholder="Vendor / contractor" />
+                        <input name="expenseDate" type="date" defaultValue={expense?.expense_date || ""} />
+                        <input name="description" defaultValue={expense?.description || ""} placeholder="Expense notes" />
+                        <input name="laborCost" type="number" min="0" step="0.01" defaultValue={expense?.labor_cost || 0} placeholder="Labor cost" />
+                        <input name="materialCost" type="number" min="0" step="0.01" defaultValue={expense?.material_cost || 0} placeholder="Materials cost" />
+                        <input name="otherCost" type="number" min="0" step="0.01" defaultValue={expense?.other_cost || 0} placeholder="Other cost" />
+                        <label style={{display:"flex",gap:8,alignItems:"center"}}><input name="includeTax" type="checkbox" defaultChecked={expense ? expense.include_in_tax_report : true}/> Include in tax report</label>
+                        <button className="primary" type="submit">Save Repair Expense</button>
+                      </form>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
       </main>
@@ -8144,23 +8243,6 @@ export default function Dashboard() {
             bottom: 82px;
           }
         }
-      .logo{display:flex!important;align-items:center;gap:10px!important}.uvWord{font-weight:900;letter-spacing:-1.2px}.uvWord>span{color:#3B82F6!important}.uvBrandMark{width:34px;height:34px;border-radius:11px 11px 14px 14px;background:linear-gradient(145deg,#38BDF8,#2563EB 58%,#1D4ED8);display:grid;place-items:center;color:white;font-style:normal;font-size:18px;font-weight:950;box-shadow:0 8px 22px rgba(37,99,235,.28);position:relative;overflow:hidden}.uvBrandMark:after{content:"";position:absolute;width:14px;height:10px;left:10px;top:8px;border-left:3px solid rgba(255,255,255,.92);border-top:3px solid rgba(255,255,255,.92);transform:rotate(45deg);border-radius:1px}
-
-        /* Unitvero unified premium pass */
-        .unitveroModern { background:#F4F7FB !important; color:#0F172A !important; }
-        .unitveroModern .sidebar { background:linear-gradient(180deg,#07111F 0%,#0B1628 58%,#0A1322 100%) !important; border-right:1px solid rgba(148,163,184,.12) !important; }
-        .unitveroModern .sidebarBrand { padding-bottom:20px !important; border-bottom:1px solid rgba(148,163,184,.12) !important; }
-        .unitveroModern .uvBrandMark { background:linear-gradient(145deg,#60A5FA,#2563EB 58%,#1D4ED8) !important; box-shadow:0 8px 24px rgba(37,99,235,.32) !important; }
-        .unitveroModern .uvWord, .unitveroModern .logo { letter-spacing:-.65px !important; }
-        .unitveroModern .sidebarNav button { border-radius:10px !important; min-height:39px !important; margin:2px 0 !important; }
-        .unitveroModern .sidebarNav button.active { background:linear-gradient(90deg,rgba(37,99,235,.24),rgba(37,99,235,.08)) !important; color:#fff !important; box-shadow:inset 3px 0 0 #3B82F6 !important; }
-        .unitveroModern .main, .unitveroModern main { background:#F4F7FB; }
-        .unitveroModern .dashboardHeader { margin-bottom:20px !important; }
-        .unitveroModern .dashboardHeader h1 { color:#0F172A !important; letter-spacing:-1.25px !important; font-weight:800 !important; }
-        .unitveroModern .panel, .unitveroModern .commandCard, .unitveroModern .statCard, .unitveroModern .metricCard { border-color:#E2E8F0 !important; box-shadow:0 8px 24px rgba(15,23,42,.045) !important; border-radius:14px !important; }
-        .unitveroModern .primary, .unitveroModern button.primary { background:#2563EB !important; border-color:#2563EB !important; color:#fff !important; box-shadow:0 6px 16px rgba(37,99,235,.16) !important; }
-        .unitveroModern input:focus, .unitveroModern select:focus, .unitveroModern textarea:focus { border-color:#60A5FA !important; box-shadow:0 0 0 3px rgba(59,130,246,.10) !important; outline:none !important; }
-        .unitveroModern .commandStatIcon, .unitveroModern .commandSectionIcon { color:#2563EB !important; }
       `}</style>
     </div>
   );
@@ -8182,6 +8264,8 @@ function TenantPortal({
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
+  const [tenantMaintenance, setTenantMaintenance] = useState([]);
+  const [tenantDocuments, setTenantDocuments] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
 
@@ -8259,12 +8343,14 @@ function TenantPortal({
       return;
     }
 
-    const [propertyResult, conversationResult, announcementResult] = await Promise.all([
+    const [propertyResult, conversationResult, announcementResult, maintenanceResult, documentResult] = await Promise.all([
       s.from("properties").select("*").eq("id", tenancyData.property_id).maybeSingle(),
       s.from("conversations").select("*").eq("tenancy_id", tenancyData.id).order("updated_at", { ascending: false }),
       s.from("announcements").select("*")
         .or(`tenancy_id.eq.${tenancyData.id},property_id.eq.${tenancyData.property_id}`)
         .order("created_at", { ascending: false }),
+      s.from("maintenance_requests").select("*").eq("tenant_id", user.id).eq("property_id", tenancyData.property_id).order("created_at", { ascending: false }),
+      s.from("documents").select("*").eq("shared_with_tenant", true).or(`tenant_id.eq.${user.id},tenancy_id.eq.${tenancyData.id}`).order("created_at", { ascending: false }),
     ]);
 
     setProperty(propertyResult.data || null);
@@ -8291,6 +8377,8 @@ function TenantPortal({
     }
 
     setAnnouncements(announcementResult.data || []);
+    setTenantMaintenance(maintenanceResult.data || []);
+    setTenantDocuments(documentResult.data || []);
     setLoading(false);
   }
 
@@ -8348,6 +8436,47 @@ function TenantPortal({
     setView("messages");
   }
 
+  async function createMaintenanceRequest(e) {
+    e.preventDefault();
+    if (!tenancy || !property) return;
+    const form = e.currentTarget;
+    const issue = form.issue.value.trim();
+    const description = form.description.value.trim();
+    if (!issue || !description) return setNotice("Enter a repair issue and description.");
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+    const { error } = await s.from("maintenance_requests").insert({
+      property_id: tenancy.property_id,
+      unit_id: tenancy.unit_id || null,
+      tenancy_id: tenancy.id,
+      landlord_id: property.landlord_id,
+      tenant_id: user.id,
+      issue,
+      description,
+      category: form.category.value,
+      priority: form.priority.value,
+      permission_to_enter: form.permissionToEnter.checked,
+      preferred_contact: form.preferredContact.value,
+      status: "open",
+    });
+    if (error) return setNotice("Could not submit maintenance request: " + error.message);
+    form.reset();
+    setNotice("Maintenance request submitted.");
+    await loadTenant();
+    setView("maintenance");
+  }
+
+  async function openTenantMessages() {
+    setView("messages");
+    if (!messages.some(m => m.sender_type === "landlord" && !m.read_at)) return;
+    const s = supabase();
+    const unreadIds = messages.filter(m => m.sender_type === "landlord" && !m.read_at).map(m => m.id);
+    if (unreadIds.length) {
+      await s.from("messages").update({ read_at: new Date().toISOString() }).in("id", unreadIds);
+      setMessages(current => current.map(m => unreadIds.includes(m.id) ? {...m, read_at:new Date().toISOString()} : m));
+    }
+  }
+
   const unreadMessages = messages.filter((m) => m.sender_type === "landlord" && !m.read_at).length;
   const money = (value) => privacyMode ? "••••" : `$${Number(value || 0).toLocaleString()}`;
   const formatDate = (value) => value
@@ -8374,7 +8503,7 @@ function TenantPortal({
   if (loading) {
     return (
       <div className="utLoading">
-        <div className="utLogo"><i className="uvTenantMark" aria-hidden="true">U</i><span>unit<b>vero</b></span></div>
+        <div className="utLogo">unit<span>vero</span></div>
         <p>Loading your account…</p>
         <TenantStyles />
       </div>
@@ -8386,7 +8515,7 @@ function TenantPortal({
       <TenantStyles />
 
       <aside className="utSidebar">
-        <div className="utLogo"><i className="uvTenantMark" aria-hidden="true">U</i><span>unit<b>vero</b></span></div>
+        <div className="utLogo">unit<span>vero</span></div>
         <div className="utPortalLabel">TENANT PORTAL</div>
 
         <nav className="utNav">
@@ -8603,10 +8732,26 @@ function TenantPortal({
 
             {view === "maintenance" && (
               <div className="utPage">
-                <div className="utPageTitle"><div className="utEyebrow">PROPERTY CARE</div><h2>{t("maintenanceTitle")}</h2><p>Keep repair requests and updates organized.</p></div>
-                <section className="utCard">
-                  <div className="utEmptyInline large"><div>◇</div><strong>No open maintenance requests</strong><p>{t("maintenanceText")}</p><button type="button" className="utPrimary" disabled>+ New request</button></div>
-                </section>
+                <div className="utPageTitle"><div className="utEyebrow">PROPERTY CARE</div><h2>{t("maintenanceTitle")}</h2><p>Submit a repair and follow it through completion.</p></div>
+                <div className="utTwoCol">
+                  <section className="utCard">
+                    <div className="utCardHead"><div><div className="utEyebrow">NEW REQUEST</div><h2>Report a problem</h2></div></div>
+                    <form onSubmit={createMaintenanceRequest} style={{display:"grid",gap:10}}>
+                      <input name="issue" placeholder="What needs to be fixed?" required />
+                      <select name="category" defaultValue="general"><option value="general">General</option><option value="plumbing">Plumbing</option><option value="electrical">Electrical</option><option value="hvac">Heating / Cooling</option><option value="appliance">Appliance</option><option value="pest">Pest</option><option value="other">Other</option></select>
+                      <select name="priority" defaultValue="normal"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="emergency">Emergency</option></select>
+                      <textarea name="description" rows="5" placeholder="Describe the problem and where it is located." required />
+                      <select name="preferredContact" defaultValue="in_app"><option value="in_app">In-app message</option><option value="phone">Phone</option><option value="email">Email</option></select>
+                      <label style={{display:"flex",gap:8,alignItems:"center",fontSize:12}}><input type="checkbox" name="permissionToEnter"/> Landlord/contractor has permission to enter for this repair</label>
+                      <button className="utPrimary" type="submit">Submit Maintenance Request</button>
+                    </form>
+                  </section>
+                  <section className="utCard">
+                    <div className="utCardHead"><div><div className="utEyebrow">REQUESTS</div><h2>Repair history</h2></div><span className="utCount">{tenantMaintenance.length}</span></div>
+                    {tenantMaintenance.length === 0 ? <div className="utEmptyInline"><div>◇</div><strong>No requests yet</strong><p>Your submitted repairs will appear here.</p></div> :
+                      <div className="utFeed">{tenantMaintenance.map(item => <article key={item.id}><div className="utDot"></div><div><strong>{item.issue || item.category || "Repair request"}</strong><p>{item.description}</p><small>{String(item.status || "open").replaceAll("_"," ").toUpperCase()} · Submitted {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}{item.completed_at ? ` · Completed ${new Date(item.completed_at).toLocaleDateString()}` : ""}</small></div></article>)}</div>}
+                  </section>
+                </div>
               </div>
             )}
 
@@ -8614,7 +8759,8 @@ function TenantPortal({
               <div className="utPage">
                 <div className="utPageTitle"><div className="utEyebrow">FILES</div><h2>{t("documentsTitle")}</h2><p>Rental documents shared with your account.</p></div>
                 <section className="utCard">
-                  <div className="utEmptyInline large"><div>▧</div><strong>No documents shared yet</strong><p>{t("documentsText")}</p></div>
+                  {tenantDocuments.length === 0 ? <div className="utEmptyInline large"><div>▧</div><strong>No documents shared yet</strong><p>{t("documentsText")}</p></div> :
+                    <div className="utFeed">{tenantDocuments.map(doc => <article key={doc.id}><div className="utDot"></div><div><strong>{doc.title}</strong><p>{doc.description || String(doc.document_type || "document").replaceAll("_"," ")}</p><small>{doc.created_at ? new Date(doc.created_at).toLocaleDateString() : ""} · {doc.status || "active"}</small></div></article>)}</div>}
                 </section>
               </div>
             )}
@@ -8656,44 +8802,23 @@ function TenantPortal({
 function TenantStyles() {
   return (
     <style jsx global>{`
-      .utShell{min-height:100vh;background:#F5F7FB;color:#101828;font-family:Inter,"Aptos",ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-columns:238px minmax(0,1fr)}
-      .utSidebar{background:linear-gradient(180deg,#080D18 0%,#0B1220 55%,#0F1A2D 100%);color:#fff;padding:27px 16px 18px;min-height:100vh;position:sticky;top:0;height:100vh;box-sizing:border-box;display:flex;flex-direction:column}
-      .utLogo{display:flex;align-items:center;gap:10px;font-size:25px;font-weight:900;letter-spacing:-1.3px;line-height:1}.utLogo>span{color:#fff}.utLogo>span b{color:#3B82F6}.uvTenantMark{width:34px;height:34px;border-radius:11px 11px 14px 14px;background:linear-gradient(145deg,#38BDF8,#2563EB 58%,#1D4ED8);display:grid;place-items:center;color:#fff;font-style:normal;font-size:17px;font-weight:950;box-shadow:0 8px 22px rgba(37,99,235,.28)}.utPortalLabel{font-size:9px;letter-spacing:2px;color:#98A2B3;font-weight:800;margin-top:7px}
-      .utNav{display:flex;flex-direction:column;gap:4px;margin-top:34px;flex:1}.utNav button{height:43px;border:0;border-radius:10px;background:transparent;color:#D0D5DD;padding:0 12px;display:grid;grid-template-columns:25px 1fr auto;align-items:center;text-align:left;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}.utNav button:hover{background:rgba(255,255,255,.06);color:#fff}.utNav button.active{background:linear-gradient(90deg,rgba(37,99,235,.28),rgba(59,130,246,.08));color:#fff;box-shadow:inset 3px 0 #3B82F6}.utNavIcon{font-size:13px}.utNav button b{font-size:9px;background:#ef6b63;color:#fff;border-radius:99px;min-width:19px;height:19px;display:grid;place-items:center}
-      .utUser{border-top:1px solid rgba(255,255,255,.12);padding-top:16px;display:grid;grid-template-columns:36px 1fr 28px;gap:9px;align-items:center}.utAvatar{width:36px;height:36px;border-radius:10px;background:#60A5FA;color:#0B1220;display:grid;place-items:center;font-weight:900;font-size:13px}.utUserText strong,.utUserText span{display:block}.utUserText strong{font-size:11px;color:#fff}.utUserText span{font-size:9px;color:#98A2B3;margin-top:2px}.utUser>button{border:0;background:transparent;color:#98A2B3;font-size:16px;cursor:pointer}
-      .utMain{padding:34px 40px 60px;box-sizing:border-box;min-width:0}.utHeader{max-width:1240px;margin:0 auto 25px;display:flex;justify-content:space-between;gap:25px;align-items:flex-start}.utEyebrow{font-size:9px;letter-spacing:1.7px;color:#667085;font-weight:850;text-transform:uppercase}.utEyebrow.light{color:#BFDBFE}.utHeader h1{font-size:32px;letter-spacing:-1.35px;margin:5px 0 4px;color:#101828;font-weight:820}.utHeader p,.utPageTitle p{margin:0;color:#667085;font-size:13px}.utHeaderActions{display:flex;gap:7px;align-items:center}.utHeaderActions select,.utHeaderActions button,.utSecondary,.utSettings select{height:38px;border:1px solid #D0D5DD;background:#fff;border-radius:9px;padding:0 11px;color:#344054;font-size:11px;font-weight:700}.utIconButton{width:40px;padding:0!important;position:relative;font-size:17px!important}.utIconButton i{position:absolute;right:-5px;top:-6px;background:#e85f58;color:#fff;font-style:normal;font-size:8px;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center}
-      .utNotice{max-width:1240px;margin:0 auto 16px;background:#fff8e8;border:1px solid #f0dfb8;color:#765c28;padding:11px 13px;border-radius:10px;font-size:12px}.utPage{max-width:1240px;margin:0 auto}.utPageTitle{margin:4px 0 20px}.utPageTitle h2{font-size:27px;letter-spacing:-.9px;margin:5px 0 4px;font-weight:820}
-      .utPropertyCard{background:linear-gradient(135deg,#0B1220 0%,#111C33 56%,#1D4ED8 145%);border-radius:22px;color:#fff;padding:25px 27px;box-shadow:0 20px 48px rgba(11,18,32,.18)}.utPropertyTop{display:flex;justify-content:space-between;gap:30px;align-items:center}.utPropertyCard h2{font-size:25px;margin:7px 0 4px;letter-spacing:-.5px}.utPropertyCard p{margin:0;color:#D0D5DD;font-size:12px}.utRentBlock{text-align:right}.utRentBlock span,.utRentBlock small{display:block;color:#D0D5DD;font-size:10px}.utRentBlock strong{display:block;font-size:31px;margin:3px 0}.utPropertyActions{display:flex;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}.utPropertyActions button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);color:#fff;border-radius:9px;padding:9px 13px;font-size:11px;font-weight:800;cursor:pointer}
-      .utMetricGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.utMetricGrid article,.utCard{background:#fff;border:1px solid #E4E7EC;border-radius:16px;box-shadow:0 8px 30px rgba(16,24,40,.055)}.utMetricGrid article{padding:17px}.utMetricIcon{width:31px;height:31px;border-radius:9px;background:#EFF6FF;color:#2563EB;display:grid;place-items:center;margin-bottom:13px;font-size:12px}.utMetricGrid span,.utPaymentHero>span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#667085;font-weight:800}.utMetricGrid strong{display:block;font-size:16px;margin:5px 0;color:#1D2939}.utMetricGrid small{font-size:10px;color:#98A2B3}
-      .utTwoCol,.utPaymentGrid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px}.utCard{padding:21px}.utCardHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.utCardHead h2{font-size:18px;margin:4px 0 0}.utCount{background:#EFF6FF;color:#2563EB;min-width:28px;height:28px;border-radius:99px;display:grid;place-items:center;font-size:10px;font-weight:850}.utEmptyInline{text-align:center;padding:30px 18px;color:#667085}.utEmptyInline>div{width:38px;height:38px;margin:0 auto 10px;border-radius:11px;background:#EFF6FF;color:#2563EB;display:grid;place-items:center}.utEmptyInline strong{display:block;color:#344054;font-size:13px}.utEmptyInline p{font-size:11px;line-height:1.55;max-width:410px;margin:5px auto 0}.utEmptyInline.large{padding:65px 20px}.utEmptyInline.large>div{width:46px;height:46px}.utFeed article{display:grid;grid-template-columns:8px 1fr;gap:10px;padding:13px 0;border-top:1px solid #EAECF0}.utDot{width:7px;height:7px;background:#3B82F6;border-radius:99px;margin-top:5px}.utFeed strong{font-size:12px}.utFeed p{font-size:11px;color:#697b75;margin:3px 0}.utFeed small{font-size:9px;color:#98A2B3}
-      .utQuickList{display:grid;gap:6px}.utQuickList button{display:grid;grid-template-columns:34px 1fr 16px;gap:10px;align-items:center;border:0;background:#F8FAFC;border-radius:10px;padding:10px;text-align:left;color:#344054;cursor:pointer}.utQuickList button>span{width:32px;height:32px;background:#fff;border:1px solid #E4E7EC;border-radius:9px;display:grid;place-items:center}.utQuickList b,.utQuickList small{display:block}.utQuickList b{font-size:11px}.utQuickList small{font-size:9px;color:#667085;margin-top:2px}.utQuickList i{font-style:normal;font-size:18px;color:#667085}
-      .utPaymentHero strong{display:block;font-size:35px;margin:7px 0 0}.utPaymentHero small{color:#667085}.utPaymentHero .utPrimary{margin-top:25px;width:100%}.utPaymentHero p{font-size:10px;color:#667085;line-height:1.5}.utPrimary{border:0;background:#2563EB;color:#fff;border-radius:9px;min-height:39px;padding:0 16px;font-weight:800;font-size:11px}.utPrimary:disabled{opacity:.55;cursor:not-allowed}
-      .utLeaseHeader{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:18px;border-bottom:1px solid #EAECF0}.utLeaseHeader span{font-size:9px;text-transform:uppercase;color:#667085;font-weight:800}.utLeaseHeader h3{font-size:17px;margin:4px 0 0}.utStatus{display:inline-flex!important;align-items:center;color:#2563EB!important;background:#EFF6FF;border-radius:99px;padding:6px 9px;font-size:9px!important;font-weight:850!important;white-space:nowrap}.utDetails{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.utDetails div{background:#F8FAFC;border-radius:10px;padding:14px}.utDetails span,.utDetails strong{display:block}.utDetails span{font-size:9px;color:#667085;text-transform:uppercase;font-weight:800}.utDetails strong{font-size:12px;margin-top:5px}
-      .utChat{padding:0;overflow:hidden}.utChatHead{height:64px;padding:0 18px;border-bottom:1px solid #E4E7EC;display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center}.utAvatar.landlord{background:#EFF6FF;color:#2563EB}.utChatHead strong,.utChatHead span{display:block}.utChatHead strong{font-size:12px}.utChatHead span:not(.utStatus){font-size:9px;color:#667085;margin-top:2px}.utMessageHistory{min-height:390px;max-height:540px;overflow:auto;background:#F8FAFC;padding:20px}.chatEmpty{padding-top:100px}.utBubble{max-width:68%;width:max-content;background:#fff;border:1px solid #E4E7EC;border-radius:13px 13px 13px 4px;padding:10px 12px;margin:8px 0;box-shadow:0 2px 7px rgba(20,55,47,.03)}.utBubble.mine{margin-left:auto;background:#1D4ED8;border-color:#1D4ED8;color:#fff;border-radius:13px 13px 4px 13px}.utBubble>span,.utBubble small{font-size:8px;opacity:.65}.utBubble p{font-size:12px;margin:4px 0}.utComposer{display:grid;grid-template-columns:1fr auto;gap:8px;padding:13px;border-top:1px solid #E4E7EC;background:#fff}.utComposer input{height:41px;border:1px solid #D0D5DD;border-radius:9px;padding:0 12px;font-size:12px;outline:none}.utComposer input:focus{border-color:#60A5FA}.utComposer button{border:0;background:#2563EB;color:#fff;border-radius:9px;padding:0 18px;font-size:11px;font-weight:800}
-      .utSettings{padding:0 20px}.utSettingRow{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:17px 0;border-bottom:1px solid #EAECF0}.utSettingRow:last-child{border-bottom:0}.utSettingIcon{width:36px;height:36px;border-radius:9px;background:#EFF6FF;color:#2563EB;display:grid;place-items:center}.utSettingRow strong{font-size:12px}.utSettingRow p{font-size:10px;color:#667085;margin:3px 0 0}.utEmptyCard{max-width:800px;margin:80px auto;background:#fff;border:1px solid #E4E7EC;border-radius:16px;text-align:center;padding:60px 25px}.utEmptyIcon{width:48px;height:48px;margin:auto;background:#EFF6FF;border-radius:13px;display:grid;place-items:center;color:#2563EB}.utEmptyCard h2{font-size:18px}.utEmptyCard p{font-size:12px;color:#667085}.utLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#F5F7FB;color:#101828;font-family:Inter,"Aptos",ui-sans-serif,system-ui}.utLoading .utLogo{font-size:30px}.utLoading p{font-size:12px;color:#667085}
+      .utShell{min-height:100vh;background:#f4f7f6;color:#163b32;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-columns:238px minmax(0,1fr)}
+      .utSidebar{background:#103f34;color:#fff;padding:27px 16px 18px;min-height:100vh;position:sticky;top:0;height:100vh;box-sizing:border-box;display:flex;flex-direction:column}
+      .utLogo{font-size:27px;font-weight:900;letter-spacing:-1.4px;line-height:1}.utLogo span{color:#61d8b4}.utPortalLabel{font-size:9px;letter-spacing:2px;color:#91bcb0;font-weight:800;margin-top:7px}
+      .utNav{display:flex;flex-direction:column;gap:4px;margin-top:34px;flex:1}.utNav button{height:43px;border:0;border-radius:10px;background:transparent;color:#bcd3cc;padding:0 12px;display:grid;grid-template-columns:25px 1fr auto;align-items:center;text-align:left;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}.utNav button:hover{background:rgba(255,255,255,.06);color:#fff}.utNav button.active{background:#205d4e;color:#fff;box-shadow:inset 3px 0 #63d6b4}.utNavIcon{font-size:13px}.utNav button b{font-size:9px;background:#ef6b63;color:#fff;border-radius:99px;min-width:19px;height:19px;display:grid;place-items:center}
+      .utUser{border-top:1px solid rgba(255,255,255,.12);padding-top:16px;display:grid;grid-template-columns:36px 1fr 28px;gap:9px;align-items:center}.utAvatar{width:36px;height:36px;border-radius:10px;background:#63d6b4;color:#103f34;display:grid;place-items:center;font-weight:900;font-size:13px}.utUserText strong,.utUserText span{display:block}.utUserText strong{font-size:11px;color:#fff}.utUserText span{font-size:9px;color:#92b8ae;margin-top:2px}.utUser>button{border:0;background:transparent;color:#9fc2b8;font-size:16px;cursor:pointer}
+      .utMain{padding:34px 40px 60px;box-sizing:border-box;min-width:0}.utHeader{max-width:1240px;margin:0 auto 25px;display:flex;justify-content:space-between;gap:25px;align-items:flex-start}.utEyebrow{font-size:9px;letter-spacing:1.7px;color:#7c8d88;font-weight:850;text-transform:uppercase}.utEyebrow.light{color:#a8d4c8}.utHeader h1{font-size:30px;letter-spacing:-1px;margin:5px 0 4px;color:#173d34}.utHeader p,.utPageTitle p{margin:0;color:#7a8b86;font-size:13px}.utHeaderActions{display:flex;gap:7px;align-items:center}.utHeaderActions select,.utHeaderActions button,.utSecondary,.utSettings select{height:38px;border:1px solid #dce5e1;background:#fff;border-radius:9px;padding:0 11px;color:#31564d;font-size:11px;font-weight:700}.utIconButton{width:40px;padding:0!important;position:relative;font-size:17px!important}.utIconButton i{position:absolute;right:-5px;top:-6px;background:#e85f58;color:#fff;font-style:normal;font-size:8px;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center}
+      .utNotice{max-width:1240px;margin:0 auto 16px;background:#fff8e8;border:1px solid #f0dfb8;color:#765c28;padding:11px 13px;border-radius:10px;font-size:12px}.utPage{max-width:1240px;margin:0 auto}.utPageTitle{margin:4px 0 20px}.utPageTitle h2{font-size:24px;letter-spacing:-.5px;margin:5px 0 4px}
+      .utPropertyCard{background:linear-gradient(120deg,#164d40,#246a58);border-radius:18px;color:#fff;padding:25px 27px;box-shadow:0 13px 35px rgba(19,62,52,.13)}.utPropertyTop{display:flex;justify-content:space-between;gap:30px;align-items:center}.utPropertyCard h2{font-size:25px;margin:7px 0 4px;letter-spacing:-.5px}.utPropertyCard p{margin:0;color:#b9d9d0;font-size:12px}.utRentBlock{text-align:right}.utRentBlock span,.utRentBlock small{display:block;color:#b9d9d0;font-size:10px}.utRentBlock strong{display:block;font-size:31px;margin:3px 0}.utPropertyActions{display:flex;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}.utPropertyActions button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);color:#fff;border-radius:9px;padding:9px 13px;font-size:11px;font-weight:800;cursor:pointer}
+      .utMetricGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.utMetricGrid article,.utCard{background:#fff;border:1px solid #e1e8e5;border-radius:14px;box-shadow:0 4px 18px rgba(25,61,52,.035)}.utMetricGrid article{padding:17px}.utMetricIcon{width:31px;height:31px;border-radius:9px;background:#edf6f3;color:#287d68;display:grid;place-items:center;margin-bottom:13px;font-size:12px}.utMetricGrid span,.utPaymentHero>span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#879590;font-weight:800}.utMetricGrid strong{display:block;font-size:16px;margin:5px 0;color:#23473e}.utMetricGrid small{font-size:10px;color:#94a09c}
+      .utTwoCol,.utPaymentGrid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px}.utCard{padding:21px}.utCardHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.utCardHead h2{font-size:18px;margin:4px 0 0}.utCount{background:#edf6f3;color:#287d68;min-width:28px;height:28px;border-radius:99px;display:grid;place-items:center;font-size:10px;font-weight:850}.utEmptyInline{text-align:center;padding:30px 18px;color:#82918c}.utEmptyInline>div{width:38px;height:38px;margin:0 auto 10px;border-radius:11px;background:#edf6f3;color:#2b826d;display:grid;place-items:center}.utEmptyInline strong{display:block;color:#34564d;font-size:13px}.utEmptyInline p{font-size:11px;line-height:1.55;max-width:410px;margin:5px auto 0}.utEmptyInline.large{padding:65px 20px}.utEmptyInline.large>div{width:46px;height:46px}.utFeed article{display:grid;grid-template-columns:8px 1fr;gap:10px;padding:13px 0;border-top:1px solid #edf1ef}.utDot{width:7px;height:7px;background:#4da98d;border-radius:99px;margin-top:5px}.utFeed strong{font-size:12px}.utFeed p{font-size:11px;color:#697b75;margin:3px 0}.utFeed small{font-size:9px;color:#98a39f}
+      .utQuickList{display:grid;gap:6px}.utQuickList button{display:grid;grid-template-columns:34px 1fr 16px;gap:10px;align-items:center;border:0;background:#f7f9f8;border-radius:10px;padding:10px;text-align:left;color:#31554c;cursor:pointer}.utQuickList button>span{width:32px;height:32px;background:#fff;border:1px solid #e4eae7;border-radius:9px;display:grid;place-items:center}.utQuickList b,.utQuickList small{display:block}.utQuickList b{font-size:11px}.utQuickList small{font-size:9px;color:#8b9894;margin-top:2px}.utQuickList i{font-style:normal;font-size:18px;color:#91a09b}
+      .utPaymentHero strong{display:block;font-size:35px;margin:7px 0 0}.utPaymentHero small{color:#83918d}.utPaymentHero .utPrimary{margin-top:25px;width:100%}.utPaymentHero p{font-size:10px;color:#8a9893;line-height:1.5}.utPrimary{border:0;background:#21836a;color:#fff;border-radius:9px;min-height:39px;padding:0 16px;font-weight:800;font-size:11px}.utPrimary:disabled{opacity:.55;cursor:not-allowed}
+      .utLeaseHeader{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:18px;border-bottom:1px solid #e9eeec}.utLeaseHeader span{font-size:9px;text-transform:uppercase;color:#86958f;font-weight:800}.utLeaseHeader h3{font-size:17px;margin:4px 0 0}.utStatus{display:inline-flex!important;align-items:center;color:#277d68!important;background:#edf7f3;border-radius:99px;padding:6px 9px;font-size:9px!important;font-weight:850!important;white-space:nowrap}.utDetails{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.utDetails div{background:#f7f9f8;border-radius:10px;padding:14px}.utDetails span,.utDetails strong{display:block}.utDetails span{font-size:9px;color:#86958f;text-transform:uppercase;font-weight:800}.utDetails strong{font-size:12px;margin-top:5px}
+      .utChat{padding:0;overflow:hidden}.utChatHead{height:64px;padding:0 18px;border-bottom:1px solid #e5ebe8;display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center}.utAvatar.landlord{background:#eaf5f1;color:#267a66}.utChatHead strong,.utChatHead span{display:block}.utChatHead strong{font-size:12px}.utChatHead span:not(.utStatus){font-size:9px;color:#879590;margin-top:2px}.utMessageHistory{min-height:390px;max-height:540px;overflow:auto;background:#f7f9f8;padding:20px}.chatEmpty{padding-top:100px}.utBubble{max-width:68%;width:max-content;background:#fff;border:1px solid #dfe7e3;border-radius:13px 13px 13px 4px;padding:10px 12px;margin:8px 0;box-shadow:0 2px 7px rgba(20,55,47,.03)}.utBubble.mine{margin-left:auto;background:#1e6655;border-color:#1e6655;color:#fff;border-radius:13px 13px 4px 13px}.utBubble>span,.utBubble small{font-size:8px;opacity:.65}.utBubble p{font-size:12px;margin:4px 0}.utComposer{display:grid;grid-template-columns:1fr auto;gap:8px;padding:13px;border-top:1px solid #e5ebe8;background:#fff}.utComposer input{height:41px;border:1px solid #dce5e1;border-radius:9px;padding:0 12px;font-size:12px;outline:none}.utComposer input:focus{border-color:#6fae9d}.utComposer button{border:0;background:#21836a;color:#fff;border-radius:9px;padding:0 18px;font-size:11px;font-weight:800}
+      .utSettings{padding:0 20px}.utSettingRow{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:17px 0;border-bottom:1px solid #e9eeec}.utSettingRow:last-child{border-bottom:0}.utSettingIcon{width:36px;height:36px;border-radius:9px;background:#edf6f3;color:#267b67;display:grid;place-items:center}.utSettingRow strong{font-size:12px}.utSettingRow p{font-size:10px;color:#82908c;margin:3px 0 0}.utEmptyCard{max-width:800px;margin:80px auto;background:#fff;border:1px solid #e1e8e5;border-radius:16px;text-align:center;padding:60px 25px}.utEmptyIcon{width:48px;height:48px;margin:auto;background:#edf6f3;border-radius:13px;display:grid;place-items:center;color:#267b67}.utEmptyCard h2{font-size:18px}.utEmptyCard p{font-size:12px;color:#80908b}.utLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#f4f7f6;color:#163b32;font-family:Inter,ui-sans-serif,system-ui}.utLoading .utLogo{font-size:30px}.utLoading p{font-size:12px;color:#80908b}
       @media(max-width:1000px){.utShell{grid-template-columns:1fr}.utSidebar{position:static;height:auto;min-height:auto;padding:18px}.utPortalLabel{margin-bottom:12px}.utNav{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr)}.utNav button{grid-template-columns:1fr;text-align:center;justify-items:center;height:52px;gap:3px}.utNav button b{position:absolute}.utUser{margin-top:14px}.utMain{padding:24px}.utMetricGrid{grid-template-columns:repeat(2,1fr)}}
       @media(max-width:700px){.utMain{padding:18px 14px 40px}.utHeader{display:block}.utHeaderActions{margin-top:14px;flex-wrap:wrap}.utHeader h1{font-size:25px}.utNav{grid-template-columns:repeat(3,1fr)}.utPropertyTop{display:block}.utRentBlock{text-align:left;margin-top:20px}.utPropertyActions{flex-wrap:wrap}.utMetricGrid,.utTwoCol,.utPaymentGrid,.utDetails{grid-template-columns:1fr}.utBubble{max-width:85%}.utSettingRow{grid-template-columns:36px 1fr}.utSettingRow>:last-child{grid-column:2}.utLeaseHeader{align-items:flex-start}.utHeaderActions select,.utHeaderActions button{flex:1}.utPropertyCard{padding:21px}}
-
-      /* Unitvero tenant: compact premium app pass */
-      .utShell{background:#F4F7FB;grid-template-columns:224px minmax(0,1fr)}
-      .utSidebar{background:linear-gradient(180deg,#07111F 0%,#0B1628 58%,#0A1322 100%);padding:24px 16px 18px;border-right:1px solid rgba(148,163,184,.12)}
-      .utLogo{font-size:20px;letter-spacing:-.7px}.uvTenantMark{box-shadow:0 8px 24px rgba(37,99,235,.32)}
-      .utPortalLabel{color:#64748B;letter-spacing:1.65px;margin:7px 8px 19px}
-      .utNav{gap:3px}.utNav button{height:40px;border-radius:10px;padding:0 10px;color:#94A3B8;font-size:11px}
-      .utNav button:hover{background:rgba(59,130,246,.08);color:#E2E8F0}.utNav button.active{background:linear-gradient(90deg,rgba(37,99,235,.24),rgba(37,99,235,.07));box-shadow:inset 3px 0 0 #3B82F6;color:#fff}
-      .utNavIcon{color:#60A5FA}.utUser{background:rgba(255,255,255,.035);border:1px solid rgba(148,163,184,.10);border-radius:12px;padding:10px;margin-top:auto}
-      .utMain{padding:28px 34px 44px}.utHeader{margin-bottom:18px;align-items:center}.utHeader h1{font-size:29px;letter-spacing:-1.25px;margin-top:4px}.utHeader p{font-size:11px}.utHeaderActions select,.utHeaderActions button{height:36px;border-radius:9px;border-color:#E2E8F0;box-shadow:0 2px 8px rgba(15,23,42,.025)}
-      .utPageTitle{margin:0 0 15px}.utPageTitle h2{font-size:24px}.utEyebrow{color:#64748B;letter-spacing:1.55px}
-      .utPropertyCard{padding:20px 22px;border-radius:16px;background:linear-gradient(118deg,#0B1628 0%,#10203A 62%,#173B78 100%);box-shadow:0 12px 28px rgba(15,23,42,.15)}
-      .utPropertyCard h2{font-size:19px;margin:5px 0 3px}.utRentBlock strong{font-size:27px}.utPropertyActions{margin-top:15px;padding-top:13px}.utPropertyActions button{background:#fff;color:#0F172A;border-color:#fff;padding:8px 12px}.utPropertyActions button+button{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.16)}
-      .utMetricGrid{gap:10px;margin:10px 0}.utMetricGrid article{padding:14px;border-radius:13px;box-shadow:0 5px 18px rgba(15,23,42,.04)}.utMetricIcon{margin-bottom:9px;width:28px;height:28px;border-radius:8px}.utMetricGrid strong{font-size:14px}.utMetricGrid small{font-size:9px}
-      .utTwoCol,.utPaymentGrid{gap:10px;grid-template-columns:1.45fr .75fr}.utCard{border-radius:14px;padding:17px;box-shadow:0 5px 18px rgba(15,23,42,.04)}.utCardHead{margin-bottom:10px}.utCardHead h2{font-size:16px}.utEmptyInline{padding:20px 14px}.utEmptyInline.large{padding:42px 20px}
-      .utQuickList button{padding:8px;background:#F8FAFC;border:1px solid #EEF2F6}.utQuickList button:hover{border-color:#BFDBFE;background:#F8FBFF}
-      .utPaymentHero{background:linear-gradient(145deg,#0B1628,#12284B);color:#fff;border:0}.utPaymentHero>span,.utPaymentHero small,.utPaymentHero p{color:#CBD5E1}.utPaymentHero strong{color:#fff}.utPaymentHero .utPrimary{background:#3B82F6}
-      .utLeaseHeader,.utChatHead{border-color:#E2E8F0}.utDetails div{border:1px solid #EEF2F6}.utStatus{color:#1D4ED8!important;background:#EFF6FF}
-      .utMessageHistory{background:#F5F8FC;min-height:330px}.utBubble.mine{background:#2563EB;border-color:#2563EB}.utComposer button,.utPrimary{background:#2563EB}.utSettingIcon,.utMetricIcon,.utEmptyInline>div,.utEmptyIcon{background:#EFF6FF;color:#2563EB}
-      @media(max-width:1000px){.utShell{grid-template-columns:1fr}.utMain{padding:22px}.utUser{margin-top:12px}.utTwoCol,.utPaymentGrid{grid-template-columns:1fr}}
-      @media(max-width:700px){.utMain{padding:16px 12px 34px}.utSidebar{padding:14px}.utHeader h1{font-size:23px}.utPropertyCard{padding:17px}.utMetricGrid{grid-template-columns:repeat(2,1fr)}.utNav{grid-template-columns:repeat(4,1fr)}.utNav button{height:48px;font-size:9px}.utPortalLabel{display:none}}
     `}</style>
   );
 }
