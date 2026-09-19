@@ -8329,6 +8329,56 @@ function TenantPortal({
   const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
+    async function uploadUnitveroFile(file, folder) {
+    if (!file) return null;
+
+    const s = supabase();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await s.auth.getUser();
+
+    if (userError || !user) {
+      setNotice("Please sign in again.");
+      return null;
+    }
+
+    const extension = file.name.includes(".")
+      ? file.name.split(".").pop().toLowerCase()
+      : "jpg";
+
+    const safeName = file.name
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .slice(0, 120);
+
+    const path =
+      `${folder}/${user.id}/` +
+      `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+    const { error } = await s.storage
+      .from("unitvero-media")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || "application/octet-stream",
+      });
+
+    if (error) {
+      setNotice("Could not upload file: " + error.message);
+      return null;
+    }
+
+    const { data } = s.storage
+      .from("unitvero-media")
+      .getPublicUrl(path);
+
+    return {
+      fileName: safeName,
+      filePath: path,
+      fileUrl: data.publicUrl,
+    };
+  }
 
   const words = {
     en: {
