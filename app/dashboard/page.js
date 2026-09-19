@@ -3551,15 +3551,46 @@ export default function Dashboard() {
                   }
                 }
 
-                const { error: invitationError } = await s
-                  .from("invitations")
-                  .insert({
-                    landlord_id: user.id,
-                    property_id: selectedProperty.id,
-                    unit_id: selectedUnit?.id || null,
-                    email: tenantEmail,
-                    status: "pending",
-                  });
+               const {
+  data: { session },
+  error: sessionError,
+} = await s.auth.getSession();
+
+if (sessionError || !session?.access_token) {
+  alert(
+    tenantName +
+      " was added, but the invitation could not be created because your session expired.",
+  );
+  return;
+}
+
+let invitationError = null;
+let invitationData = null;
+
+try {
+  const invitationResponse = await fetch("/api/tenant-invitations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      propertyId: selectedProperty.id,
+      tenantName,
+      tenantEmail,
+    }),
+  });
+
+  invitationData = await invitationResponse.json();
+
+  if (!invitationResponse.ok) {
+    invitationError = new Error(
+      invitationData?.error || "Could not create tenant invitation.",
+    );
+  }
+} catch (error) {
+  invitationError = error;
+}
 
                 setSelectedTenancy(newTenancy);
 
