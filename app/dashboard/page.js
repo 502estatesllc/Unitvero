@@ -1074,7 +1074,7 @@ export default function Dashboard() {
         display: "grid",
         placeItems: "center",
         background: "#f5f7f6",
-        fontFamily: ""Segoe UI Variable", "Aptos", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif",
+        fontFamily: "Avenir Next, Avenir, Aptos, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         color: "#101828",
       }}>
         <div style={{ textAlign: "center" }}>
