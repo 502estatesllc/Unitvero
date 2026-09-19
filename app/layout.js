@@ -1,4 +1,5 @@
 import './style.css';
+import './luxury.css';
 import { Manrope } from 'next/font/google';
 
 const manrope = Manrope({
