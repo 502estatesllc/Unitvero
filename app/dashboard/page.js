@@ -102,12 +102,25 @@ export default function Dashboard() {
   const [rentalValueOpen, setRentalValueOpen] = useState(false);
   const [rentalPropertyId, setRentalPropertyId] = useState("");
   const [rentalMonthlyRent, setRentalMonthlyRent] = useState("");
+  const [rentEstimateAddress, setRentEstimateAddress] = useState("");
+  const [rentEstimateLoading, setRentEstimateLoading] = useState(false);
+  const [rentEstimateError, setRentEstimateError] = useState("");
+  const [rentEstimateResult, setRentEstimateResult] = useState(null);
+  const [rentEstimatePropertyType, setRentEstimatePropertyType] = useState("");
+  const [rentEstimateBedrooms, setRentEstimateBedrooms] = useState("");
+  const [rentEstimateBathrooms, setRentEstimateBathrooms] = useState("");
+  const [rentEstimateSqft, setRentEstimateSqft] = useState("");
+  const [rentEstimateComps, setRentEstimateComps] = useState([]);
   const [rentalCompRows, setRentalCompRows] = useState([
     { id: 1, address: "", rent: "", beds: "", baths: "", sqft: "" },
     { id: 2, address: "", rent: "", beds: "", baths: "", sqft: "" },
     { id: 3, address: "", rent: "", beds: "", baths: "", sqft: "" },
   ]);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [qaOpen, setQaOpen] = useState(false);
+  const [qaFilter, setQaFilter] = useState("all");
+  const [qaSearch, setQaSearch] = useState("");
+  const [savedRentSearches, setSavedRentSearches] = useState([]);
   const [documentEditorOpen, setDocumentEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
   const [editingDocumentTitle, setEditingDocumentTitle] = useState("");
@@ -1177,6 +1190,38 @@ export default function Dashboard() {
 
 
   const unitveroLanguages = [
+
+  const unitveroProductionChecklist = [
+    { id:"auth", label:"Authentication & profile setup", area:"Account", status:"built" },
+    { id:"properties", label:"Properties & units", area:"Landlord", status:"built" },
+    { id:"tenants", label:"Tenant management", area:"Landlord", status:"built" },
+    { id:"payments", label:"Rent/payment tracking", area:"Finance", status:"built" },
+    { id:"maintenance", label:"Maintenance + photo uploads", area:"Operations", status:"built" },
+    { id:"messages", label:"Landlord/tenant messaging", area:"Communication", status:"test" },
+    { id:"documents", label:"Professional editable documents", area:"Documents", status:"built" },
+    { id:"jurisdictions", label:"50-state + D.C. framework", area:"Documents", status:"built" },
+    { id:"esign", label:"In-app eSignature", area:"Documents", status:"test" },
+    { id:"bookkeeping", label:"Bookkeeping", area:"Finance", status:"test" },
+    { id:"rent", label:"Address-based rent estimate", area:"Market", status:"connect" },
+    { id:"pro", label:"Pro comparison + upgrade", area:"Billing", status:"connect" },
+    { id:"help", label:"In-app help chat", area:"Support", status:"built" },
+    { id:"languages", label:"Multi-language UI", area:"Localization", status:"partial" },
+    { id:"privacy", label:"Privacy policy / app-store page", area:"Compliance", status:"partial" },
+    { id:"rls", label:"RLS/security audit", area:"Security", status:"test" },
+    { id:"mobile", label:"Mobile / responsive QA", area:"QA", status:"test" },
+    { id:"store", label:"Apple + Google production release", area:"Release", status:"pending" },
+  ];
+
+  function checklistStatusLabel(status) {
+    return ({
+      built:"Built",
+      test:"Needs testing",
+      connect:"Needs connection",
+      partial:"Partially built",
+      pending:"Not finished",
+    })[status] || status;
+  }
+
     ["en", "English"],
     ["es", "Español"],
     ["fr", "Français"],
@@ -1275,6 +1320,133 @@ export default function Dashboard() {
   function openProScreen() {
     setProScreenOpen(true);
     setView("pro");
+  }
+
+
+  async function getLiveRentEstimate(e) {
+    e?.preventDefault?.();
+
+    const address = rentEstimateAddress.trim();
+
+    if (!address) {
+      setRentEstimateError("Enter a full property address.");
+      return;
+    }
+
+    setRentEstimateLoading(true);
+    setRentEstimateError("");
+    setRentEstimateResult(null);
+    setRentEstimateComps([]);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("address", address);
+
+      if (rentEstimatePropertyType) {
+        params.set("propertyType", rentEstimatePropertyType);
+      }
+      if (rentEstimateBedrooms !== "") {
+        params.set("bedrooms", rentEstimateBedrooms);
+      }
+      if (rentEstimateBathrooms !== "") {
+        params.set("bathrooms", rentEstimateBathrooms);
+      }
+      if (rentEstimateSqft !== "") {
+        params.set("squareFootage", rentEstimateSqft);
+      }
+
+      const response = await fetch(`/api/rent-estimate?${params.toString()}`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.error ||
+          "Could not retrieve a live rent estimate for that address."
+        );
+      }
+
+      setRentEstimateResult(payload);
+      setRentEstimateComps(payload.comparables || []);
+    } catch (error) {
+      console.error("Rent estimate failed:", error);
+      setRentEstimateError(
+        error?.message ||
+        "Could not retrieve a live rent estimate. Please try again."
+      );
+    } finally {
+      setRentEstimateLoading(false);
+    }
+  }
+
+  function usePropertyForRentEstimate(property) {
+    if (!property) return;
+
+    const fullAddress = [
+      property.address,
+      property.city,
+      property.state,
+      property.zip_code,
+    ].filter(Boolean).join(", ");
+
+    setRentEstimateAddress(fullAddress);
+    setRentalPropertyId(property.id);
+    setRentalMonthlyRent(
+      property.rent || property.monthly_rent || ""
+    );
+
+    setRentEstimateResult(null);
+    setRentEstimateError("");
+  }
+
+
+  function getVisibleChecklist() {
+    const search = qaSearch.trim().toLowerCase();
+
+    return unitveroProductionChecklist.filter((item) => {
+      const matchesFilter =
+        qaFilter === "all" ||
+        (qaFilter === "built" && item.status === "built") ||
+        (qaFilter === "needs-work" && item.status !== "built");
+
+      const matchesSearch =
+        !search ||
+        item.label.toLowerCase().includes(search) ||
+        item.area.toLowerCase().includes(search);
+
+      return matchesFilter && matchesSearch;
+    });
+  }
+
+  function getChecklistSummary() {
+    const total = unitveroProductionChecklist.length;
+    const built = unitveroProductionChecklist.filter((item) => item.status === "built").length;
+    const needsWork = total - built;
+    return { total, built, needsWork };
+  }
+
+  function saveCurrentRentSearch() {
+    if (!rentEstimateAddress.trim()) {
+      alert("Enter an address first.");
+      return;
+    }
+
+    const result = {
+      id: Date.now(),
+      address: rentEstimateAddress.trim(),
+      rent: rentEstimateResult?.rent || null,
+      low: rentEstimateResult?.rentRange?.low || null,
+      high: rentEstimateResult?.rentRange?.high || null,
+      savedAt: new Date().toISOString(),
+    };
+
+    setSavedRentSearches((current) => [result, ...current].slice(0, 20));
+  }
+
+  function formatMoneyCompact(value) {
+    if (value === null || value === undefined || value === "") return "—";
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "—";
+    return `$${Math.round(number).toLocaleString()}`;
   }
 
   async function load() {
@@ -2593,6 +2765,14 @@ export default function Dashboard() {
                 }
               </span>
             )}
+          </a>
+
+          <a
+            className={view === "qa" ? "active" : ""}
+            onClick={() => setView("qa")}
+          >
+            <span className="navIcon">✓</span>
+            <span>Setup & QA</span>
           </a>
 
           <a
@@ -6921,218 +7101,438 @@ export default function Dashboard() {
           <section className="panel">
             <div className="applicationsHeader documentsHeader">
               <div>
-                <small>RENTAL ANALYSIS</small>
-                <h1>Rent Value & Comparable Properties</h1>
+                <small>LIVE RENTAL MARKET</small>
+                <h1>What Is Rent Going For Here?</h1>
                 <p>
-                  Enter comparable rental properties to estimate a suggested
-                  monthly rent range for one of your properties.
+                  Enter a property address and Unitvero will return a current
+                  long-term rent estimate and comparable rental listings.
                 </p>
               </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setRentalCompRows([
-                  { id: 1, address: "", rent: "", beds: "", baths: "", sqft: "" },
-                  { id: 2, address: "", rent: "", beds: "", baths: "", sqft: "" },
-                  { id: 3, address: "", rent: "", beds: "", baths: "", sqft: "" },
-                ])}
-              >
-                Reset Comps
-              </button>
+              <span style={{
+                display:"inline-flex",
+                alignItems:"center",
+                padding:"7px 11px",
+                borderRadius:999,
+                background:"#eaf8f0",
+                color:"#18794e",
+                fontWeight:800,
+                fontSize:12,
+              }}>
+                LIVE MARKET DATA
+              </span>
             </div>
 
-            <div style={{
-              display:"grid",
-              gridTemplateColumns:"minmax(240px,.8fr) minmax(0,2fr)",
-              gap:18,
-              marginTop:22,
-            }}>
-              <section className="commandCard">
-                <h2>Subject Property</h2>
-                <p>Select the property and enter its current rent.</p>
+            <section className="commandCard" style={{marginTop:22}}>
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">⌕</span>
+                  <div>
+                    <h2>Get a Rent Estimate</h2>
+                    <p>
+                      Full address is enough to start. Property details can make
+                      the estimate more specific.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                <label style={{display:"grid",gap:6,marginTop:14}}>
-                  <b>Property</b>
-                  <select
-                    value={rentalPropertyId}
-                    onChange={(e) => {
-                      setRentalPropertyId(e.target.value);
-                      const property = props.find((p) => p.id === e.target.value);
-                      if (property?.rent) setRentalMonthlyRent(String(property.rent));
-                    }}
-                  >
-                    <option value="">Select property...</option>
-                    {props.map((property) => (
-                      <option key={property.id} value={property.id}>
-                        {property.address}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label style={{display:"grid",gap:6,marginTop:14}}>
-                  <b>Current Monthly Rent</b>
+              <form
+                onSubmit={getLiveRentEstimate}
+                style={{display:"grid",gap:14,marginTop:16}}
+              >
+                <label style={{display:"grid",gap:6}}>
+                  <b>Property Address</b>
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={rentalMonthlyRent}
-                    onChange={(e) => setRentalMonthlyRent(e.target.value)}
-                    placeholder="1500"
+                    value={rentEstimateAddress}
+                    onChange={(e) => setRentEstimateAddress(e.target.value)}
+                    placeholder="123 Main St, Louisville, KY 40211"
+                    autoComplete="street-address"
+                    required
                   />
                 </label>
 
                 <div style={{
-                  marginTop:18,
-                  padding:14,
-                  border:"1px solid #dbe3ef",
-                  borderRadius:14,
-                  background:"#f8fafc",
+                  display:"grid",
+                  gridTemplateColumns:"repeat(4,minmax(0,1fr))",
+                  gap:10,
                 }}>
-                  <b>How the suggestion works</b>
-                  <p style={{margin:"7px 0 0",fontSize:13,color:"#5d6878"}}>
-                    Unitvero calculates the average and median of the comparable
-                    rents you enter and shows the observed low/high range. This is
-                    an estimate, not an appraisal.
-                  </p>
-                </div>
-              </section>
-
-              <section className="commandCard">
-                <div className="commandCardHeader">
-                  <div>
-                    <span className="commandSectionIcon">≈</span>
-                    <div>
-                      <h2>Comparable Rentals</h2>
-                      <p>Use nearby properties that are reasonably similar.</p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={addRentalCompRow}
-                  >
-                    + Add Comp
-                  </button>
-                </div>
-
-                <div style={{display:"grid",gap:10,marginTop:16}}>
-                  {rentalCompRows.map((row, index) => (
-                    <div
-                      key={row.id}
-                      style={{
-                        display:"grid",
-                        gridTemplateColumns:"1.6fr .8fr .6fr .6fr .8fr auto",
-                        gap:8,
-                        alignItems:"end",
-                        padding:12,
-                        border:"1px solid #e1e7ef",
-                        borderRadius:12,
-                      }}
+                  <label style={{display:"grid",gap:6}}>
+                    <b>Property Type</b>
+                    <select
+                      value={rentEstimatePropertyType}
+                      onChange={(e) => setRentEstimatePropertyType(e.target.value)}
                     >
-                      <label style={{display:"grid",gap:5}}>
-                        <small>ADDRESS / AREA</small>
-                        <input
-                          value={row.address}
-                          onChange={(e) => updateRentalCompRow(row.id,"address",e.target.value)}
-                          placeholder={`Comparable ${index + 1}`}
-                        />
-                      </label>
-                      <label style={{display:"grid",gap:5}}>
-                        <small>RENT</small>
-                        <input
-                          type="number"
-                          min="0"
-                          value={row.rent}
-                          onChange={(e) => updateRentalCompRow(row.id,"rent",e.target.value)}
-                          placeholder="1500"
-                        />
-                      </label>
-                      <label style={{display:"grid",gap:5}}>
-                        <small>BEDS</small>
-                        <input
-                          type="number"
-                          min="0"
-                          value={row.beds}
-                          onChange={(e) => updateRentalCompRow(row.id,"beds",e.target.value)}
-                          placeholder="3"
-                        />
-                      </label>
-                      <label style={{display:"grid",gap:5}}>
-                        <small>BATHS</small>
-                        <input
-                          type="number"
-                          min="0"
-                          step=".5"
-                          value={row.baths}
-                          onChange={(e) => updateRentalCompRow(row.id,"baths",e.target.value)}
-                          placeholder="2"
-                        />
-                      </label>
-                      <label style={{display:"grid",gap:5}}>
-                        <small>SQ FT</small>
-                        <input
-                          type="number"
-                          min="0"
-                          value={row.sqft}
-                          onChange={(e) => updateRentalCompRow(row.id,"sqft",e.target.value)}
-                          placeholder="1500"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => removeRentalCompRow(row.id)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                      <option value="">Auto-detect</option>
+                      <option value="Single Family">Single Family</option>
+                      <option value="Condo">Condo</option>
+                      <option value="Townhouse">Townhouse</option>
+                      <option value="Manufactured">Manufactured</option>
+                      <option value="Multi-Family">Multi-Family</option>
+                      <option value="Apartment">Apartment</option>
+                    </select>
+                  </label>
 
-                {(() => {
-                  const result = calculateRentalSuggestion(rentalCompRows);
-                  return (
-                    <div style={{
-                      display:"grid",
-                      gridTemplateColumns:"repeat(4,1fr)",
-                      gap:10,
-                      marginTop:18,
-                    }}>
-                      <div className="documentStatCard">
-                        <small>OBSERVED LOW</small>
-                        <b>{result.count ? `$${Math.round(result.low).toLocaleString()}` : "—"}</b>
-                      </div>
-                      <div className="documentStatCard">
-                        <small>MEDIAN</small>
-                        <b>{result.count ? `$${Math.round(result.median).toLocaleString()}` : "—"}</b>
-                      </div>
-                      <div className="documentStatCard">
-                        <small>AVERAGE</small>
-                        <b>{result.count ? `$${Math.round(result.average).toLocaleString()}` : "—"}</b>
-                      </div>
-                      <div className="documentStatCard">
-                        <small>OBSERVED HIGH</small>
-                        <b>{result.count ? `$${Math.round(result.high).toLocaleString()}` : "—"}</b>
-                      </div>
-                    </div>
-                  );
-                })()}
+                  <label style={{display:"grid",gap:6}}>
+                    <b>Bedrooms</b>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={rentEstimateBedrooms}
+                      onChange={(e) => setRentEstimateBedrooms(e.target.value)}
+                      placeholder="Auto"
+                    />
+                  </label>
+
+                  <label style={{display:"grid",gap:6}}>
+                    <b>Bathrooms</b>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      step=".5"
+                      value={rentEstimateBathrooms}
+                      onChange={(e) => setRentEstimateBathrooms(e.target.value)}
+                      placeholder="Auto"
+                    />
+                  </label>
+
+                  <label style={{display:"grid",gap:6}}>
+                    <b>Square Feet</b>
+                    <input
+                      type="number"
+                      min="0"
+                      value={rentEstimateSqft}
+                      onChange={(e) => setRentEstimateSqft(e.target.value)}
+                      placeholder="Auto"
+                    />
+                  </label>
+                </div>
 
                 <div style={{
-                  marginTop:16,
-                  padding:14,
-                  borderRadius:12,
-                  background:"#f8fafc",
-                  color:"#5d6878",
-                  fontSize:12,
+                  display:"flex",
+                  justifyContent:"space-between",
+                  gap:12,
+                  flexWrap:"wrap",
+                  alignItems:"center",
                 }}>
-                  <b>Important:</b> Unitvero's calculator uses the comparable
-                  information entered by the landlord. A future live-data integration
-                  can supply verified market comps automatically. It should not be
-                  represented as a licensed appraisal or guaranteed market rent.
+                  <div style={{fontSize:12,color:"#687386"}}>
+                    Address + property characteristics are sent to the configured
+                    property-data provider only when you request an estimate.
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="primary"
+                    disabled={rentEstimateLoading}
+                  >
+                    {rentEstimateLoading ? "Analyzing Market..." : "Get Rent Estimate"}
+                  </button>
                 </div>
-              </section>
+              </form>
+
+              {rentEstimateError && (
+                <div style={{
+                  marginTop:14,
+                  padding:13,
+                  borderRadius:12,
+                  background:"#fff4f4",
+                  border:"1px solid #f0caca",
+                  color:"#a61b1b",
+                }}>
+                  {rentEstimateError}
+                </div>
+              )}
+            </section>
+
+            {rentEstimateResult && (
+              <>
+                <section className="commandCard" style={{marginTop:18}}>
+                  <div className="commandCardHeader">
+                    <div>
+                      <span className="commandSectionIcon">≈</span>
+                      <div>
+                        <h2>Estimated Market Rent</h2>
+                        <p>{rentEstimateResult.formattedAddress || rentEstimateAddress}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={saveCurrentRentSearch}
+                    >
+                      Save Estimate
+                    </button>
+
+                    <span style={{
+                      padding:"6px 9px",
+                      borderRadius:999,
+                      background:"#eef3fb",
+                      fontSize:11,
+                      fontWeight:800,
+                    }}>
+                      {rentEstimateResult.provider || "Property data provider"}
+                    </span>
+                  </div>
+
+                  <div style={{
+                    display:"grid",
+                    gridTemplateColumns:"repeat(4,minmax(0,1fr))",
+                    gap:10,
+                    marginTop:18,
+                  }}>
+                    <div className="documentStatCard">
+                      <small>ESTIMATED RENT</small>
+                      <b>
+                        {rentEstimateResult.rent
+                          ? `$${Math.round(rentEstimateResult.rent).toLocaleString()}/mo`
+                          : "—"}
+                      </b>
+                    </div>
+
+                    <div className="documentStatCard">
+                      <small>LOW</small>
+                      <b>
+                        {rentEstimateResult.rentRange?.low
+                          ? `$${Math.round(rentEstimateResult.rentRange.low).toLocaleString()}`
+                          : "—"}
+                      </b>
+                    </div>
+
+                    <div className="documentStatCard">
+                      <small>HIGH</small>
+                      <b>
+                        {rentEstimateResult.rentRange?.high
+                          ? `$${Math.round(rentEstimateResult.rentRange.high).toLocaleString()}`
+                          : "—"}
+                      </b>
+                    </div>
+
+                    <div className="documentStatCard">
+                      <small>COMPARABLES</small>
+                      <b>{rentEstimateResult.comparables?.length || 0}</b>
+                    </div>
+                  </div>
+
+                  {rentEstimateResult.subjectProperty && (
+                    <div style={{
+                      marginTop:16,
+                      display:"grid",
+                      gridTemplateColumns:"repeat(4,minmax(0,1fr))",
+                      gap:10,
+                    }}>
+                      {[
+                        ["Beds", rentEstimateResult.subjectProperty.bedrooms],
+                        ["Baths", rentEstimateResult.subjectProperty.bathrooms],
+                        ["Sq Ft", rentEstimateResult.subjectProperty.squareFootage],
+                        ["Type", rentEstimateResult.subjectProperty.propertyType],
+                      ].map(([label, value]) => (
+                        <div key={label} style={{
+                          padding:12,
+                          border:"1px solid #e1e7ef",
+                          borderRadius:12,
+                        }}>
+                          <small style={{color:"#687386"}}>{label}</small>
+                          <strong style={{display:"block",marginTop:4}}>
+                            {value ?? "—"}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{
+                    marginTop:16,
+                    padding:13,
+                    borderRadius:12,
+                    background:"#f8fafc",
+                    color:"#5d6878",
+                    fontSize:12,
+                  }}>
+                    <b>How to use this:</b> Treat the estimate as a market-data
+                    reference, not a guaranteed achievable rent or a licensed
+                    appraisal. Review the comparable listings before setting the
+                    property's actual rent.
+                  </div>
+                </section>
+
+                <section className="commandCard" style={{marginTop:18}}>
+                  <div className="commandCardHeader">
+                    <div>
+                      <span className="commandSectionIcon">▤</span>
+                      <div>
+                        <h2>Comparable Rental Listings</h2>
+                        <p>
+                          Recent comparable listings returned for the subject
+                          property.
+                        </p>
+                      </div>
+                    </div>
+                    <span>{rentEstimateComps.length} comps</span>
+                  </div>
+
+                  {rentEstimateComps.length ? (
+                    <div style={{display:"grid",gap:10,marginTop:16}}>
+                      {rentEstimateComps.map((comp, index) => (
+                        <div
+                          key={comp.id || `${comp.address}-${index}`}
+                          style={{
+                            display:"grid",
+                            gridTemplateColumns:"1.6fr .7fr .6fr .6fr .8fr",
+                            gap:10,
+                            padding:13,
+                            border:"1px solid #e1e7ef",
+                            borderRadius:12,
+                            alignItems:"center",
+                          }}
+                        >
+                          <div>
+                            <b>{comp.address || `Comparable ${index + 1}`}</b>
+                            <small style={{display:"block",color:"#687386"}}>
+                              {comp.distance != null
+                                ? `${Number(comp.distance).toFixed(1)} mi away`
+                                : ""}
+                            </small>
+                          </div>
+                          <div>
+                            <small>RENT</small>
+                            <b style={{display:"block"}}>
+                              {comp.price
+                                ? `$${Math.round(comp.price).toLocaleString()}`
+                                : "—"}
+                            </b>
+                          </div>
+                          <div>
+                            <small>BEDS</small>
+                            <b style={{display:"block"}}>{comp.bedrooms ?? "—"}</b>
+                          </div>
+                          <div>
+                            <small>BATHS</small>
+                            <b style={{display:"block"}}>{comp.bathrooms ?? "—"}</b>
+                          </div>
+                          <div>
+                            <small>SQ FT</small>
+                            <b style={{display:"block"}}>
+                              {comp.squareFootage
+                                ? Number(comp.squareFootage).toLocaleString()
+                                : "—"}
+                            </b>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{marginTop:16,color:"#687386"}}>
+                      No comparable listings were returned for this search.
+                    </p>
+                  )}
+                </section>
+              </>
+            )}
+
+            <section className="commandCard" style={{marginTop:18}}>
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">＋</span>
+                  <div>
+                    <h2>Analyze One of Your Properties</h2>
+                    <p>
+                      Pull an existing property from Unitvero and use its address
+                      as the starting point.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"1fr auto",
+                gap:10,
+                marginTop:14,
+              }}>
+                <select
+                  value={rentalPropertyId}
+                  onChange={(e) => {
+                    const property = props.find((p) => p.id === e.target.value);
+                    usePropertyForRentEstimate(property);
+                  }}
+                >
+                  <option value="">Select one of your properties...</option>
+                  {props.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {property.address}, {property.city}, {property.state}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    const property = props.find((p) => p.id === rentalPropertyId);
+                    if (property) getLiveRentEstimate();
+                    else alert("Select a property first.");
+                  }}
+                  disabled={rentEstimateLoading}
+                >
+                  Analyze Property
+                </button>
+              </div>
+            </section>
+          </section>
+        )}
+
+
+        {view === "rental-value" && savedRentSearches.length > 0 && (
+          <section className="commandCard" style={{marginTop:18}}>
+            <div className="commandCardHeader">
+              <div>
+                <span className="commandSectionIcon">◷</span>
+                <div>
+                  <h2>Saved Rent Searches</h2>
+                  <p>Quickly revisit recent market estimates.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setSavedRentSearches([])}
+              >
+                Clear
+              </button>
+            </div>
+
+            <div style={{display:"grid",gap:10,marginTop:14}}>
+              {savedRentSearches.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setRentEstimateAddress(item.address);
+                    setRentEstimateResult({
+                      rent:item.rent,
+                      rentRange:{low:item.low,high:item.high},
+                      formattedAddress:item.address,
+                      comparables:[],
+                      provider:"Saved estimate",
+                    });
+                  }}
+                  style={{
+                    textAlign:"left",
+                    padding:13,
+                    border:"1px solid #e1e7ef",
+                    borderRadius:12,
+                    background:"#fff",
+                    cursor:"pointer",
+                  }}
+                >
+                  <b>{item.address}</b>
+                  <span style={{display:"block",marginTop:4,color:"#687386",fontSize:12}}>
+                    Estimate: {formatMoneyCompact(item.rent)} ·
+                    Range: {formatMoneyCompact(item.low)}–{formatMoneyCompact(item.high)}
+                  </span>
+                </button>
+              ))}
             </div>
           </section>
         )}
@@ -8099,6 +8499,180 @@ export default function Dashboard() {
                 before charging customers.
               </p>
             </div>
+          </section>
+        )}
+
+
+        {view === "qa" && (
+          <section className="panel">
+            <div className="applicationsHeader documentsHeader">
+              <div>
+                <small>UNITVERO PRODUCTION CENTER</small>
+                <h1>Setup & QA Checklist</h1>
+                <p>
+                  Use this screen to see what is built, what still needs a real
+                  account/provider connection, and what needs end-to-end testing.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setView("overview")}
+              >
+                Back to Dashboard
+              </button>
+            </div>
+
+            {(() => {
+              const summary = getChecklistSummary();
+              const percent = Math.round((summary.built / summary.total) * 100);
+
+              return (
+                <section className="commandCard" style={{marginTop:22}}>
+                  <div className="commandCardHeader">
+                    <div>
+                      <span className="commandSectionIcon">✓</span>
+                      <div>
+                        <h2>Production Progress</h2>
+                        <p>{summary.built} of {summary.total} areas have been built in the current codebase.</p>
+                      </div>
+                    </div>
+                    <b>{percent}% built</b>
+                  </div>
+
+                  <div style={{
+                    height:12,
+                    background:"#e7edf5",
+                    borderRadius:999,
+                    overflow:"hidden",
+                    marginTop:16,
+                  }}>
+                    <div style={{
+                      width:`${percent}%`,
+                      height:"100%",
+                      background:"#172033",
+                    }} />
+                  </div>
+                </section>
+              );
+            })()}
+
+            <section className="commandCard" style={{marginTop:18}}>
+              <div style={{
+                display:"flex",
+                gap:10,
+                flexWrap:"wrap",
+                alignItems:"center",
+                justifyContent:"space-between",
+              }}>
+                <input
+                  value={qaSearch}
+                  onChange={(e) => setQaSearch(e.target.value)}
+                  placeholder="Search checklist..."
+                  style={{minWidth:240}}
+                />
+
+                <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                  {[
+                    ["all","All"],
+                    ["built","Built"],
+                    ["needs-work","Needs Work"],
+                  ].map(([value,label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={qaFilter === value ? "primary" : "secondary"}
+                      onClick={() => setQaFilter(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{display:"grid",gap:9,marginTop:16}}>
+                {getVisibleChecklist().map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      display:"grid",
+                      gridTemplateColumns:"1fr auto auto",
+                      gap:12,
+                      alignItems:"center",
+                      padding:13,
+                      border:"1px solid #e1e7ef",
+                      borderRadius:12,
+                      background:"#fff",
+                    }}
+                  >
+                    <div>
+                      <b>{item.label}</b>
+                      <span style={{
+                        display:"block",
+                        fontSize:12,
+                        color:"#687386",
+                        marginTop:3,
+                      }}>
+                        {item.area}
+                      </span>
+                    </div>
+
+                    <span style={{
+                      padding:"5px 9px",
+                      borderRadius:999,
+                      background:item.status === "built" ? "#eaf8f0" : "#fff5df",
+                      color:item.status === "built" ? "#18794e" : "#8a5b00",
+                      fontSize:11,
+                      fontWeight:800,
+                    }}>
+                      {checklistStatusLabel(item.status)}
+                    </span>
+
+                    <span style={{fontSize:18}}>
+                      {item.status === "built" ? "✓" : "!"}
+                    </span>
+                  </div>
+                ))}
+
+                {!getVisibleChecklist().length && (
+                  <p style={{color:"#687386"}}>
+                    No checklist items match that search.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <section className="commandCard" style={{marginTop:18}}>
+              <h2>Next Steps</h2>
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
+                gap:12,
+                marginTop:14,
+              }}>
+                {[
+                  ["1","Connect live rent data","Add RENTCAST_API_KEY in Vercel and test several addresses."],
+                  ["2","Run RLS audit","Verify landlords and tenants can only access records they are authorized to see."],
+                  ["3","Test eSign","Create → request → tenant signs → verify signed/audit records."],
+                  ["4","Connect Pro billing","Connect the Upgrade button to a real subscription checkout."],
+                  ["5","Finish translations","Translate actual UI strings for landlord and tenant views."],
+                  ["6","Mobile QA","Test photo upload, messaging, documents, signing, and payments on phones."],
+                  ["7","App-store compliance","Finalize public privacy policy, terms, account deletion, and store disclosures."],
+                  ["8","Production smoke test","Create a fresh landlord and tenant account and test the entire workflow."],
+                ].map(([number,title,desc]) => (
+                  <div key={number} style={{
+                    padding:15,
+                    border:"1px solid #e1e7ef",
+                    borderRadius:14,
+                  }}>
+                    <b>{number}. {title}</b>
+                    <p style={{fontSize:12,color:"#687386",margin:"6px 0 0"}}>
+                      {desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
           </section>
         )}
 
