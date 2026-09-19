@@ -2947,7 +2947,7 @@ export default function Dashboard() {
 
             <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>Privacy Policy</button><button type="button">Terms of Service</button></div></footer>
           </div>
-        )}}}
+        )}
 
         {view === "properties" && (
           <section className="portfolioPage">
