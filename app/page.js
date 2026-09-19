@@ -2,9 +2,9 @@
    Replace the ENTIRE contents of app/page.js with this file.
 
    Required public image files:
-   /public/images/unitvero-hero-house.png
-   /public/images/unitvero-landlord-phone.png
-   /public/images/unitvero-tenant-phone.png
+   /public/unitvero-hero-house.png
+   /public/unitvero-landlord-phone.png
+   /public/unitvero-tenant-phone.png
 
    This page intentionally uses one clean style block.
    It does not depend on the old homepage CSS.
@@ -187,7 +187,7 @@ export default function Home() {
 
             <div className="propertyCard">
               <img
-                src="/images/unitvero-hero-house.png"
+                src="/unitvero-hero-house.png"
                 alt=""
               />
               <div>
@@ -236,7 +236,7 @@ export default function Home() {
 
           <div className="phoneWrap landlordPhone">
             <img
-              src="/images/unitvero-landlord-phone.png"
+              src="/unitvero-landlord-phone.png"
               alt="Unitvero landlord app"
             />
           </div>
@@ -267,7 +267,7 @@ export default function Home() {
 
           <div className="phoneWrap tenantPhone">
             <img
-              src="/images/unitvero-tenant-phone.png"
+              src="/unitvero-tenant-phone.png"
               alt="Unitvero tenant app"
             />
           </div>
@@ -573,7 +573,7 @@ export default function Home() {
           position: absolute;
           inset: 0;
           z-index: -3;
-          background-image: url("/images/unitvero-hero-house.png");
+          background-image: url("/unitvero-hero-house.png");
           background-size: cover;
           background-position: center center;
           transform: scale(1.01);
