@@ -97,6 +97,25 @@ export default function Dashboard() {
   const [signatureConsent, setSignatureConsent] = useState(false);
   const [signatureMode, setSignatureMode] = useState("draw");
   const [signatureSubmitting, setSignatureSubmitting] = useState(false);
+  const [appLanguage, setAppLanguage] = useState("en");
+  const [helpChatOpen, setHelpChatOpen] = useState(false);
+  const [helpMessages, setHelpMessages] = useState([
+    {
+      role: "assistant",
+      text: "Hi! I’m Unitvero Help. Ask me about maintenance, rent, documents, messaging, bookkeeping, or your account."
+    }
+  ]);
+  const [helpInput, setHelpInput] = useState("");
+  const [proScreenOpen, setProScreenOpen] = useState(false);
+  const [rentalValueOpen, setRentalValueOpen] = useState(false);
+  const [rentalPropertyId, setRentalPropertyId] = useState("");
+  const [rentalMonthlyRent, setRentalMonthlyRent] = useState("");
+  const [rentalCompRows, setRentalCompRows] = useState([
+    { id: 1, address: "", rent: "", beds: "", baths: "", sqft: "" },
+    { id: 2, address: "", rent: "", beds: "", baths: "", sqft: "" },
+    { id: 3, address: "", rent: "", beds: "", baths: "", sqft: "" },
+  ]);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [documentEditorOpen, setDocumentEditorOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState(null);
   const [editingDocumentTitle, setEditingDocumentTitle] = useState("");
@@ -699,6 +718,7 @@ export default function Dashboard() {
         description: notes,
         document_type: editingDocumentType,
         status: "draft",
+        document_html: html,
         updated_at: new Date().toISOString(),
       })
       .eq("id", editingDocument.id)
@@ -711,7 +731,7 @@ export default function Dashboard() {
       return;
     }
 
-    const updated = { ...data, generated_html: html };
+    const updated = { ...data, document_html: html, generated_html: html };
 
     setDocuments((current) =>
       current.map((documentRecord) =>
@@ -1065,6 +1085,7 @@ export default function Dashboard() {
       document_type: documentBuilderType,
       status: "draft",
       shared_with_tenant: false,
+      document_html: html,
     };
 
     const { data, error } = await s
@@ -1078,7 +1099,7 @@ export default function Dashboard() {
       return;
     }
 
-    const generated = { ...data, generated_html: html };
+    const generated = { ...data, document_html: html, generated_html: html };
     setDocuments((current) => [generated, ...current]);
     setSelectedDocument(generated);
     setDocumentBuilderOpen(false);
@@ -1115,6 +1136,7 @@ export default function Dashboard() {
       tenancies.find((item) => item.id === documentRecord.tenancy_id) || {};
 
     const html =
+      documentRecord.document_html ||
       documentRecord.generated_html ||
       buildDocumentHtml({
         title: documentRecord.title || "Unitvero Document",
@@ -1122,6 +1144,7 @@ export default function Dashboard() {
         property,
         tenancy,
         notes: documentRecord.description || "",
+        stateCode: getPropertyState(property),
       });
 
     const printWindow = window.open("", "_blank", "width=900,height=900");
@@ -1158,6 +1181,149 @@ export default function Dashboard() {
     );
 
     window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  }
+
+
+  const unitveroLanguages = [
+    ["en", "English"],
+    ["es", "Español"],
+    ["fr", "Français"],
+    ["de", "Deutsch"],
+    ["pt", "Português"],
+    ["zh", "中文"],
+    ["ko", "한국어"],
+    ["vi", "Tiếng Việt"],
+    ["ar", "العربية"],
+    ["ru", "Русский"],
+  ];
+
+  const languageLabels = {
+    en: {
+      help: "Help",
+      home: "Home",
+      payments: "Payments",
+      maintenance: "Maintenance",
+      documents: "Documents",
+      messages: "Messages",
+      bookkeeping: "Bookkeeping",
+      upgrade: "Upgrade to Pro",
+      propertyValue: "Rent Value",
+    },
+    es: {
+      help: "Ayuda",
+      home: "Inicio",
+      payments: "Pagos",
+      maintenance: "Mantenimiento",
+      documents: "Documentos",
+      messages: "Mensajes",
+      bookkeeping: "Contabilidad",
+      upgrade: "Actualizar a Pro",
+      propertyValue: "Valor de renta",
+    },
+  };
+
+  function uiLabel(key) {
+    return languageLabels[appLanguage]?.[key] ||
+      languageLabels.en[key] ||
+      key;
+  }
+
+  function calculateRentalSuggestion(rows) {
+    const values = rows
+      .map((row) => Number(row.rent))
+      .filter((value) => Number.isFinite(value) && value > 0);
+
+    if (!values.length) {
+      return { low: 0, high: 0, average: 0, median: 0, count: 0 };
+    }
+
+    const sorted = [...values].sort((a, b) => a - b);
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const middle = Math.floor(sorted.length / 2);
+    const median =
+      sorted.length % 2
+        ? sorted[middle]
+        : (sorted[middle - 1] + sorted[middle]) / 2;
+
+    return {
+      low: Math.min(...values),
+      high: Math.max(...values),
+      average,
+      median,
+      count: values.length,
+    };
+  }
+
+  function addRentalCompRow() {
+    setRentalCompRows((rows) => [
+      ...rows,
+      {
+        id: Date.now(),
+        address: "",
+        rent: "",
+        beds: "",
+        baths: "",
+        sqft: "",
+      },
+    ]);
+  }
+
+  function updateRentalCompRow(id, field, value) {
+    setRentalCompRows((rows) =>
+      rows.map((row) =>
+        row.id === id ? { ...row, [field]: value } : row
+      )
+    );
+  }
+
+  function removeRentalCompRow(id) {
+    setRentalCompRows((rows) => rows.filter((row) => row.id !== id));
+  }
+
+  function getHelpReply(message) {
+    const q = message.toLowerCase();
+
+    if (q.includes("maintenance") || q.includes("repair")) {
+      return "For maintenance, open Maintenance and create a request. Tenants can attach photos, and landlords can update the status, record labor/material costs, and keep the expense in bookkeeping.";
+    }
+
+    if (q.includes("document") || q.includes("lease")) {
+      return "Open Documents to create, edit, print, email, request signatures, and manage rental documents. The document workflow also uses the property's state jurisdiction.";
+    }
+
+    if (q.includes("rent") || q.includes("payment")) {
+      return "Open Payments to review rent activity. Landlords can also use Rent Value to compare entered rental comps and calculate a suggested range.";
+    }
+
+    if (q.includes("pro") || q.includes("upgrade")) {
+      return "Open Upgrade to Pro to compare plans and see the paid features. The actual payment checkout can be connected to your billing provider when you are ready.";
+    }
+
+    if (q.includes("language") || q.includes("spanish") || q.includes("español")) {
+      return "Use the language selector in the account/header area. Unitvero supports English, Spanish, French, German, Portuguese, Chinese, Korean, Vietnamese, Arabic, and Russian UI frameworks.";
+    }
+
+    return "I can help with rent, maintenance, documents, messaging, bookkeeping, subscriptions, languages, or account questions. Try asking about one of those areas.";
+  }
+
+  function submitHelpMessage(e) {
+    e.preventDefault();
+    const message = helpInput.trim();
+    if (!message) return;
+
+    const reply = getHelpReply(message);
+
+    setHelpMessages((current) => [
+      ...current,
+      { role: "user", text: message },
+      { role: "assistant", text: reply },
+    ]);
+    setHelpInput("");
+  }
+
+  function openProScreen() {
+    setProScreenOpen(true);
+    setView("pro");
   }
 
   async function load() {
@@ -2340,6 +2506,49 @@ export default function Dashboard() {
           <span className="brandLabel">PROPERTY MANAGEMENT</span>
         </div>
 
+        <div style={{
+          padding:"12px 14px",
+          borderBottom:"1px solid #e5e9ef",
+          display:"grid",
+          gap:8,
+        }}>
+          <label style={{fontSize:11,fontWeight:800,color:"#687386"}}>
+            LANGUAGE
+          </label>
+          <select
+            value={appLanguage}
+            onChange={(e) => setAppLanguage(e.target.value)}
+            style={{
+              minHeight:38,
+              border:"1px solid #dbe3ef",
+              borderRadius:10,
+              padding:"0 9px",
+              background:"#fff",
+            }}
+          >
+            {unitveroLanguages.map(([code, name]) => (
+              <option key={code} value={code}>{name}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={openProScreen}
+          style={{
+            margin:"12px 14px 4px",
+            minHeight:44,
+            border:0,
+            borderRadius:12,
+            background:"linear-gradient(135deg,#172033,#324968)",
+            color:"#fff",
+            fontWeight:900,
+            cursor:"pointer",
+          }}
+        >
+          ★ {uiLabel("upgrade")}
+        </button>
+
         <nav className="sidebarNav">
           <span className="navSection">WORKSPACE</span>
 
@@ -2444,6 +2653,14 @@ export default function Dashboard() {
           </a>
 
           <a
+            className={view === "rental-value" ? "active" : ""}
+            onClick={() => setView("rental-value")}
+          >
+            <span className="navIcon">≈</span>
+            <span>{uiLabel("propertyValue")}</span>
+          </a>
+
+          <a
             className={view === "maintenance" ? "active" : ""}
             onClick={() => setView("maintenance")}
           >
@@ -2459,6 +2676,33 @@ export default function Dashboard() {
             <span>Bookkeeping</span>
           </a>
         </nav>
+        <div style={{
+          padding:"12px 14px",
+          borderTop:"1px solid #e5e9ef",
+          display:"grid",
+          gap:6,
+          fontSize:12,
+        }}>
+          <button
+            type="button"
+            onClick={() => setPrivacyOpen(true)}
+            style={{
+              border:0,
+              background:"transparent",
+              padding:0,
+              textAlign:"left",
+              color:"#526174",
+              cursor:"pointer",
+              fontWeight:700,
+            }}
+          >
+            Privacy Policy
+          </button>
+          <span style={{color:"#8a95a5"}}>
+            Unitvero privacy & data choices
+          </span>
+        </div>
+
         <div className="sidebarAccount">
           <div className="accountAvatar">
             {profile?.full_name
@@ -6721,6 +6965,227 @@ export default function Dashboard() {
           </section>
         )}
 
+
+        {view === "rental-value" && (
+          <section className="panel">
+            <div className="applicationsHeader documentsHeader">
+              <div>
+                <small>RENTAL ANALYSIS</small>
+                <h1>Rent Value & Comparable Properties</h1>
+                <p>
+                  Enter comparable rental properties to estimate a suggested
+                  monthly rent range for one of your properties.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setRentalCompRows([
+                  { id: 1, address: "", rent: "", beds: "", baths: "", sqft: "" },
+                  { id: 2, address: "", rent: "", beds: "", baths: "", sqft: "" },
+                  { id: 3, address: "", rent: "", beds: "", baths: "", sqft: "" },
+                ])}
+              >
+                Reset Comps
+              </button>
+            </div>
+
+            <div style={{
+              display:"grid",
+              gridTemplateColumns:"minmax(240px,.8fr) minmax(0,2fr)",
+              gap:18,
+              marginTop:22,
+            }}>
+              <section className="commandCard">
+                <h2>Subject Property</h2>
+                <p>Select the property and enter its current rent.</p>
+
+                <label style={{display:"grid",gap:6,marginTop:14}}>
+                  <b>Property</b>
+                  <select
+                    value={rentalPropertyId}
+                    onChange={(e) => {
+                      setRentalPropertyId(e.target.value);
+                      const property = props.find((p) => p.id === e.target.value);
+                      if (property?.rent) setRentalMonthlyRent(String(property.rent));
+                    }}
+                  >
+                    <option value="">Select property...</option>
+                    {props.map((property) => (
+                      <option key={property.id} value={property.id}>
+                        {property.address}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label style={{display:"grid",gap:6,marginTop:14}}>
+                  <b>Current Monthly Rent</b>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={rentalMonthlyRent}
+                    onChange={(e) => setRentalMonthlyRent(e.target.value)}
+                    placeholder="1500"
+                  />
+                </label>
+
+                <div style={{
+                  marginTop:18,
+                  padding:14,
+                  border:"1px solid #dbe3ef",
+                  borderRadius:14,
+                  background:"#f8fafc",
+                }}>
+                  <b>How the suggestion works</b>
+                  <p style={{margin:"7px 0 0",fontSize:13,color:"#5d6878"}}>
+                    Unitvero calculates the average and median of the comparable
+                    rents you enter and shows the observed low/high range. This is
+                    an estimate, not an appraisal.
+                  </p>
+                </div>
+              </section>
+
+              <section className="commandCard">
+                <div className="commandCardHeader">
+                  <div>
+                    <span className="commandSectionIcon">≈</span>
+                    <div>
+                      <h2>Comparable Rentals</h2>
+                      <p>Use nearby properties that are reasonably similar.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={addRentalCompRow}
+                  >
+                    + Add Comp
+                  </button>
+                </div>
+
+                <div style={{display:"grid",gap:10,marginTop:16}}>
+                  {rentalCompRows.map((row, index) => (
+                    <div
+                      key={row.id}
+                      style={{
+                        display:"grid",
+                        gridTemplateColumns:"1.6fr .8fr .6fr .6fr .8fr auto",
+                        gap:8,
+                        alignItems:"end",
+                        padding:12,
+                        border:"1px solid #e1e7ef",
+                        borderRadius:12,
+                      }}
+                    >
+                      <label style={{display:"grid",gap:5}}>
+                        <small>ADDRESS / AREA</small>
+                        <input
+                          value={row.address}
+                          onChange={(e) => updateRentalCompRow(row.id,"address",e.target.value)}
+                          placeholder={`Comparable ${index + 1}`}
+                        />
+                      </label>
+                      <label style={{display:"grid",gap:5}}>
+                        <small>RENT</small>
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.rent}
+                          onChange={(e) => updateRentalCompRow(row.id,"rent",e.target.value)}
+                          placeholder="1500"
+                        />
+                      </label>
+                      <label style={{display:"grid",gap:5}}>
+                        <small>BEDS</small>
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.beds}
+                          onChange={(e) => updateRentalCompRow(row.id,"beds",e.target.value)}
+                          placeholder="3"
+                        />
+                      </label>
+                      <label style={{display:"grid",gap:5}}>
+                        <small>BATHS</small>
+                        <input
+                          type="number"
+                          min="0"
+                          step=".5"
+                          value={row.baths}
+                          onChange={(e) => updateRentalCompRow(row.id,"baths",e.target.value)}
+                          placeholder="2"
+                        />
+                      </label>
+                      <label style={{display:"grid",gap:5}}>
+                        <small>SQ FT</small>
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.sqft}
+                          onChange={(e) => updateRentalCompRow(row.id,"sqft",e.target.value)}
+                          placeholder="1500"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => removeRentalCompRow(row.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {(() => {
+                  const result = calculateRentalSuggestion(rentalCompRows);
+                  return (
+                    <div style={{
+                      display:"grid",
+                      gridTemplateColumns:"repeat(4,1fr)",
+                      gap:10,
+                      marginTop:18,
+                    }}>
+                      <div className="documentStatCard">
+                        <small>OBSERVED LOW</small>
+                        <b>{result.count ? `$${Math.round(result.low).toLocaleString()}` : "—"}</b>
+                      </div>
+                      <div className="documentStatCard">
+                        <small>MEDIAN</small>
+                        <b>{result.count ? `$${Math.round(result.median).toLocaleString()}` : "—"}</b>
+                      </div>
+                      <div className="documentStatCard">
+                        <small>AVERAGE</small>
+                        <b>{result.count ? `$${Math.round(result.average).toLocaleString()}` : "—"}</b>
+                      </div>
+                      <div className="documentStatCard">
+                        <small>OBSERVED HIGH</small>
+                        <b>{result.count ? `$${Math.round(result.high).toLocaleString()}` : "—"}</b>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div style={{
+                  marginTop:16,
+                  padding:14,
+                  borderRadius:12,
+                  background:"#f8fafc",
+                  color:"#5d6878",
+                  fontSize:12,
+                }}>
+                  <b>Important:</b> Unitvero's calculator uses the comparable
+                  information entered by the landlord. A future live-data integration
+                  can supply verified market comps automatically. It should not be
+                  represented as a licensed appraisal or guaranteed market rent.
+                </div>
+              </section>
+            </div>
+          </section>
+        )}
+
         {view === "documents" && (
           <section className="documentsPage">
             <div className="applicationsHeader documentsHeader">
@@ -7587,6 +8052,102 @@ export default function Dashboard() {
                 </form>
               </div>
             )}
+          </section>
+        )}
+
+
+        {view === "pro" && (
+          <section className="panel">
+            <div className="applicationsHeader documentsHeader">
+              <div>
+                <small>UNITVERO PLANS</small>
+                <h1>Free vs. Pro</h1>
+                <p>
+                  Compare the features included with each plan.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setView("overview")}
+              >
+                Back to Dashboard
+              </button>
+            </div>
+
+            <div style={{
+              display:"grid",
+              gridTemplateColumns:"repeat(2,minmax(0,1fr))",
+              gap:18,
+              marginTop:24,
+            }}>
+              <article style={{
+                border:"1px solid #dbe3ef",
+                borderRadius:20,
+                padding:22,
+                background:"#fff",
+              }}>
+                <small>STARTER</small>
+                <h2>Free</h2>
+                <p>Core property-management tools.</p>
+                <ul style={{lineHeight:2,paddingLeft:20}}>
+                  <li>Property management</li>
+                  <li>Tenant management</li>
+                  <li>Basic rent tracking</li>
+                  <li>Maintenance requests</li>
+                  <li>Basic messaging</li>
+                  <li>Document storage</li>
+                </ul>
+              </article>
+
+              <article style={{
+                border:"2px solid #172033",
+                borderRadius:20,
+                padding:22,
+                background:"#f8fafc",
+              }}>
+                <small>FULL MANAGEMENT</small>
+                <h2>Unitvero Pro</h2>
+                <p>Advanced tools for landlords who want the complete workflow.</p>
+                <ul style={{lineHeight:2,paddingLeft:20}}>
+                  <li>Everything in Free</li>
+                  <li>Professional document builder</li>
+                  <li>50-state document framework</li>
+                  <li>In-app eSignatures</li>
+                  <li>Messaging with attachments</li>
+                  <li>Advanced bookkeeping</li>
+                  <li>Maintenance cost tracking</li>
+                  <li>Rental value & comp analysis</li>
+                  <li>Faster payout option</li>
+                  <li>Advanced document delivery</li>
+                  <li>Priority help/chat features</li>
+                  <li>Expanded landlord reporting</li>
+                </ul>
+                <button
+                  type="button"
+                  className="primary"
+                  style={{width:"100%",marginTop:12}}
+                  onClick={() => alert("Pro checkout is ready to connect to your billing provider.")}
+                >
+                  Upgrade to Pro
+                </button>
+              </article>
+            </div>
+
+            <div style={{
+              marginTop:20,
+              padding:16,
+              border:"1px solid #dbe3ef",
+              borderRadius:14,
+              background:"#fff",
+            }}>
+              <b>Subscription note</b>
+              <p style={{margin:"6px 0 0",color:"#5d6878"}}>
+                The comparison screen is live. The Upgrade button is ready for a
+                real checkout connection; payment processing should be connected
+                before charging customers.
+              </p>
+            </div>
           </section>
         )}
 
@@ -11224,7 +11785,283 @@ function TenantPortal({
             )}
           </>
         )}
-      </main>
+      
+      <div style={{
+        position:"fixed",
+        left:18,
+        bottom:18,
+        zIndex:1199,
+        background:"#fff",
+        border:"1px solid #dbe3ef",
+        borderRadius:12,
+        padding:"7px 9px",
+        boxShadow:"0 8px 24px rgba(0,0,0,.12)",
+      }}>
+        <select
+          aria-label="Choose language"
+          value={appLanguage}
+          onChange={(e) => setAppLanguage(e.target.value)}
+          style={{
+            border:0,
+            outline:"none",
+            background:"#fff",
+            fontWeight:700,
+            color:"#263247",
+          }}
+        >
+          {unitveroLanguages.map(([code, name]) => (
+            <option key={code} value={code}>{name}</option>
+          ))}
+        </select>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setHelpChatOpen((open) => !open)}
+        aria-label="Open Unitvero Help"
+        style={{
+          position:"fixed",
+          right:22,
+          bottom:22,
+          zIndex:1200,
+          width:58,
+          height:58,
+          borderRadius:"50%",
+          border:0,
+          background:"#172033",
+          color:"#fff",
+          fontSize:24,
+          boxShadow:"0 12px 30px rgba(0,0,0,.2)",
+          cursor:"pointer",
+        }}
+      >
+        ?
+      </button>
+
+      {helpChatOpen && (
+        <div style={{
+          position:"fixed",
+          right:22,
+          bottom:92,
+          zIndex:1200,
+          width:"min(390px,calc(100vw - 32px))",
+          height:520,
+          background:"#fff",
+          border:"1px solid #dbe3ef",
+          borderRadius:20,
+          boxShadow:"0 20px 60px rgba(0,0,0,.22)",
+          display:"grid",
+          gridTemplateRows:"auto 1fr auto",
+          overflow:"hidden",
+        }}>
+          <div style={{
+            padding:16,
+            background:"#172033",
+            color:"#fff",
+            display:"flex",
+            justifyContent:"space-between",
+            alignItems:"center",
+          }}>
+            <div>
+              <b>Unitvero Help</b>
+              <span style={{display:"block",fontSize:12,opacity:.75}}>
+                In-app support
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHelpChatOpen(false)}
+              style={{
+                border:0,
+                background:"transparent",
+                color:"#fff",
+                fontSize:22,
+                cursor:"pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          <div style={{
+            padding:14,
+            overflow:"auto",
+            display:"grid",
+            alignContent:"start",
+            gap:10,
+            background:"#f8fafc",
+          }}>
+            {helpMessages.map((message, index) => (
+              <div
+                key={index}
+                style={{
+                  justifySelf:message.role === "user" ? "end" : "start",
+                  maxWidth:"86%",
+                  padding:"10px 12px",
+                  borderRadius:14,
+                  background:message.role === "user" ? "#172033" : "#fff",
+                  color:message.role === "user" ? "#fff" : "#263247",
+                  border:message.role === "user" ? "0" : "1px solid #e1e7ef",
+                  fontSize:13,
+                  lineHeight:1.45,
+                }}
+              >
+                {message.text}
+              </div>
+            ))}
+          </div>
+
+          <form
+            onSubmit={submitHelpMessage}
+            style={{
+              padding:10,
+              borderTop:"1px solid #e1e7ef",
+              display:"flex",
+              gap:8,
+            }}
+          >
+            <input
+              value={helpInput}
+              onChange={(e) => setHelpInput(e.target.value)}
+              placeholder="Ask Unitvero Help..."
+              style={{flex:1}}
+            />
+            <button type="submit" className="primary">Send</button>
+          </form>
+        </div>
+      )}
+
+      {privacyOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position:"fixed",
+            inset:0,
+            zIndex:1300,
+            background:"rgba(10,20,35,.58)",
+            display:"grid",
+            placeItems:"center",
+            padding:20,
+          }}
+        >
+          <div style={{
+            width:"min(820px,100%)",
+            maxHeight:"90vh",
+            overflow:"auto",
+            background:"#fff",
+            borderRadius:22,
+            padding:26,
+          }}>
+            <div style={{
+              display:"flex",
+              justifyContent:"space-between",
+              gap:14,
+              alignItems:"flex-start",
+            }}>
+              <div>
+                <small>UNITVERO</small>
+                <h2 style={{margin:"4px 0 6px"}}>Privacy Policy</h2>
+                <p style={{margin:0,color:"#667386"}}>
+                  Privacy information and data choices.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setPrivacyOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{lineHeight:1.65,fontSize:13,marginTop:20}}>
+              <h3>1. Information We Collect</h3>
+              <p>
+                Unitvero may collect account information, property and tenancy
+                information, payment-related records, maintenance requests and
+                photos, messages, documents, signatures, and other information
+                that users choose to enter or upload. The exact categories depend
+                on the features a user uses.
+              </p>
+
+              <h3>2. How We Use Information</h3>
+              <p>
+                Information is used to provide property-management features,
+                authenticate accounts, process and display rental records,
+                facilitate communications, manage documents and signatures,
+                provide support, improve security, and operate requested
+                subscription features.
+              </p>
+
+              <h3>3. Sharing</h3>
+              <p>
+                Unitvero may use service providers that process information on
+                Unitvero's behalf, such as hosting, authentication, storage,
+                payment, email, messaging, analytics, or document-delivery
+                providers. Information may also be shared when a user explicitly
+                requests a transfer, such as sending a document to a tenant.
+              </p>
+
+              <h3>4. Security</h3>
+              <p>
+                Unitvero uses access controls and security measures designed to
+                protect stored information. No internet service can guarantee
+                absolute security.
+              </p>
+
+              <h3>5. Retention and Deletion</h3>
+              <p>
+                Unitvero retains information for as long as reasonably necessary
+                to provide the service, comply with legal obligations, resolve
+                disputes, and maintain legitimate business records. Users may
+                request account/data deletion through the account-support process,
+                subject to information that must be retained by law.
+              </p>
+
+              <h3>6. Privacy Choices</h3>
+              <p>
+                Users may contact Unitvero to request access, correction, or
+                deletion of applicable personal information and to ask questions
+                about data practices.
+              </p>
+
+              <h3>7. Children</h3>
+              <p>
+                Unitvero is not directed to children and should not be used by
+                children without appropriate authorization.
+              </p>
+
+              <h3>8. Changes</h3>
+              <p>
+                Unitvero may update this policy as its services or legal
+                requirements change. The current policy should be made available
+                through a public privacy-policy URL.
+              </p>
+
+              <h3>9. Contact</h3>
+              <p>
+                Privacy questions should be directed to the privacy/support
+                contact published by the Unitvero operator.
+              </p>
+
+              <div style={{
+                padding:14,
+                background:"#fff8e8",
+                border:"1px solid #ead9a9",
+                borderRadius:12,
+              }}>
+                <b>Before app-store submission:</b> replace the placeholder
+                operator/contact information with your actual legal business
+                name, privacy email, retention practices, and the exact third-party
+                services Unitvero uses. This policy should be reviewed for the
+                actual production data flows before submission.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+</main>
     </div>
   );
 }
