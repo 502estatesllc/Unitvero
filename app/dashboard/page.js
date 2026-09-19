@@ -3693,15 +3693,27 @@ try {
         {view === "tenants" && (
           <section className="panel">
             <div className="dashboardHeader">
-              <div>
-                <small>TENANT MANAGEMENT</small>
-                <h1>Tenants</h1>
+  <div>
+    <small>TENANT MANAGEMENT</small>
+    <h1>Tenants</h1>
 
-                <p className="dashboardSubtitle">
-                  Manage active tenants across your rental portfolio.
-                </p>
-              </div>
-            </div>
+    <p className="dashboardSubtitle">
+      Manage active tenants across your rental portfolio.
+    </p>
+  </div>
+
+  <button
+    type="button"
+    className="primary"
+    onClick={() => {
+      setSelectedProperty(null);
+      setSelectedUnit(null);
+      setView("addTenant");
+    }}
+  >
+    + Invite Tenant
+  </button>
+</div>
 
             <div className="activityList">
               {tenancies.length === 0 && (
