@@ -8468,21 +8468,29 @@ function TenantPortal({
     if (!tenancy || !property?.landlord_id) return null;
 
     const s = supabase();
-    const { data, error } = await s.from("conversations").insert({
-      landlord_id: property.landlord_id,
-      property_id: tenancy.property_id,
-      tenancy_id: tenancy.id,
-      subject: "Tenant conversation",
-      updated_at: new Date().toISOString(),
-    }).select("*").single();
+    const { data, error } = await s.rpc("unitvero_start_conversation", {
+      p_tenancy_id: tenancy.id,
+      p_subject: "Tenant conversation",
+    });
 
     if (error) {
       setNotice("Could not start the conversation: " + error.message);
       return null;
     }
-    setConversations([data]);
-    setSelectedConversation(data);
-    return data;
+
+    const conversation = Array.isArray(data) ? data[0] : data;
+
+    if (!conversation?.id) {
+      setNotice("Could not start the conversation. Please try again.");
+      return null;
+    }
+
+    setConversations((current) => {
+      const exists = current.some((item) => item.id === conversation.id);
+      return exists ? current : [conversation, ...current];
+    });
+    setSelectedConversation(conversation);
+    return conversation;
   }
 
   async function sendTenantMessage(e) {
