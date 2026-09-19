@@ -2876,428 +2876,78 @@ export default function Dashboard() {
 
       <main className="dash">
         {view === "overview" && (
-          <>
-            <div className="dashboardHeader">
+          <div className="generatedDashboard">
+            <section className="generatedWelcome">
               <div>
-                <small>LANDLORD DASHBOARD</small>
-
-                <h1>
-                  {t("greeting")}
-                  {profile?.full_name
-                    ? ", " + profile.full_name.split(" ")[0]
-                    : ""}
-                  .
-                </h1>
-
-                <p className="dashboardSubtitle">{t("portfolioUpdate")}</p>
+                <span className="generatedEyebrow">UNITVERO DASHBOARD</span>
+                <h1>Good to see you, {profile?.full_name?.split(" ")[0] || "Ladon"}.</h1>
+                <p>Here’s what’s happening with your portfolio.</p>
               </div>
-
-              <div className="dashboardHeaderTools">
-                <select
-                  className="languageSelect"
-                  value={language}
-                  onChange={(event) => changeLanguage(event.target.value)}
-                  aria-label="Language"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
+              <div className="generatedWelcomeActions">
+                <select value={bookkeepingMonth} onChange={(e)=>setBookkeepingMonth(e.target.value)} aria-label="Period">
+                  <option value="all">This Month</option>
+                  <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+                  <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+                  <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+                  <option value="9">October</option><option value="10">November</option><option value="11">December</option>
                 </select>
-
-                <button
-                  type="button"
-                  className="privacyButton"
-                  onClick={togglePrivacy}
-                  aria-pressed={privacyMode}
-                >
-                  {privacyMode ? "◉ Show amounts" : "◎ Hide amounts"}
-                </button>
-
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={() => setView("properties")}
-                >
-                  {t("addProperty")}
-                </button>
-              </div>
-            </div>
-
-            <div className="overviewStats overviewStatsEnhanced">
-              <article className="overviewStatCard statBlue">
-                <span>Total Properties</span>
-                <b>{props.length}</b>
-                <small>{dashboardTotalUnits} RENTABLE UNITS</small>
-              </article>
-
-              <article className="overviewStatCard statGreen">
-                <span>Occupied Units</span>
-                <b>{dashboardOccupiedUnits}</b>
-                <small>{dashboardOccupancyRate}% OCCUPANCY</small>
-              </article>
-
-              <article className="overviewStatCard statPurple">
-                <span>Monthly Rent</span>
-                <b className="privacyValue">
-                  ${portfolioMonthlyRent.toLocaleString()}
-                </b>
-                <small>EXPECTED</small>
-              </article>
-
-              <article className="overviewStatCard statOrange">
-                <span>Outstanding</span>
-                <b className="privacyValue">
-                  ${dashboardOutstanding.toLocaleString()}
-                </b>
-                <small>CURRENT LEDGER</small>
-              </article>
-            </div>
-
-            <div className="UnitveroChartsGrid">
-              <section className="UnitveroChartCard">
-                <div className="UnitveroChartHeader">
-                  <div>
-                    <small>COLLECTION PERFORMANCE</small>
-                    <h2>Rent Collection</h2>
-                  </div>
-
-                  <strong>{dashboardCollectionRate}%</strong>
-                </div>
-
-                <div className="collectionDonutRow">
-                  <div
-                    className="collectionDonut"
-                    style={{
-                      "--collection-rate": `${dashboardCollectionRate * 3.6}deg`,
-                    }}
-                  >
-                    <div>
-                      <b>{dashboardCollectionRate}%</b>
-                      <span>collected</span>
-                    </div>
-                  </div>
-
-                  <div className="chartLegend">
-                    <div>
-                      <i className="legendCollected"></i>
-                      <span>Collected</span>
-                      <b>${dashboardCollected.toLocaleString()}</b>
-                    </div>
-
-                    <div>
-                      <i className="legendOutstanding"></i>
-                      <span>Outstanding</span>
-                      <b>${dashboardOutstanding.toLocaleString()}</b>
-                    </div>
-
-                    <div>
-                      <i className="legendCharges"></i>
-                      <span>Total charges</span>
-                      <b>${dashboardTotalCharges.toLocaleString()}</b>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="UnitveroChartCard">
-                <div className="UnitveroChartHeader">
-                  <div>
-                    <small>PORTFOLIO HEALTH</small>
-                    <h2>Occupancy</h2>
-                  </div>
-
-                  <strong>{dashboardOccupancyRate}%</strong>
-                </div>
-
-                <div className="occupancyVisual">
-                  <div className="occupancyTrack">
-                    <span
-                      style={{
-                        width: `${dashboardOccupancyRate}%`,
-                      }}
-                    ></span>
-                  </div>
-
-                  <div className="occupancyNumbers">
-                    <div>
-                      <b>{dashboardOccupiedUnits}</b>
-                      <span>Occupied</span>
-                    </div>
-
-                    <div>
-                      <b>{dashboardVacantUnits}</b>
-                      <span>Vacant</span>
-                    </div>
-
-                    <div>
-                      <b>{dashboardTotalUnits}</b>
-                      <span>Total units</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="UnitveroChartCard UnitveroChartWide">
-                <div className="UnitveroChartHeader">
-                  <div>
-                    <small>LAST 6 MONTHS</small>
-                    <h2>Rent Collected</h2>
-                  </div>
-
-                  <strong>${dashboardCollected.toLocaleString()}</strong>
-                </div>
-
-                <div className="rentBarChart">
-                  {dashboardMonthData.map((month) => (
-                    <div className="rentBarColumn" key={month.label}>
-                      <div className="rentBarValue">
-                        {month.amount > 0
-                          ? `$${month.amount.toLocaleString()}`
-                          : ""}
-                      </div>
-
-                      <div className="rentBarTrack">
-                        <span
-                          style={{
-                            height: `${Math.max(
-                              (month.amount / dashboardMaxMonth) * 100,
-                              month.amount > 0 ? 8 : 2,
-                            )}%`,
-                          }}
-                        ></span>
-                      </div>
-
-                      <b>{month.label}</b>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
-
-            <div className="dashboardProperties">
-              {props.slice(0, 4).map((property) => {
-                const tenancy = activeTenancyForProperty(property.id);
-                const occupied = Boolean(tenancy);
-
-                return (
-                  <article
-                    className="dashboardPropertyCard identityPropertyCard"
-                    key={property.id}
-                    onClick={() => {
-                      setSelectedProperty(property);
-                      setSelectedUnit(null);
-
-                      if (isMultiFamily(property)) {
-                        setSelectedTenancy(null);
-                      } else {
-                        loadTenancy(property.id);
-                      }
-
-                      setView("propertyDetails");
-                    }}
-                  >
-                    <div className="propertyIdentityPanel">
-                      <div className="propertyBuildingIcon">⌂</div>
-
-                      <span
-                        className={
-                          occupied
-                            ? "portfolioOccupancy occupied"
-                            : "portfolioOccupancy vacant"
-                        }
-                      >
-                        <i></i>
-                        {occupied ? "Occupied" : "Vacant"}
-                      </span>
-                    </div>
-
-                    <div className="propertyCardBody">
-                      <div className="propertyCardTop">
-                        <div>
-                          <small>RENTAL PROPERTY</small>
-
-                          <h3>{property.address}</h3>
-
-                          <p>
-                            {property.city}, {property.state}{" "}
-                            {property.zip_code}
-                          </p>
-                        </div>
-
-                        <span className="propertyArrow">→</span>
-                      </div>
-
-                      <div className="propertyCardDetails">
-                        <div>
-                          <span>MONTHLY RENT</span>
-
-                          <b>
-                            $
-                            {Number(
-                              property.monthly_rent || 0,
-                            ).toLocaleString()}
-                          </b>
-                        </div>
-
-                        <div>
-                          <span>TENANT</span>
-
-                          <b>
-                            {tenancy
-                              ? tenancy.tenant_name ||
-                                tenancy.tenant_email ||
-                                "Active tenant"
-                              : "No tenant"}
-                          </b>
-                        </div>
-                      </div>
-
-                      <div className="propertyCardFooter">
-                        <span>
-                          {occupied ? "Active tenancy" : "Ready for tenant"}
-                        </span>
-
-                        <b>View Property →</b>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-
-            <section className="activityShowcase">
-              <div className="showcaseHeader">
                 <div>
-                  <h2>Recent Activity</h2>
-                  <p>Latest updates from your portfolio.</p>
-                </div>
-              </div>
-
-              <div className="activityList">
-                <div className="activityRow">
-                  <div className="activityTypeIcon">$</div>
-
-                  <div>
-                    <b>Rent collection</b>
-                    <span>Payments will appear here</span>
-                  </div>
-
-                  <small>Current</small>
-                </div>
-
-                <div className="activityRow">
-                  <div className="activityTypeIcon">⌂</div>
-
-                  <div>
-                    <b>{props.length} properties</b>
-                    <span>Currently in your portfolio</span>
-                  </div>
-
-                  <small>Portfolio</small>
-                </div>
-
-                <div className="activityRow">
-                  <div className="activityTypeIcon">✓</div>
-
-                  <div>
-                    <b>{occupiedPropertyCount} occupied</b>
-
-                    <span>{vacantPropertyCount} currently vacant</span>
-                  </div>
-
-                  <small>Occupancy</small>
+                  <button type="button" className="generatedSecondary" onClick={togglePrivacy}>◉ {privacyMode ? "Show Amounts" : "Hide Amounts"}</button>
+                  <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>+ Add Property</button>
                 </div>
               </div>
             </section>
 
-            <div className="dashboardBottomGrid">
-              <section className="dashboardFeatureCard">
-                <div className="featureCardHeader">
-                  <div>
-                    <h2>Rent Collection</h2>
-                    <p>This month&apos;s performance</p>
-                  </div>
+            <section className="generatedStats">
+              <article><span>Total Properties</span><strong>{props.length}</strong><small>{dashboardTotalUnits} RENTABLE UNITS</small></article>
+              <article><span>Occupied Units</span><strong>{dashboardOccupiedUnits}</strong><small>{dashboardOccupancyRate}% OCCUPANCY</small></article>
+              <article><span>Monthly Rent</span><strong className="privacyValue">${portfolioMonthlyRent.toLocaleString()}</strong><small>EXPECTED</small></article>
+              <article><span>Outstanding</span><strong className="privacyValue">${dashboardOutstanding.toLocaleString()}</strong><small>CURRENT LEDGER</small></article>
+            </section>
+
+            <section className="generatedPanel generatedCollection">
+              <div className="generatedPanelTitle"><span>COLLECTION PERFORMANCE</span><h2>Rent Collection</h2></div>
+              <div className="generatedCollectionBody">
+                <div className="generatedDonut" style={{"--rate":`${Math.min(100,Math.max(0,dashboardCollectionRate))}%`}}>
+                  <div><strong>{dashboardCollectionRate}%</strong><small>Collected</small></div>
                 </div>
-
-                <div className="rentCollectionContent">
-                  <div className="rentCircle">
-                    <div>
-                      <b>0%</b>
-                      <span>Collected</span>
-                    </div>
-                  </div>
-
-                  <div className="rentLegend">
-                    <div>
-                      <span className="legendDot collected"></span>
-                      <span>Collected</span>
-                      <b>$0</b>
-                    </div>
-
-                    <div>
-                      <span className="legendDot pending"></span>
-                      <span>Expected</span>
-
-                      <b>${portfolioMonthlyRent.toLocaleString()}</b>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="dashboardFeatureCard">
-                <div className="featureCardHeader">
-                  <div>
-                    <h2>Lease Renewals</h2>
-                    <p>Upcoming lease activity</p>
-                  </div>
-                </div>
-
-                <div className="featureEmpty">
-                  <div className="featureEmptyIcon">▤</div>
-                  <b>No renewals scheduled</b>
-
-                  <span>Upcoming lease renewals will appear here.</span>
-                </div>
-              </section>
-
-              <section className="dashboardFeatureCard">
-                <div className="featureCardHeader">
-                  <div>
-                    <h2>Maintenance</h2>
-                    <p>Active requests</p>
-                  </div>
-                </div>
-
-                <div className="featureEmpty">
-                  <div className="featureEmptyIcon">◇</div>
-                  <b>0 Open Requests</b>
-                  <span>You&apos;re all caught up.</span>
-                </div>
-              </section>
-            </div>
-
-            <section className="portfolioBanner">
-              <div>
-                <span className="bannerIcon">⌂</span>
-
-                <div>
-                  <h2>Grow Your Portfolio</h2>
-
-                  <p>
-                    Add another property and keep building your rental business.
-                  </p>
+                <div className="generatedLegend">
+                  <div><span><i></i>Collected</span><b className="privacyValue">${dashboardCollected.toLocaleString()}</b></div>
+                  <div><span><i></i>Outstanding</span><b className="privacyValue">${dashboardOutstanding.toLocaleString()}</b></div>
+                  <div><span><i></i>Total charges</span><b className="privacyValue">${(dashboardCollected + dashboardOutstanding).toLocaleString()}</b></div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                className="primary"
-                onClick={() => setView("properties")}
-              >
-                + Add Property
-              </button>
             </section>
-          </>
-        )}
+
+            <section className="generatedPanel generatedOccupancy">
+              <div className="generatedPanelTitle"><span>PORTFOLIO HEALTH</span><h2>Occupancy</h2></div>
+              <strong className="generatedPercent">{dashboardOccupancyRate}%</strong>
+              <div className="generatedOccupancyTrack"><span style={{width:`${dashboardOccupancyRate}%`}}></span></div>
+              <div className="generatedOccupancyBoxes">
+                <div><strong>{dashboardOccupiedUnits}</strong><span>Occupied</span></div>
+                <div><strong>{dashboardVacantUnits}</strong><span>Vacant</span></div>
+                <div><strong>{dashboardTotalUnits}</strong><span>Total Units</span></div>
+              </div>
+            </section>
+
+            <section className="generatedPanel generatedSixMonths">
+              <div className="generatedPanelTitle"><span>LAST 6 MONTHS</span><h2>Rent Collected</h2></div>
+              <strong className="generatedAmount privacyValue">${dashboardCollected.toLocaleString()}</strong>
+              <div className="generatedMonths">
+                {Array.from({length:6},(_,index)=>{
+                  const d=new Date(); d.setMonth(d.getMonth()-(5-index),1);
+                  const label=d.toLocaleString("en-US",{month:"short"});
+                  const value=rentPayments.filter(p=>{const x=new Date(p.payment_date);return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth();}).reduce((s,p)=>s+Number(p.amount||0),0);
+                  const max=Math.max(1,...Array.from({length:6},(_,j)=>{const y=new Date();y.setMonth(y.getMonth()-(5-j),1);return rentPayments.filter(p=>{const x=new Date(p.payment_date);return x.getFullYear()===y.getFullYear()&&x.getMonth()===y.getMonth();}).reduce((s,p)=>s+Number(p.amount||0),0);}));
+                  const height=value?Math.max(8,Math.round((value/max)*100)):5;
+                  return <div key={label}><b className={index===5?"active": ""} style={{height:`${height}%`}}></b><span>{label}</span>{value>0&&<small>${value.toLocaleString()}</small>}</div>;
+                })}
+              </div>
+            </section>
+
+            <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>Privacy Policy</button><button type="button">Terms of Service</button></div></footer>
+          </div>
+        )}}}
 
         {view === "properties" && (
           <section className="portfolioPage">
@@ -12041,6 +11691,135 @@ html, body,
   font-family:Inter,Arial,sans-serif !important;
   font-synthesis:none !important;
 }
+
+
+/* =========================================================
+   REFERENCE MOCKUP LAYOUT — DO NOT MIX WITH OLD DASHBOARD
+   Black / gold / warm white / gray only.
+   ========================================================= */
+.refTopbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 18px;border-bottom:1px solid rgba(244,200,79,.10);gap:18px}
+.refBreadcrumb{font-size:9px;font-weight:800;letter-spacing:.13em;color:#777a76}
+.refBreadcrumb span{color:#f4c84f;margin:0 7px}
+.refTopActions{display:flex;gap:7px;flex-wrap:wrap}
+.refTopActions button{background:#0c0e0f!important;color:#b9bab5!important;border:1px solid rgba(244,200,79,.18)!important;border-radius:8px!important;padding:8px 11px!important;font-size:10px!important;font-weight:800!important;cursor:pointer}
+.refTopActions button:last-child{background:#f4c84f!important;color:#111!important;border-color:#f4c84f!important}
+
+.refHero{margin-top:16px}
+.refHeroPhoto{position:relative;min-height:355px;overflow:hidden;border:1px solid rgba(244,200,79,.26);border-radius:14px;background:
+  linear-gradient(125deg,#19140a 0%,#0d0f10 45%,#16120a 100%);box-shadow:0 24px 55px rgba(0,0,0,.28)}
+.refHeroPhoto:before{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 75% 35%,rgba(244,200,79,.15),transparent 26%),
+  linear-gradient(90deg,rgba(0,0,0,.84) 0%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.12) 74%,rgba(0,0,0,.62) 100%);z-index:1}
+.refHeroShade{position:absolute;inset:0;background:
+  linear-gradient(135deg,rgba(244,200,79,.07),transparent 35%),
+  repeating-linear-gradient(0deg,transparent 0 34px,rgba(244,200,79,.025) 35px 36px);z-index:2}
+.refHeroCopy{position:absolute;left:28px;top:30px;width:42%;z-index:4}
+.refHeroCopy>span{font-size:9px;letter-spacing:.14em;font-weight:900;color:#f4c84f}
+.refHeroCopy h1{font-size:40px;line-height:.98;letter-spacing:-.055em;margin:10px 0 13px;color:#fff}
+.refHeroCopy p{max-width:440px;color:#a6a7a2;font-size:12px;line-height:1.65;margin:0 0 17px}
+.refHeroActions{display:flex;gap:8px}
+.refHeroActions button{padding:9px 13px;border-radius:8px;border:1px solid rgba(244,200,79,.26);background:#0c0e0f;color:#eee9dd;font-size:10px;font-weight:900;cursor:pointer}
+.refHeroActions button:first-child{background:#f4c84f;color:#111;border-color:#f4c84f}
+
+.refHeroProperty{position:absolute;z-index:3;left:43%;top:35px;width:37%;height:278px;border:1px solid rgba(244,200,79,.30);border-radius:11px;overflow:hidden;background:#111415;box-shadow:0 18px 38px rgba(0,0,0,.35);transform:perspective(900px) rotateY(-3deg)}
+.refPropertyImage{height:198px;background:linear-gradient(145deg,#17130a,#282019 50%,#0d0f10);overflow:hidden}
+.refPropertyImage img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.72) contrast(1.03)}
+.refBuildingPlaceholder{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;background:
+  linear-gradient(145deg,transparent 25%,rgba(244,200,79,.09)),
+  linear-gradient(135deg,#2a261c 0%,#141617 55%,#090a0b 100%)}
+.refBuildingPlaceholder span{font-size:8px;color:#f4c84f;letter-spacing:.14em;font-weight:900}
+.refBuildingPlaceholder b{font-size:16px;color:#fff;margin-top:5px}
+.refPropertyInfo{padding:10px 12px;display:grid;gap:3px}
+.refPropertyInfo small{font-size:7px;color:#777b77;letter-spacing:.12em}
+.refPropertyInfo b{font-size:12px;color:#f5f3ec}
+.refPropertyInfo span{font-size:9px;color:#8d918c}
+
+.refCollectionCard{position:absolute;right:22px;top:23px;width:180px;padding:14px;border:1px solid rgba(244,200,79,.28);border-radius:10px;background:rgba(10,12,13,.94);z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.35)}
+.refCollectionCard small{display:block;font-size:7px;letter-spacing:.13em;color:#8b8e8a;font-weight:900}
+.refCollectionCard>strong{display:block;color:#f4c84f;font-size:25px;margin:4px 0 7px}
+.refMiniTrack{height:5px;background:#1d1f1f;border-radius:99px;overflow:hidden;margin-bottom:10px}
+.refMiniTrack span{display:block;height:100%;background:#f4c84f;border-radius:99px}
+.refCollectionCard>div:not(.refMiniTrack){display:flex;justify-content:space-between;margin-top:6px;font-size:8px}
+.refCollectionCard>div span{color:#838782}.refCollectionCard>div b{color:#eee9dd}
+
+.refStats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:11px}
+.refStats article{padding:15px 16px;border:1px solid rgba(244,200,79,.20);border-radius:10px;background:#0d1011;min-height:94px}
+.refStats small{display:block;color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
+.refStats strong{display:block;color:#f7f5ee;font-size:24px;letter-spacing:-.04em;margin:7px 0 2px}
+.refStats article:nth-child(2) strong{color:#f4c84f}
+.refStats span{font-size:8px;color:#888c87}
+
+.refDashboardGrid{display:grid;grid-template-columns:1.6fr .75fr;gap:10px;margin-top:10px}
+.refPanel{padding:17px;border:1px solid rgba(244,200,79,.22);border-radius:11px;background:#0d1011;min-height:250px}
+.refWide{min-width:0}
+.refPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.refPanelHead small{display:block;font-size:7px;letter-spacing:.13em;color:#777b77;font-weight:900}
+.refPanelHead h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
+.refPanelHead strong{color:#f4c84f;font-size:17px}
+.refPanelHead button{background:transparent;border:0;color:#f4c84f;font-size:9px;font-weight:900;cursor:pointer}
+.refChart{height:175px;border:1px solid rgba(244,200,79,.14);border-radius:8px;padding:14px 10px 8px;background:#0a0c0d}
+.refChartBars{height:100%;display:flex;align-items:flex-end;gap:10px}
+.refChartBars>div{height:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+.refChartBars>div span{width:100%;max-width:22px;background:#242626;border-radius:4px 4px 1px 1px;display:block;border:1px solid rgba(244,200,79,.06)}
+.refChartBars>div.active span{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 16px rgba(244,200,79,.12)}
+.refChartBars small{font-size:7px;color:#6f736f}
+
+.refHealthRing{width:130px;height:130px;margin:8px auto 13px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#f4c84f 0deg calc(var(--occ, .88)*360deg),#232626 calc(var(--occ, .88)*360deg) 360deg);position:relative}
+.refHealthRing{--occ:0.88}
+.refHealthRing:after{content:"";position:absolute;inset:10px;background:#0d1011;border-radius:50%;border:1px solid rgba(244,200,79,.12)}
+.refHealthRing>div{position:relative;z-index:2;text-align:center;display:grid}
+.refHealthRing b{font-size:24px;color:#fff}.refHealthRing span{font-size:8px;color:#858984}
+.refHealthStats{display:flex;justify-content:center;gap:20px;color:#858984;font-size:8px}
+.refHealthStats b{color:#f4c84f;font-size:14px;margin-right:3px}
+
+.refQuickActions{margin-top:10px;padding:17px;border:1px solid rgba(244,200,79,.20);border-radius:11px;background:#0d1011;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.refQuickActions small{color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
+.refQuickActions h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
+.refActionGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;flex:1}
+.refActionGrid button{min-height:70px;border:1px solid rgba(244,200,79,.17);border-radius:9px;background:#101314;color:#c9c8c0;display:grid;place-items:center;gap:5px;cursor:pointer}
+.refActionGrid button:hover{border-color:rgba(244,200,79,.45);background:#151718}
+.refActionGrid b{color:#f4c84f;font-size:16px}.refActionGrid span{font-size:8px;font-weight:800}
+
+@media(max-width:1050px){
+  .refHeroCopy{width:50%}.refHeroProperty{left:48%;width:40%}.refCollectionCard{right:14px}
+  .refDashboardGrid{grid-template-columns:1fr}.refQuickActions{display:grid}.refActionGrid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:720px){
+  .refTopbar{align-items:flex-start;flex-direction:column}.refTopActions{width:100%}
+  .refHeroPhoto{min-height:620px}.refHeroCopy{position:relative;left:0;top:0;width:auto;padding:25px 20px}.refHeroCopy h1{font-size:34px}
+  .refHeroProperty{left:20px;right:20px;top:245px;width:auto;height:230px;transform:none}
+  .refPropertyImage{height:155px}.refCollectionCard{right:14px;top:465px;width:170px}
+  .refStats{grid-template-columns:repeat(2,1fr)}.refActionGrid{grid-template-columns:repeat(2,1fr)}
+}
+
+
+/* =========================================================
+   FINAL GENERATED-IMAGE LAYOUT — STRUCTURE + SPACING + PALETTE
+   ========================================================= */
+.unitveroModern .dash{margin-left:200px!important;padding:112px 26px 0!important;background:#070808!important;min-height:100vh!important}
+.unitveroModern .referenceHeader{left:200px!important;height:83px!important;background:#070808!important;border-bottom:1px solid rgba(244,200,79,.42)!important;padding:0 28px!important}
+.unitveroModern .sidebar{width:200px!important;background:#050606!important;border-right:1px solid rgba(244,200,79,.40)!important}
+.generatedDashboard{max-width:1110px;margin:0 auto;padding-bottom:0}
+.generatedWelcome{display:flex;justify-content:space-between;align-items:flex-end;gap:25px;margin-bottom:25px}
+.generatedEyebrow{font-size:10px;letter-spacing:.12em;font-weight:900;color:#f4c84f}
+.generatedWelcome h1{margin:7px 0 2px;color:#f8f7f1;font-size:38px;line-height:1.05;letter-spacing:-.055em;font-weight:800}
+.generatedWelcome p{margin:0;color:#969993;font-size:14px}
+.generatedWelcomeActions{display:grid;gap:9px;justify-items:end}
+.generatedWelcomeActions select{width:190px;height:40px;background:#0d0f10!important;border:1px solid rgba(244,200,79,.32)!important;border-radius:8px!important;color:#eeeae0!important;padding:0 12px!important;font-weight:700!important}
+.generatedWelcomeActions>div{display:flex;gap:9px}
+.generatedSecondary,.generatedPrimary{height:42px;border-radius:8px!important;padding:0 15px!important;font-size:11px!important;font-weight:900!important;cursor:pointer!important}
+.generatedSecondary{background:#080909!important;border:1px solid rgba(244,200,79,.34)!important;color:#f3f0e7!important}.generatedPrimary{background:#f4c84f!important;border:1px solid #f4c84f!important;color:#111!important}
+.generatedStats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.generatedStats article{height:117px;padding:17px 19px;border:1px solid rgba(244,200,79,.44);border-radius:10px;background:linear-gradient(145deg,#0d0f10,#101212);display:flex;flex-direction:column}
+.generatedStats article span{font-size:11px;color:#d0cec4;font-weight:600}.generatedStats article strong{margin-top:7px;font-size:30px;line-height:1;color:#f7f5ee;letter-spacing:-.04em}.generatedStats article small{margin-top:auto;color:#8c908b;font-size:8px;font-weight:800;letter-spacing:.07em}
+.generatedPanel{background:#0b0d0e;border:1px solid rgba(244,200,79,.44);border-radius:10px;padding:18px 19px;margin-bottom:12px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
+.generatedPanelTitle span{display:block;color:#a9a79f;font-size:9px;font-weight:900;letter-spacing:.09em}.generatedPanelTitle h2{margin:5px 0 0;color:#f7f5ee;font-size:20px;letter-spacing:-.035em}
+.generatedCollection{height:255px}.generatedCollectionBody{display:grid;grid-template-columns:170px 1fr;align-items:center;height:180px;gap:22px}.generatedDonut{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:auto;background:conic-gradient(#f4c84f 0 var(--rate),#262828 var(--rate) 100%);position:relative}.generatedDonut:after{content:"";position:absolute;inset:13px;background:#0b0d0e;border-radius:50%;border:1px solid rgba(255,255,255,.04)}.generatedDonut>div{position:relative;z-index:1;text-align:center;display:grid}.generatedDonut strong{font-size:22px;color:#f7f5ee}.generatedDonut small{font-size:9px;color:#8f938e}.generatedLegend{display:grid;gap:0}.generatedLegend div{height:47px;border-bottom:1px solid rgba(244,200,79,.25);display:flex;align-items:center;justify-content:space-between}.generatedLegend span{display:flex;align-items:center;gap:10px;color:#b0b1ac;font-size:11px}.generatedLegend i{width:12px;height:12px;border-radius:50%;background:#f4c84f;display:inline-block}.generatedLegend b{font-size:11px;color:#f4c84f}
+.generatedOccupancy{height:230px}.generatedPercent{display:block;margin:10px 0 6px;color:#f4c84f;font-size:16px}.generatedOccupancyTrack{height:14px;background:#191b1b;border:1px solid rgba(244,200,79,.11);border-radius:99px;overflow:hidden}.generatedOccupancyTrack span{display:block;height:100%;background:linear-gradient(90deg,#f4c84f,#f7df86);border-radius:99px}.generatedOccupancyBoxes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:15px}.generatedOccupancyBoxes div{height:72px;background:#f4f2e9;border-radius:8px;display:grid;place-items:center;color:#111}.generatedOccupancyBoxes strong{font-size:18px;line-height:1}.generatedOccupancyBoxes span{font-size:10px;color:#64645e}
+.generatedSixMonths{height:345px}.generatedAmount{display:block;color:#f4c84f;font-size:17px;margin-top:12px}.generatedMonths{height:235px;display:flex;align-items:flex-end;gap:26px;padding:20px 10px 0;border-top:1px solid rgba(244,200,79,.12);margin-top:9px}.generatedMonths>div{position:relative;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.generatedMonths b{display:block;width:45px;max-height:185px;min-height:7px;background:#1b1e1e;border:1px solid rgba(244,200,79,.08);border-radius:7px 7px 3px 3px}.generatedMonths b.active{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 20px rgba(244,200,79,.12)}.generatedMonths span{margin-top:8px;color:#858983;font-size:10px}.generatedMonths small{position:absolute;bottom:29px;color:#f4c84f;font-size:9px;font-weight:800}
+.generatedFooter{height:70px;border-top:1px solid rgba(244,200,79,.12);display:flex;align-items:center;justify-content:space-between;color:#858983;font-size:10px;margin-top:25px}.generatedFooter div{display:flex;gap:25px}.generatedFooter button{background:none;border:0;color:#9c9d98;font-size:10px;cursor:pointer}
+@media(max-width:850px){.generatedWelcome{align-items:flex-start;flex-direction:column}.generatedWelcomeActions{justify-items:start;width:100%}.generatedStats{grid-template-columns:repeat(2,1fr)}.generatedCollectionBody{grid-template-columns:145px 1fr}.generatedMonths{gap:12px}}
+@media(max-width:650px){.unitveroModern .sidebar{width:70px!important}.unitveroModern .referenceHeader{left:70px!important}.unitveroModern .dash{margin-left:70px!important;padding-left:14px!important;padding-right:14px!important}.generatedStats{grid-template-columns:1fr}.generatedCollection{height:auto}.generatedCollectionBody{grid-template-columns:1fr;height:auto;padding-top:15px}.generatedLegend{margin-top:10px}.generatedOccupancyBoxes{grid-template-columns:1fr}.generatedSixMonths{overflow:hidden}.generatedMonths{gap:5px}.generatedMonths b{width:30px}.generatedFooter{height:auto;padding:20px 0;gap:10px;align-items:flex-start;flex-direction:column}}
 
       `}</style>
     </div>
