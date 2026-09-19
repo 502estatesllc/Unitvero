@@ -78,6 +78,8 @@ export default function Dashboard() {
   const [maintenanceRequests, setMaintenanceRequests] = useState([]);
   const [maintenanceAttachments, setMaintenanceAttachments] = useState([]);
   const [maintenanceExpenses, setMaintenanceExpenses] = useState([]);
+  const [bookkeepingYear, setBookkeepingYear] = useState(String(new Date().getFullYear()));
+  const [bookkeepingMonth, setBookkeepingMonth] = useState("all");
   const [documents, setDocuments] = useState([]);
   const [documentTemplates, setDocumentTemplates] = useState([]);
   const [subscription, setSubscription] = useState(null);
@@ -105,6 +107,81 @@ export default function Dashboard() {
     if (hasFeature(featureKey)) return true;
     alert(`${featureName} is included with Unitvero Pro. Subscription checkout will be connected before launch.`);
     return false;
+  }
+
+  function bookkeepingDate(value) {
+    if (!value) return null;
+    const d = new Date(value.includes("T") ? value : `${value}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function bookkeepingMatchesDate(value) {
+    const d = bookkeepingDate(value);
+    if (!d) return false;
+    const yearMatches = d.getFullYear() === Number(bookkeepingYear);
+    const monthMatches =
+      bookkeepingMonth === "all" ||
+      d.getMonth() === Number(bookkeepingMonth);
+    return yearMatches && monthMatches;
+  }
+
+  function exportBookkeepingCsv() {
+    const rows = [
+      ["Date", "Type", "Category", "Description", "Property", "Amount", "Tax Deductible"],
+    ];
+
+    const propertyName = (propertyId) => {
+      const p = props.find((item) => item.id === propertyId);
+      return p?.address || "";
+    };
+
+    rentPayments
+      .filter((payment) => bookkeepingMatchesDate(payment.payment_date))
+      .forEach((payment) => {
+        rows.push([
+          payment.payment_date || "",
+          "Income",
+          "Rent",
+          payment.notes || "Rent payment",
+          propertyName(payment.property_id),
+          Number(payment.amount || 0).toFixed(2),
+          "No",
+        ]);
+      });
+
+    maintenanceExpenses
+      .filter((expense) => bookkeepingMatchesDate(expense.expense_date))
+      .forEach((expense) => {
+        rows.push([
+          expense.expense_date || "",
+          "Expense",
+          expense.category || "Repairs and maintenance",
+          expense.description || "Maintenance expense",
+          propertyName(expense.property_id),
+          (-Number(expense.total_cost || 0)).toFixed(2),
+          expense.include_in_tax_report ? "Yes" : "No",
+        ]);
+      });
+
+    rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `unitvero-bookkeeping-${bookkeepingYear}${bookkeepingMonth === "all" ? "" : `-${String(Number(bookkeepingMonth) + 1).padStart(2, "0")}`}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   async function loadEntitlements(s, landlordId) {
@@ -1338,6 +1415,14 @@ export default function Dashboard() {
           >
             <span className="navIcon">◇</span>
             <span>{t("maintenance")}</span>
+          </a>
+
+          <a
+            className={view === "bookkeeping" ? "active" : ""}
+            onClick={() => setView("bookkeeping")}
+          >
+            <span className="navIcon">▤</span>
+            <span>Bookkeeping</span>
           </a>
         </nav>
         <div className="sidebarAccount">
@@ -7995,7 +8080,397 @@ export default function Dashboard() {
             )}
           </section>
         )}
-      </main>
+      
+        {view === "bookkeeping" && (() => {
+          const filteredRentPayments = rentPayments.filter((payment) =>
+            bookkeepingMatchesDate(payment.payment_date)
+          );
+
+          const filteredMaintenanceExpenses = maintenanceExpenses.filter((expense) =>
+            bookkeepingMatchesDate(expense.expense_date)
+          );
+
+          const totalIncome = filteredRentPayments.reduce(
+            (sum, payment) => sum + Number(payment.amount || 0),
+            0
+          );
+
+          const totalExpenses = filteredMaintenanceExpenses.reduce(
+            (sum, expense) => sum + Number(expense.total_cost || 0),
+            0
+          );
+
+          const netIncome = totalIncome - totalExpenses;
+
+          const deductibleExpenses = filteredMaintenanceExpenses
+            .filter((expense) => expense.include_in_tax_report)
+            .reduce((sum, expense) => sum + Number(expense.total_cost || 0), 0);
+
+          const laborExpenses = filteredMaintenanceExpenses.reduce(
+            (sum, expense) => sum + Number(expense.labor_cost || 0),
+            0
+          );
+
+          const materialExpenses = filteredMaintenanceExpenses.reduce(
+            (sum, expense) => sum + Number(expense.material_cost || 0),
+            0
+          );
+
+          const otherExpenses = filteredMaintenanceExpenses.reduce(
+            (sum, expense) => sum + Number(expense.other_cost || 0),
+            0
+          );
+
+          const propertyBreakdown = props
+            .map((property) => {
+              const income = filteredRentPayments
+                .filter((payment) => payment.property_id === property.id)
+                .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+
+              const expenses = filteredMaintenanceExpenses
+                .filter((expense) => expense.property_id === property.id)
+                .reduce((sum, expense) => sum + Number(expense.total_cost || 0), 0);
+
+              return {
+                ...property,
+                income,
+                expenses,
+                net: income - expenses,
+              };
+            })
+            .filter((property) => property.income !== 0 || property.expenses !== 0)
+            .sort((a, b) => b.net - a.net);
+
+          const years = Array.from(
+            new Set([
+              new Date().getFullYear(),
+              ...rentPayments
+                .map((payment) => bookkeepingDate(payment.payment_date)?.getFullYear())
+                .filter(Boolean),
+              ...maintenanceExpenses
+                .map((expense) => bookkeepingDate(expense.expense_date)?.getFullYear())
+                .filter(Boolean),
+            ])
+          ).sort((a, b) => b - a);
+
+          const money = (value) =>
+            `$${Number(value || 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`;
+
+          const monthName = (monthIndex) =>
+            new Date(2000, monthIndex, 1).toLocaleString("en-US", {
+              month: "long",
+            });
+
+          return (
+            <section className="panel">
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: 16,
+                flexWrap: "wrap",
+              }}>
+                <div>
+                  <small>FINANCIAL MANAGEMENT</small>
+                  <h1>Bookkeeping</h1>
+                  <p>
+                    Track collected rent, repair expenses, tax-deductible costs,
+                    and property-level cash flow from your Unitvero records.
+                  </p>
+                </div>
+
+                <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                  <select
+                    value={bookkeepingYear}
+                    onChange={(e) => setBookkeepingYear(e.target.value)}
+                    style={{
+                      minHeight:42,
+                      border:"1px solid #dbe3ef",
+                      borderRadius:12,
+                      padding:"0 12px",
+                      background:"#fff",
+                    }}
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={bookkeepingMonth}
+                    onChange={(e) => setBookkeepingMonth(e.target.value)}
+                    style={{
+                      minHeight:42,
+                      border:"1px solid #dbe3ef",
+                      borderRadius:12,
+                      padding:"0 12px",
+                      background:"#fff",
+                    }}
+                  >
+                    <option value="all">All months</option>
+                    {Array.from({length:12}, (_, index) => (
+                      <option key={index} value={index}>
+                        {monthName(index)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={async () => {
+                      await load();
+                    }}
+                  >
+                    Refresh
+                  </button>
+
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={exportBookkeepingCsv}
+                  >
+                    Export CSV
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="portfolioStats"
+                style={{
+                  marginTop:22,
+                  gridTemplateColumns:"repeat(4,minmax(0,1fr))",
+                }}
+              >
+                <article>
+                  <span className="portfolioStatIcon rent">$</span>
+                  <div>
+                    <small>RENT COLLECTED</small>
+                    <b>{money(totalIncome)}</b>
+                    <p>{filteredRentPayments.length} payment(s)</p>
+                  </div>
+                </article>
+
+                <article>
+                  <span className="portfolioStatIcon">−</span>
+                  <div>
+                    <small>EXPENSES</small>
+                    <b>{money(totalExpenses)}</b>
+                    <p>{filteredMaintenanceExpenses.length} repair expense(s)</p>
+                  </div>
+                </article>
+
+                <article>
+                  <span className="portfolioStatIcon occupied">✓</span>
+                  <div>
+                    <small>NET CASH FLOW</small>
+                    <b>{money(netIncome)}</b>
+                    <p>Collected rent less recorded expenses</p>
+                  </div>
+                </article>
+
+                <article>
+                  <span className="portfolioStatIcon">▣</span>
+                  <div>
+                    <small>TAX-TRACKED EXPENSES</small>
+                    <b>{money(deductibleExpenses)}</b>
+                    <p>Marked for tax reporting</p>
+                  </div>
+                </article>
+              </div>
+
+              <section className="commandCard" style={{marginTop:22}}>
+                <div className="commandCardHeader">
+                  <div>
+                    <span className="commandSectionIcon">▤</span>
+                    <div>
+                      <h2>Expense breakdown</h2>
+                      <p>Recorded maintenance costs for the selected period.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="documentStats" style={{marginTop:14}}>
+                  <article>
+                    <span>Labor</span>
+                    <b>{money(laborExpenses)}</b>
+                    <small>REPAIRS</small>
+                  </article>
+                  <article>
+                    <span>Materials</span>
+                    <b>{money(materialExpenses)}</b>
+                    <small>REPAIRS</small>
+                  </article>
+                  <article>
+                    <span>Other</span>
+                    <b>{money(otherExpenses)}</b>
+                    <small>REPAIRS</small>
+                  </article>
+                  <article>
+                    <span>Deductible</span>
+                    <b>{money(deductibleExpenses)}</b>
+                    <small>TAX TRACKED</small>
+                  </article>
+                </div>
+              </section>
+
+              <section className="commandCard" style={{marginTop:22}}>
+                <div className="commandCardHeader">
+                  <div>
+                    <span className="commandSectionIcon">▦</span>
+                    <div>
+                      <h2>Property cash flow</h2>
+                      <p>Income and recorded maintenance expenses by property.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {propertyBreakdown.length === 0 ? (
+                  <div className="featureEmpty" style={{marginTop:16}}>
+                    <div className="featureEmptyIcon">▤</div>
+                    <b>No bookkeeping activity for this period</b>
+                    <span>
+                      Collected rent and recorded maintenance expenses will appear here.
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{display:"grid",gap:10,marginTop:16}}>
+                    {propertyBreakdown.map((property) => (
+                      <article
+                        key={property.id}
+                        style={{
+                          display:"grid",
+                          gridTemplateColumns:"minmax(180px,1.5fr) repeat(3,minmax(110px,1fr))",
+                          gap:12,
+                          alignItems:"center",
+                          padding:"14px 16px",
+                          border:"1px solid #e1e7ef",
+                          borderRadius:14,
+                          background:"#fff",
+                        }}
+                      >
+                        <div>
+                          <b>{property.address || "Property"}</b>
+                          <span style={{display:"block",fontSize:13,color:"#6b778c"}}>
+                            {[property.city, property.state, property.zip_code].filter(Boolean).join(", ")}
+                          </span>
+                        </div>
+                        <div>
+                          <small style={{display:"block",color:"#6b778c"}}>INCOME</small>
+                          <b>{money(property.income)}</b>
+                        </div>
+                        <div>
+                          <small style={{display:"block",color:"#6b778c"}}>EXPENSES</small>
+                          <b>{money(property.expenses)}</b>
+                        </div>
+                        <div>
+                          <small style={{display:"block",color:"#6b778c"}}>NET</small>
+                          <b>{money(property.net)}</b>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="commandCard" style={{marginTop:22}}>
+                <div className="commandCardHeader">
+                  <div>
+                    <span className="commandSectionIcon">↕</span>
+                    <div>
+                      <h2>Bookkeeping ledger</h2>
+                      <p>Every collected rent payment and recorded maintenance expense.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{display:"grid",gap:8,marginTop:16}}>
+                  {filteredRentPayments.map((payment) => (
+                    <article
+                      key={`income-${payment.id}`}
+                      style={{
+                        display:"grid",
+                        gridTemplateColumns:"120px 110px 1fr auto",
+                        gap:12,
+                        alignItems:"center",
+                        padding:"12px 14px",
+                        borderBottom:"1px solid #edf1f5",
+                      }}
+                    >
+                      <span>{payment.payment_date || "—"}</span>
+                      <b style={{color:"#19734a"}}>INCOME</b>
+                      <div>
+                        <b>Rent payment</b>
+                        <span style={{display:"block",fontSize:13,color:"#6b778c"}}>
+                          {props.find((p) => p.id === payment.property_id)?.address || "Property"}
+                        </span>
+                      </div>
+                      <b>{money(payment.amount)}</b>
+                    </article>
+                  ))}
+
+                  {filteredMaintenanceExpenses.map((expense) => (
+                    <article
+                      key={`expense-${expense.id}`}
+                      style={{
+                        display:"grid",
+                        gridTemplateColumns:"120px 110px 1fr auto",
+                        gap:12,
+                        alignItems:"center",
+                        padding:"12px 14px",
+                        borderBottom:"1px solid #edf1f5",
+                      }}
+                    >
+                      <span>{expense.expense_date || "—"}</span>
+                      <b style={{color:"#a23a3a"}}>EXPENSE</b>
+                      <div>
+                        <b>{expense.description || "Maintenance expense"}</b>
+                        <span style={{display:"block",fontSize:13,color:"#6b778c"}}>
+                          {props.find((p) => p.id === expense.property_id)?.address || "Property"}
+                          {" · "}
+                          {expense.category || "Repairs and maintenance"}
+                        </span>
+                      </div>
+                      <b>-{money(expense.total_cost)}</b>
+                    </article>
+                  ))}
+
+                  {filteredRentPayments.length === 0 &&
+                    filteredMaintenanceExpenses.length === 0 && (
+                      <div className="featureEmpty">
+                        <div className="featureEmptyIcon">↕</div>
+                        <b>No ledger entries</b>
+                        <span>
+                          Select another period or record rent and maintenance activity.
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </section>
+
+              <section
+                style={{
+                  marginTop:22,
+                  padding:"16px 18px",
+                  border:"1px solid #dbe3ef",
+                  borderRadius:14,
+                  background:"#f8fafc",
+                }}
+              >
+                <b>Bookkeeping note</b>
+                <p style={{margin:"6px 0 0",color:"#5d6878"}}>
+                  This ledger is automatically calculated from Unitvero's recorded
+                  rent payments and maintenance expenses. It is a bookkeeping
+                  record, not a tax return or accounting certification.
+                </p>
+              </section>
+            </section>
+          );
+        })()}
+</main>
 
       <button
         type="button"
