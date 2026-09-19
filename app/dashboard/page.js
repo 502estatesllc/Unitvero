@@ -2879,9 +2879,9 @@ export default function Dashboard() {
           <div className="generatedDashboard">
             <section className="generatedWelcome">
               <div>
-                <span className="generatedEyebrow">UNITVERO DASHBOARD</span>
-                <h1>Good to see you, {profile?.full_name?.split(" ")[0] || "Ladon"}.</h1>
-                <p>Here’s what’s happening with your portfolio.</p>
+                <span className="generatedEyebrow">LANDLORD DASHBOARD</span>
+                <h1>Hello, {profile?.full_name?.split(" ")[0] || "Ladon"}!</h1>
+                <p>Here’s what’s happening with your properties today.</p>
               </div>
               <div className="generatedWelcomeActions">
                 <select value={bookkeepingMonth} onChange={(e)=>setBookkeepingMonth(e.target.value)} aria-label="Period">
@@ -2892,57 +2892,59 @@ export default function Dashboard() {
                   <option value="9">October</option><option value="10">November</option><option value="11">December</option>
                 </select>
                 <div>
-                  <button type="button" className="generatedSecondary" onClick={togglePrivacy}>◉ {privacyMode ? "Show Amounts" : "Hide Amounts"}</button>
+                  <button type="button" className="generatedSecondary" onClick={togglePrivacy}>◉ {privacyMode ? "Show" : "Hide"}</button>
                   <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>+ Add Property</button>
                 </div>
               </div>
             </section>
 
             <section className="generatedStats">
-              <article><span>Total Properties</span><strong>{props.length}</strong><small>{dashboardTotalUnits} RENTABLE UNITS</small></article>
-              <article><span>Occupied Units</span><strong>{dashboardOccupiedUnits}</strong><small>{dashboardOccupancyRate}% OCCUPANCY</small></article>
-              <article><span>Monthly Rent</span><strong className="privacyValue">${portfolioMonthlyRent.toLocaleString()}</strong><small>EXPECTED</small></article>
-              <article><span>Outstanding</span><strong className="privacyValue">${dashboardOutstanding.toLocaleString()}</strong><small>CURRENT LEDGER</small></article>
+              <article><span>Total Revenue</span><strong className="privacyValue">${dashboardCollected.toLocaleString()}</strong><small>↑ CURRENT COLLECTIONS</small><i className="generatedStatIcon">▥</i></article>
+              <article><span>Occupancy Rate</span><strong>{dashboardOccupancyRate}%</strong><small>↑ {dashboardOccupiedUnits} OCCUPIED</small><i className="generatedStatRing" style={{"--occupancy":`${dashboardOccupancyRate * 3.6}deg`}} /></article>
+              <article><span>Active Properties</span><strong>{props.length}</strong><small>{dashboardTotalUnits} RENTABLE UNITS</small><i className="generatedStatIcon">⌂</i></article>
+              <article><span>Open Maintenance</span><strong>{maintenanceRequests.filter((item)=>!["completed","closed"].includes(String(item.status || "").toLowerCase())).length}</strong><small>ACTIVE REQUESTS</small><i className="generatedStatIcon">⚒</i></article>
             </section>
 
-            <section className="generatedPanel generatedCollection">
-              <div className="generatedPanelTitle"><span>COLLECTION PERFORMANCE</span><h2>Rent Collection</h2></div>
-              <div className="generatedCollectionBody">
-                <div className="generatedDonut" style={{"--rate":`${Math.min(100,Math.max(0,dashboardCollectionRate))}%`}}>
-                  <div><strong>{dashboardCollectionRate}%</strong><small>Collected</small></div>
-                </div>
-                <div className="generatedLegend">
-                  <div><span><i></i>Collected</span><b className="privacyValue">${dashboardCollected.toLocaleString()}</b></div>
-                  <div><span><i></i>Outstanding</span><b className="privacyValue">${dashboardOutstanding.toLocaleString()}</b></div>
-                  <div><span><i></i>Total charges</span><b className="privacyValue">${(dashboardCollected + dashboardOutstanding).toLocaleString()}</b></div>
-                </div>
-              </div>
-            </section>
-
-            <section className="generatedPanel generatedOccupancy">
-              <div className="generatedPanelTitle"><span>PORTFOLIO HEALTH</span><h2>Occupancy</h2></div>
-              <strong className="generatedPercent">{dashboardOccupancyRate}%</strong>
-              <div className="generatedOccupancyTrack"><span style={{width:`${dashboardOccupancyRate}%`}}></span></div>
-              <div className="generatedOccupancyBoxes">
-                <div><strong>{dashboardOccupiedUnits}</strong><span>Occupied</span></div>
-                <div><strong>{dashboardVacantUnits}</strong><span>Vacant</span></div>
-                <div><strong>{dashboardTotalUnits}</strong><span>Total Units</span></div>
-              </div>
-            </section>
-
-            <section className="generatedPanel generatedSixMonths">
-              <div className="generatedPanelTitle"><span>LAST 6 MONTHS</span><h2>Rent Collected</h2></div>
-              <strong className="generatedAmount privacyValue">${dashboardCollected.toLocaleString()}</strong>
-              <div className="generatedMonths">
-                {Array.from({length:6},(_,index)=>{
-                  const d=new Date(); d.setMonth(d.getMonth()-(5-index),1);
-                  const label=d.toLocaleString("en-US",{month:"short"});
-                  const value=rentPayments.filter(p=>{const x=new Date(p.payment_date);return x.getFullYear()===d.getFullYear()&&x.getMonth()===d.getMonth();}).reduce((s,p)=>s+Number(p.amount||0),0);
-                  const max=Math.max(1,...Array.from({length:6},(_,j)=>{const y=new Date();y.setMonth(y.getMonth()-(5-j),1);return rentPayments.filter(p=>{const x=new Date(p.payment_date);return x.getFullYear()===y.getFullYear()&&x.getMonth()===y.getMonth();}).reduce((s,p)=>s+Number(p.amount||0),0);}));
-                  const height=value?Math.max(8,Math.round((value/max)*100)):5;
-                  return <div key={label}><b className={index===5?"active": ""} style={{height:`${height}%`}}></b><span>{label}</span>{value>0&&<small>${value.toLocaleString()}</small>}</div>;
+            <section className="generatedPanel generatedCollection generatedRentChart">
+              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>COLLECTION PERFORMANCE</span><h2>Rent Collection</h2></div><div className="generatedChartLegend"><i/> Collected <i/> Expected</div></div>
+              <div className="generatedYearChart">
+                {Array.from({length:12},(_,index)=>{
+                  const label=new Date(2026,index,1).toLocaleString("en-US",{month:"short"});
+                  const value=rentPayments.filter(p=>{const x=new Date(p.payment_date);return x.getFullYear()===new Date().getFullYear()&&x.getMonth()===index;}).reduce((sum,p)=>sum+Number(p.amount||0),0);
+                  const height=Math.max(8,Math.min(100,Math.round((value/Math.max(portfolioMonthlyRent,1))*100)));
+                  return <div key={label}><span className="generatedBarPair"><i style={{height:`${height}%`}}/><b style={{height:`${Math.max(height,75)}%`}}/></span><small>{label}</small></div>;
                 })}
               </div>
+              <div className="generatedCollectionSummary">
+                <div><span>Collected</span><strong className="privacyValue">${dashboardCollected.toLocaleString()}</strong></div>
+                <div><span>Outstanding</span><strong className="privacyValue">${dashboardOutstanding.toLocaleString()}</strong></div>
+                <div><span>Collection rate</span><strong>{dashboardCollectionRate}%</strong></div>
+              </div>
+            </section>
+
+            <section className="generatedPanel generatedRecentPayments">
+              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>ACTIVITY</span><h2>Recent Payments</h2></div><button type="button" onClick={()=>setView("rent")}>View All ›</button></div>
+              <div className="generatedPaymentList">
+                {rentPayments.length === 0 ? <div className="generatedEmptyPayment">No payments recorded yet.</div> : rentPayments.slice(0,5).map((payment)=>{
+                  const paymentProperty=props.find((item)=>item.id===payment.property_id);
+                  return <article key={payment.id}><span className="generatedPaymentThumb">⌂</span><div><b>{paymentProperty?.address || "Rental payment"}</b><small>{payment.payment_date ? new Date(`${payment.payment_date}T00:00:00`).toLocaleDateString() : "Recent"}</small></div><strong className="privacyValue">${Number(payment.amount||0).toLocaleString()}</strong></article>;
+                })}
+              </div>
+            </section>
+
+            <section className="generatedQuickActions">
+              <h2>Quick Actions</h2>
+              <div>
+                {[
+                  ["⌂","Add Property","properties"],["♙","Add Tenant","tenants"],["▤","Create Lease","leases"],
+                  ["◎","Record Payment","rent"],["⚒","Maintenance","maintenance"],["▥","Generate Report","bookkeeping"],
+                ].map(([icon,label,target])=><button type="button" key={label} onClick={()=>setView(target)}><span>{icon}</span><b>{label}</b></button>)}
+              </div>
+            </section>
+
+            <section className="generatedPortfolioHealth">
+              <article><span>Occupancy</span><strong>{dashboardOccupancyRate}%</strong><div><i style={{width:`${dashboardOccupancyRate}%`}}/></div></article>
+              <article><span>Portfolio</span><strong>{props.length} properties</strong><small>{dashboardTotalUnits} total units</small></article>
             </section>
 
             <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>Privacy Policy</button><button type="button">Terms of Service</button></div></footer>
@@ -11847,6 +11849,9 @@ function TenantPortal({
   const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
+  const [appLanguage, setAppLanguage] = useState(language);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const unitveroLanguages = [["en", "English"], ["es", "Español"]];
 
   const words = {
     en: {
@@ -12241,15 +12246,18 @@ function TenantPortal({
               <div className="utPage">
                 <section className="utPropertyCard">
                   <div className="utPropertyTop">
-                    <div>
-                      <div className="utEyebrow light">{t("property")}</div>
-                      <h2>{property?.address || "Your rental property"}</h2>
-                      <p>{[property?.city, property?.state, property?.zip_code].filter(Boolean).join(" • ")}</p>
+                    <div className="utPropertySummary">
+                      <div className="utPropertyPhoto" />
+                      <div>
+                        <div className="utEyebrow light">{unit?.unit_name || unit?.name || t("property")}</div>
+                        <h2>{property?.address || "Your rental property"}</h2>
+                        <p>{[property?.city, property?.state, property?.zip_code].filter(Boolean).join(" • ")}</p>
+                      </div>
                     </div>
                     <div className="utRentBlock">
-                      <span>{t("monthlyRent")}</span>
+                      <span>Rent Due</span>
                       <strong>{money(tenancy.monthly_rent)}</strong>
-                      <small>/ {t("month")}</small>
+                      <small>Due on the 1st</small>
                     </div>
                   </div>
                   <div className="utPropertyActions">
@@ -12468,7 +12476,7 @@ function TenantPortal({
           </>
         )}
       
-      <div style={{
+      <div className="utFloatingLanguage" style={{
         position:"fixed",
         left:18,
         bottom:18,
@@ -12482,7 +12490,10 @@ function TenantPortal({
         <select
           aria-label="Choose language"
           value={appLanguage}
-          onChange={(e) => setAppLanguage(e.target.value)}
+          onChange={(e) => {
+            setAppLanguage(e.target.value);
+            changeLanguage(e.target.value);
+          }}
           style={{
             border:0,
             outline:"none",
@@ -12499,6 +12510,7 @@ function TenantPortal({
 
       {privacyOpen && (
         <div
+          className="utPrivacyOverlay"
           role="dialog"
           aria-modal="true"
           style={{
@@ -12511,7 +12523,7 @@ function TenantPortal({
             padding:20,
           }}
         >
-          <div style={{
+          <div className="utPrivacyModal" style={{
             width:"min(820px,100%)",
             maxHeight:"90vh",
             overflow:"auto",
