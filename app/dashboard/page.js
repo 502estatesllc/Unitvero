@@ -79,6 +79,8 @@ export default function Dashboard() {
   const [maintenanceExpenses, setMaintenanceExpenses] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [documentTemplates, setDocumentTemplates] = useState([]);
+  const [subscription, setSubscription] = useState(null);
+  const [entitlements, setEntitlements] = useState({});
   const [communicationTab, setCommunicationTab] = useState("messages");
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [announcementAudience, setAnnouncementAudience] = useState("property");
@@ -95,6 +97,39 @@ export default function Dashboard() {
   ]);
 
   const r = useRouter();
+
+  const hasFeature = (featureKey) => Boolean(entitlements?.[featureKey]);
+
+  function requirePro(featureKey, featureName) {
+    if (hasFeature(featureKey)) return true;
+    alert(`${featureName} is included with Unitvero Pro. Subscription checkout will be connected before launch.`);
+    return false;
+  }
+
+  async function loadEntitlements(s, landlordId) {
+    const featureKeys = [
+      "advanced_messaging", "announcements", "document_center",
+      "state_template_library", "document_generation", "esignatures",
+      "maintenance_accounting", "tax_reporting", "advanced_rent_collection",
+      "automation", "advanced_analytics", "priority_support",
+      "faster_payouts", "phone_notifications"
+    ];
+    const results = await Promise.all(featureKeys.map(async (featureKey) => {
+      const { data, error } = await s.rpc("unitvero_has_feature", {
+        p_landlord_id: landlordId,
+        p_feature_key: featureKey,
+      });
+      return [featureKey, !error && data === true];
+    }));
+    setEntitlements(Object.fromEntries(results));
+
+    const { data: subscriptionData } = await s
+      .from("landlord_subscriptions")
+      .select("*")
+      .eq("landlord_id", landlordId)
+      .maybeSingle();
+    setSubscription(subscriptionData || { plan_code: "free", status: "active" });
+  }
 
   async function load() {
     const s = supabase();
@@ -130,6 +165,8 @@ export default function Dashboard() {
     if (String(resolvedProfile?.role || "").toLowerCase() === "tenant") {
       return;
     }
+
+    await loadEntitlements(s, user.id);
 
     const { data: properties, error } = await s
       .from("properties")
@@ -556,6 +593,7 @@ export default function Dashboard() {
   }
 
   async function openOrCreateConversation(tenancyId) {
+    if (!requirePro("advanced_messaging", "Advanced Messaging")) return;
     if (!tenancyId) return;
 
     const tenancy = tenancies.find((item) => item.id === tenancyId);
@@ -757,6 +795,7 @@ export default function Dashboard() {
 
   async function saveMaintenanceExpense(e, request) {
     e.preventDefault();
+    if (!requirePro("maintenance_accounting", "Maintenance Accounting")) return;
     const form = e.currentTarget;
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
@@ -5552,14 +5591,16 @@ export default function Dashboard() {
                   Create, send, track, and prepare rental documents for
                   eSignature.
                 </p>
+                <span style={{fontWeight:800,fontSize:12}}>{String(subscription?.plan_code || "free").toUpperCase()} PLAN</span>
               </div>
 
               <button
                 type="button"
                 className="primary"
-                onClick={() =>
-                  alert("Custom document builder is the next Documents step.")
-                }
+                onClick={() => {
+                  if (!requirePro("document_center", "Document Center")) return;
+                  alert("Document creation is ready for the next step: selecting a state template, property, and tenant.");
+                }}
               >
                 + Create Document
               </button>
@@ -5568,19 +5609,19 @@ export default function Dashboard() {
             <div className="documentStats">
               <article>
                 <span>Documents</span>
-                <b>0</b>
+                <b>{documents.length}</b>
                 <small>ALL DOCUMENTS</small>
               </article>
 
               <article>
                 <span>Awaiting Signature</span>
-                <b>0</b>
+                <b>{documents.filter(d => ["sent","viewed","awaiting_signature"].includes(String(d.status || "").toLowerCase())).length}</b>
                 <small>ESIGN</small>
               </article>
 
               <article>
                 <span>Completed</span>
-                <b>0</b>
+                <b>{documents.filter(d => ["signed","completed"].includes(String(d.status || "").toLowerCase())).length}</b>
                 <small>SIGNED & STORED</small>
               </article>
 
@@ -5597,8 +5638,7 @@ export default function Dashboard() {
                   <h2>Template Library</h2>
 
                   <p>
-                    Start with a rental document and Unitvero will eventually
-                    auto-fill tenant and property information.
+                    Unitvero uses the property's state to show the correct versioned template. Templates are only published after state-rule review.
                   </p>
                 </div>
 
@@ -5606,12 +5646,19 @@ export default function Dashboard() {
               </div>
 
               <div className="documentTemplateGrid">
-                {[
+                {(documentTemplates.length ? documentTemplates.map((template) => [
+                  "▤",
+                  template.name || "Rental Document",
+                  template.description || `Versioned ${template.state_code || template.state || template.jurisdiction || "state"} rental template.`,
+                  String(template.document_type || template.type || "DOCUMENT").toUpperCase(),
+                  template
+                ]) : [
                   [
                     "▤",
                     "Residential Lease",
-                    "Create a new residential lease and prepare it for electronic signature.",
+                    "State-specific residential lease template. Available after jurisdiction review.",
                     "LEASE",
+                    null
                   ],
                   [
                     "↻",
@@ -5655,7 +5702,7 @@ export default function Dashboard() {
                     "Create condition and turnover documentation.",
                     "PROPERTY",
                   ],
-                ].map(([icon, title, description, type]) => (
+                ]).map(([icon, title, description, type, template]) => (
                   <article className="documentTemplateCard" key={title}>
                     <div className="documentTemplateIcon">{icon}</div>
 
@@ -5667,9 +5714,11 @@ export default function Dashboard() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        alert(title + " builder is being prepared.")
-                      }
+                      onClick={() => {
+                        if (!requirePro("state_template_library", "State Template Library")) return;
+                        if (!template) return alert(`${title} will appear once a reviewed state version is published.`);
+                        alert(`${title} selected. Property/tenant auto-fill is the next document workflow step.`);
+                      }}
                     >
                       Create document →
                     </button>
@@ -7873,16 +7922,27 @@ export default function Dashboard() {
                         <article><span>Completed</span><b style={{fontSize:15}}>{request.completed_at ? new Date(request.completed_at).toLocaleDateString() : "—"}</b><small>DATE</small></article>
                         <article><span>Repair Cost</span><b style={{fontSize:18}}>${Number(expense?.total_cost || 0).toFixed(2)}</b><small>LANDLORD ONLY</small></article>
                       </div>
-                      <form onSubmit={(e)=>saveMaintenanceExpense(e,request)} style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:10,marginTop:16}}>
-                        <input name="vendorName" defaultValue={expense?.vendor_name || ""} placeholder="Vendor / contractor" />
-                        <input name="expenseDate" type="date" defaultValue={expense?.expense_date || ""} />
-                        <input name="description" defaultValue={expense?.description || ""} placeholder="Expense notes" />
-                        <input name="laborCost" type="number" min="0" step="0.01" defaultValue={expense?.labor_cost || 0} placeholder="Labor cost" />
-                        <input name="materialCost" type="number" min="0" step="0.01" defaultValue={expense?.material_cost || 0} placeholder="Materials cost" />
-                        <input name="otherCost" type="number" min="0" step="0.01" defaultValue={expense?.other_cost || 0} placeholder="Other cost" />
-                        <label style={{display:"flex",gap:8,alignItems:"center"}}><input name="includeTax" type="checkbox" defaultChecked={expense ? expense.include_in_tax_report : true}/> Include in tax report</label>
-                        <button className="primary" type="submit">Save Repair Expense</button>
-                      </form>
+                      {hasFeature("maintenance_accounting") ? (
+                        <form onSubmit={(e)=>saveMaintenanceExpense(e,request)} style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:12,marginTop:16}}>
+                          <label style={{display:"grid",gap:6}}><b>Vendor / Contractor</b><input name="vendorName" defaultValue={expense?.vendor_name || ""} placeholder="Company or contractor" /></label>
+                          <label style={{display:"grid",gap:6}}><b>Expense Date</b><input name="expenseDate" type="date" defaultValue={expense?.expense_date || ""} /></label>
+                          <label style={{display:"grid",gap:6}}><b>Expense Notes</b><input name="description" defaultValue={expense?.description || ""} placeholder="What was repaired?" /></label>
+                          <label style={{display:"grid",gap:6}}><b>Labor Cost ($)</b><input name="laborCost" type="number" min="0" step="0.01" defaultValue={expense?.labor_cost || 0} /></label>
+                          <label style={{display:"grid",gap:6}}><b>Materials Cost ($)</b><input name="materialCost" type="number" min="0" step="0.01" defaultValue={expense?.material_cost || 0} /></label>
+                          <label style={{display:"grid",gap:6}}><b>Other Cost ($)</b><input name="otherCost" type="number" min="0" step="0.01" defaultValue={expense?.other_cost || 0} /></label>
+                          <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",padding:"12px 14px",border:"1px solid #dbe3ef",borderRadius:12}}>
+                            <label style={{display:"flex",gap:8,alignItems:"center"}}><input name="includeTax" type="checkbox" defaultChecked={expense ? expense.include_in_tax_report : true}/> Include in tax report</label>
+                            <b>Total Repair Cost: ${Number(expense?.total_cost || 0).toFixed(2)}</b>
+                            <button className="primary" type="submit">Save Repair Expense</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div style={{marginTop:16,padding:16,border:"1px solid #dbe3ef",borderRadius:14}}>
+                          <b>Maintenance Accounting · Unitvero Pro</b>
+                          <p style={{margin:"6px 0 12px"}}>Track labor, materials, vendors and tax-report expenses with Pro.</p>
+                          <button type="button" className="primary" onClick={()=>requirePro("maintenance_accounting","Maintenance Accounting")}>View Pro</button>
+                        </div>
+                      )}
                     </article>
                   );
                 })}
@@ -8266,6 +8326,7 @@ function TenantPortal({
   const [announcements, setAnnouncements] = useState([]);
   const [tenantMaintenance, setTenantMaintenance] = useState([]);
   const [tenantDocuments, setTenantDocuments] = useState([]);
+  const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
 
@@ -8355,6 +8416,20 @@ function TenantPortal({
 
     setProperty(propertyResult.data || null);
 
+    if (propertyResult.data?.landlord_id) {
+      const featureKeys = ["advanced_messaging", "document_center", "phone_notifications"];
+      const checks = await Promise.all(featureKeys.map(async (featureKey) => {
+        const { data, error } = await s.rpc("unitvero_landlord_has_feature", {
+          p_landlord_id: propertyResult.data.landlord_id,
+          p_feature_key: featureKey,
+        });
+        return [featureKey, !error && data === true];
+      }));
+      setLandlordEntitlements(Object.fromEntries(checks));
+    } else {
+      setLandlordEntitlements({});
+    }
+
     if (tenancyData.unit_id) {
       const { data: unitData } = await s.from("units").select("*").eq("id", tenancyData.unit_id).maybeSingle();
       setUnit(unitData || null);
@@ -8385,6 +8460,10 @@ function TenantPortal({
   useEffect(() => { loadTenant(); }, []);
 
   async function ensureConversation() {
+    if (!landlordEntitlements.advanced_messaging) {
+      setNotice("Messaging is not enabled for this property yet.");
+      return null;
+    }
     if (selectedConversation) return selectedConversation;
     if (!tenancy || !property?.landlord_id) return null;
 
