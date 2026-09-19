@@ -98,14 +98,6 @@ export default function Dashboard() {
   const [signatureMode, setSignatureMode] = useState("draw");
   const [signatureSubmitting, setSignatureSubmitting] = useState(false);
   const [appLanguage, setAppLanguage] = useState("en");
-  const [helpChatOpen, setHelpChatOpen] = useState(false);
-  const [helpMessages, setHelpMessages] = useState([
-    {
-      role: "assistant",
-      text: "Hi! I’m Unitvero Help. Ask me about maintenance, rent, documents, messaging, bookkeeping, or your account."
-    }
-  ]);
-  const [helpInput, setHelpInput] = useState("");
   const [proScreenOpen, setProScreenOpen] = useState(false);
   const [rentalValueOpen, setRentalValueOpen] = useState(false);
   const [rentalPropertyId, setRentalPropertyId] = useState("");
@@ -1278,47 +1270,6 @@ export default function Dashboard() {
 
   function removeRentalCompRow(id) {
     setRentalCompRows((rows) => rows.filter((row) => row.id !== id));
-  }
-
-  function getHelpReply(message) {
-    const q = message.toLowerCase();
-
-    if (q.includes("maintenance") || q.includes("repair")) {
-      return "For maintenance, open Maintenance and create a request. Tenants can attach photos, and landlords can update the status, record labor/material costs, and keep the expense in bookkeeping.";
-    }
-
-    if (q.includes("document") || q.includes("lease")) {
-      return "Open Documents to create, edit, print, email, request signatures, and manage rental documents. The document workflow also uses the property's state jurisdiction.";
-    }
-
-    if (q.includes("rent") || q.includes("payment")) {
-      return "Open Payments to review rent activity. Landlords can also use Rent Value to compare entered rental comps and calculate a suggested range.";
-    }
-
-    if (q.includes("pro") || q.includes("upgrade")) {
-      return "Open Upgrade to Pro to compare plans and see the paid features. The actual payment checkout can be connected to your billing provider when you are ready.";
-    }
-
-    if (q.includes("language") || q.includes("spanish") || q.includes("español")) {
-      return "Use the language selector in the account/header area. Unitvero supports English, Spanish, French, German, Portuguese, Chinese, Korean, Vietnamese, Arabic, and Russian UI frameworks.";
-    }
-
-    return "I can help with rent, maintenance, documents, messaging, bookkeeping, subscriptions, languages, or account questions. Try asking about one of those areas.";
-  }
-
-  function submitHelpMessage(e) {
-    e.preventDefault();
-    const message = helpInput.trim();
-    if (!message) return;
-
-    const reply = getHelpReply(message);
-
-    setHelpMessages((current) => [
-      ...current,
-      { role: "user", text: message },
-      { role: "assistant", text: reply },
-    ]);
-    setHelpInput("");
   }
 
   function openProScreen() {
@@ -11814,122 +11765,6 @@ function TenantPortal({
           ))}
         </select>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setHelpChatOpen((open) => !open)}
-        aria-label="Open Unitvero Help"
-        style={{
-          position:"fixed",
-          right:22,
-          bottom:22,
-          zIndex:1200,
-          width:58,
-          height:58,
-          borderRadius:"50%",
-          border:0,
-          background:"#172033",
-          color:"#fff",
-          fontSize:24,
-          boxShadow:"0 12px 30px rgba(0,0,0,.2)",
-          cursor:"pointer",
-        }}
-      >
-        ?
-      </button>
-
-      {helpChatOpen && (
-        <div style={{
-          position:"fixed",
-          right:22,
-          bottom:92,
-          zIndex:1200,
-          width:"min(390px,calc(100vw - 32px))",
-          height:520,
-          background:"#fff",
-          border:"1px solid #dbe3ef",
-          borderRadius:20,
-          boxShadow:"0 20px 60px rgba(0,0,0,.22)",
-          display:"grid",
-          gridTemplateRows:"auto 1fr auto",
-          overflow:"hidden",
-        }}>
-          <div style={{
-            padding:16,
-            background:"#172033",
-            color:"#fff",
-            display:"flex",
-            justifyContent:"space-between",
-            alignItems:"center",
-          }}>
-            <div>
-              <b>Unitvero Help</b>
-              <span style={{display:"block",fontSize:12,opacity:.75}}>
-                In-app support
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setHelpChatOpen(false)}
-              style={{
-                border:0,
-                background:"transparent",
-                color:"#fff",
-                fontSize:22,
-                cursor:"pointer",
-              }}
-            >
-              ×
-            </button>
-          </div>
-
-          <div style={{
-            padding:14,
-            overflow:"auto",
-            display:"grid",
-            alignContent:"start",
-            gap:10,
-            background:"#f8fafc",
-          }}>
-            {helpMessages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  justifySelf:message.role === "user" ? "end" : "start",
-                  maxWidth:"86%",
-                  padding:"10px 12px",
-                  borderRadius:14,
-                  background:message.role === "user" ? "#172033" : "#fff",
-                  color:message.role === "user" ? "#fff" : "#263247",
-                  border:message.role === "user" ? "0" : "1px solid #e1e7ef",
-                  fontSize:13,
-                  lineHeight:1.45,
-                }}
-              >
-                {message.text}
-              </div>
-            ))}
-          </div>
-
-          <form
-            onSubmit={submitHelpMessage}
-            style={{
-              padding:10,
-              borderTop:"1px solid #e1e7ef",
-              display:"flex",
-              gap:8,
-            }}
-          >
-            <input
-              value={helpInput}
-              onChange={(e) => setHelpInput(e.target.value)}
-              placeholder="Ask Unitvero Help..."
-              style={{flex:1}}
-            />
-            <button type="submit" className="primary">Send</button>
-          </form>
-        </div>
-      )}
 
       {privacyOpen && (
         <div
