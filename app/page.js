@@ -59,21 +59,27 @@ export default function Home() {
         </div>
       </nav>
 
+      <div className="launchOffer">
+        <span className="launchOfferBadge">LIMITED LAUNCH OFFER</span>
+        <strong>Get 1 month of Unitvero Pro FREE</strong>
+        <span>Try the full Pro experience before your regular plan begins.</span>
+        <Link href="/signup">Claim your free month →</Link>
+      </div>
+
       <section className="hero">
         <div className="heroCopy">
-          <span className="eyebrow">PROPERTY MANAGEMENT, SIMPLIFIED</span>
+          <span className="eyebrow">THE MODERN WAY TO MANAGE RENTALS</span>
           <h1>
-            Run your rentals.
-            <span> Grow your portfolio.</span>
+            Everything for your rentals.
+            <span> All in one place.</span>
           </h1>
           <p>
-            Unitvero brings properties, tenants, rent, applications,
-            communication, and financial insights into one clean workspace.
+            Manage properties, collect rent, organize documents, track maintenance, communicate with tenants, and keep your rental business organized from one premium workspace.
           </p>
 
           <div className="heroActions">
             <Link className="primaryButton" href="/signup">
-              Start managing free <span>→</span>
+              Start free — 1 month of Pro <span>→</span>
             </Link>
             <a className="secondaryButton" href="#features">
               Explore features
@@ -81,9 +87,9 @@ export default function Home() {
           </div>
 
           <div className="trustRow">
-            <span>✓ No complicated setup</span>
-            <span>✓ Built for independent landlords</span>
-            <span>✓ Works on phone and computer</span>
+            <span>✓ 1 month of Pro free</span>
+            <span>✓ Landlord + tenant portals</span>
+            <span>✓ Built for phone + desktop</span>
           </div>
         </div>
 
@@ -190,6 +196,21 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="audienceSection">
+        <div className="audienceCard">
+          <span className="eyebrow">FOR LANDLORDS</span>
+          <h2>Run your portfolio like a business.</h2>
+          <p>Properties, tenants, rent, maintenance, documents, bookkeeping, communication and portfolio insights in one place.</p>
+          <Link href="/signup" className="textButton">Create a landlord account →</Link>
+        </div>
+        <div className="audienceCard">
+          <span className="eyebrow">FOR TENANTS</span>
+          <h2>A better rental experience.</h2>
+          <p>Pay rent, submit maintenance requests, view documents, receive announcements and message your landlord from one secure portal.</p>
+          <Link href="/signup" className="textButton">Create a tenant account →</Link>
+        </div>
+      </section>
+
       <section className="featuresSection" id="features">
         <div className="sectionHeading">
           <span className="eyebrow">EVERYTHING IN ONE PLACE</span>
@@ -254,6 +275,21 @@ export default function Home() {
         </Link>
       </section>
 
+      <section className="proSection" id="pro">
+        <div>
+          <span className="eyebrow">UNITVERO PRO</span>
+          <h2>Try the complete experience for 1 month free.</h2>
+          <p>Explore advanced bookkeeping, professional documents, eSignatures, maintenance accounting, advanced rental tools and more during your free first month.</p>
+        </div>
+        <div className="proChecklist">
+          <div>✓ Advanced bookkeeping</div>
+          <div>✓ Professional documents + eSign</div>
+          <div>✓ Maintenance accounting</div>
+          <div>✓ Advanced rental tools</div>
+          <Link className="primaryButton" href="/signup">Start my free month <span>→</span></Link>
+        </div>
+      </section>
+
       <section className="finalCta">
         <span className="eyebrow">READY TO GET ORGANIZED?</span>
         <h2>Manage your rentals with confidence.</h2>
@@ -279,6 +315,102 @@ export default function Home() {
       </footer>
 
       <style jsx global>{`
+        .launchOffer {
+          width: min(1180px, calc(100% - 40px));
+          margin: 8px auto 0;
+          padding: 12px 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          border: 1px solid #bfe9e3;
+          border-radius: 14px;
+          background: linear-gradient(90deg, #f0fdfa, #ffffff);
+          color: #173042;
+          box-shadow: 0 8px 28px rgba(15, 159, 143, 0.08);
+        }
+        .launchOfferBadge {
+          padding: 5px 9px;
+          border-radius: 999px;
+          background: #0f9f8f;
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: .08em;
+        }
+        .launchOffer strong { font-size: 14px; }
+        .launchOffer > span:not(.launchOfferBadge) { color: #5c6b7a; font-size: 13px; }
+        .launchOffer a {
+          color: #087f73;
+          font-weight: 900;
+          font-size: 13px;
+        }
+        .audienceSection {
+          width: min(1180px, calc(100% - 40px));
+          margin: 70px auto 0;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 18px;
+        }
+        .audienceCard {
+          padding: 32px;
+          border: 1px solid #d8e4e7;
+          border-radius: 24px;
+          background: rgba(255,255,255,.92);
+          box-shadow: 0 18px 45px rgba(11, 23, 39, .07);
+        }
+        .audienceCard h2 {
+          margin: 8px 0 10px;
+          color: #122235;
+          font-size: clamp(25px, 3vw, 36px);
+          letter-spacing: -.035em;
+        }
+        .audienceCard p {
+          margin: 0 0 20px;
+          color: #617083;
+          line-height: 1.7;
+        }
+        .textButton { color: #087f73; font-weight: 900; }
+        .proSection {
+          width: min(1180px, calc(100% - 40px));
+          margin: 70px auto;
+          padding: 38px;
+          display: grid;
+          grid-template-columns: 1.2fr .8fr;
+          gap: 30px;
+          border-radius: 28px;
+          background: linear-gradient(135deg, #102238, #16314d);
+          color: white;
+          box-shadow: 0 24px 60px rgba(11, 23, 39, .18);
+        }
+        .proSection h2 {
+          margin: 8px 0 12px;
+          font-size: clamp(30px, 4vw, 48px);
+          letter-spacing: -.04em;
+        }
+        .proSection p { color: #d6e2eb; line-height: 1.7; max-width: 650px; }
+        .proChecklist {
+          display: grid;
+          gap: 12px;
+          align-content: center;
+          padding: 22px;
+          border: 1px solid rgba(255,255,255,.14);
+          border-radius: 20px;
+          background: rgba(255,255,255,.07);
+        }
+        .proChecklist div { color: #edf7f5; font-weight: 700; }
+        .proChecklist .primaryButton {
+          margin-top: 8px;
+          background: #16b3a1 !important;
+          color: #fff !important;
+        }
+        @media (max-width: 760px) {
+          .audienceSection, .proSection { grid-template-columns: 1fr; }
+          .launchOffer { justify-content: flex-start; }
+        }
+
+
         * {
           box-sizing: border-box;
         }
@@ -307,7 +439,7 @@ export default function Home() {
           background:
             radial-gradient(
               circle at 82% 8%,
-              rgba(53, 103, 218, 0.14),
+              rgba(15, 159, 143, 0.12),
               transparent 28%
             ),
             #f8fafc;
@@ -327,7 +459,7 @@ export default function Home() {
           letter-spacing: -0.06em;
         }
         .brand span {
-          color: #3567da;
+          color: #0f9f8f;
         }
         .navLinks,
         .navActions {
@@ -384,7 +516,7 @@ export default function Home() {
         }
         .eyebrow {
           display: inline-block;
-          color: #3567da;
+          color: #0f9f8f;
           font-size: 12px;
           font-weight: 900;
           letter-spacing: 0.12em;
@@ -398,7 +530,7 @@ export default function Home() {
         }
         .hero h1 span {
           display: block;
-          color: #3567da;
+          color: #0f9f8f;
         }
         .heroCopy > p {
           max-width: 590px;
@@ -570,7 +702,7 @@ export default function Home() {
         }
         .activityCard i.blue {
           background: #e7efff;
-          color: #3567da;
+          color: #0f9f8f;
         }
         .activityCard i.orange {
           background: #fff0df;
@@ -702,7 +834,7 @@ export default function Home() {
           padding: 24px 8px 0 0;
         }
         .stepsGrid article > span {
-          color: #3567da;
+          color: #0f9f8f;
           font-weight: 900;
         }
         .stepsGrid h3 {
