@@ -1,5 +1,3 @@
-
-```tsx
 "use client";
 
 import { useState } from "react";
@@ -71,7 +69,11 @@ export default function Home() {
 
           <div className="heroButtons">
             <button className="primaryButton">Start for free</button>
-            <button className="watchButton" onClick={() => setShowVideo(true)}>
+
+            <button
+              className="watchButton"
+              onClick={() => setShowVideo(true)}
+            >
               <span className="playIcon">▶</span>
               Watch the demo
             </button>
@@ -84,6 +86,7 @@ export default function Home() {
               <span>LS</span>
               <span>+</span>
             </div>
+
             <div>
               <strong>Trusted by 2,000+ property owners</strong>
               <small>Join the smarter way to manage property</small>
@@ -93,6 +96,7 @@ export default function Home() {
 
         <div className="heroVisual">
           <div className="glow" />
+
           <div className="heroImageFrame">
             <img
               src="/unitvero-hero-house.jpg"
@@ -105,6 +109,7 @@ export default function Home() {
             <div className="cardLabel">Monthly income</div>
             <div className="incomeValue">$24,680</div>
             <div className="incomeChange">↗ 12.8%</div>
+
             <div className="miniChart">
               <i />
               <i />
@@ -119,6 +124,7 @@ export default function Home() {
 
           <div className="floatingCard paymentCard">
             <div className="checkCircle">✓</div>
+
             <div>
               <strong>Payment received</strong>
               <small>Apartment 204 · Today</small>
@@ -135,10 +141,13 @@ export default function Home() {
 
       <section className="logoStrip">
         <span>Built for modern property teams</span>
+
         <div className="logoItems">
           <b>haven</b>
           <b>nestly</b>
-          <b>estate<span>co</span></b>
+          <b>
+            estate<span>co</span>
+          </b>
           <b>OAK &amp; STONE</b>
           <b>roam</b>
         </div>
@@ -150,11 +159,13 @@ export default function Home() {
             <span className="eyebrowDot" />
             One powerful platform
           </div>
+
           <h2>
             Less admin.
             <br />
             <em>More living.</em>
           </h2>
+
           <p>
             Everything you need to run your properties smoothly, beautifully,
             and profitably.
@@ -168,21 +179,25 @@ export default function Home() {
             text="Keep every property, unit, lease, and document organized in one clear dashboard."
             large
           />
+
           <FeatureCard
             icon="$"
             title="Simple payments"
             text="Collect rent on time with effortless digital payments and automatic reminders."
           />
+
           <FeatureCard
             icon="⌁"
             title="Easy maintenance"
             text="Resolve issues faster with streamlined maintenance requests."
           />
+
           <FeatureCard
             icon="◌"
             title="Clear communication"
             text="Keep every conversation in one place, available whenever you need it."
           />
+
           <FeatureCard
             icon="↗"
             title="Smart insights"
@@ -198,11 +213,13 @@ export default function Home() {
             <span className="eyebrowDot" />
             For landlords
           </div>
+
           <h2>
             Run your portfolio
             <br />
             like a <em>pro.</em>
           </h2>
+
           <p>
             From your first property to your fiftieth, Unitvero gives you the
             tools to stay organized, profitable, and in control.
@@ -212,15 +229,19 @@ export default function Home() {
             <li>
               <span>✓</span> See your entire portfolio at a glance
             </li>
+
             <li>
               <span>✓</span> Automate rent collection and reminders
             </li>
+
             <li>
               <span>✓</span> Track income, expenses, and performance
             </li>
           </ul>
 
-          <button className="outlineButton">Explore landlord tools →</button>
+          <button className="outlineButton">
+            Explore landlord tools →
+          </button>
         </div>
 
         <div className="dashboardMockup">
@@ -228,27 +249,32 @@ export default function Home() {
             <span className="mockupBrand">unitvero</span>
             <span className="mockupAvatar">JD</span>
           </div>
+
           <div className="mockupGreeting">
             <small>Good morning, Jordan</small>
             <h3>Portfolio overview</h3>
           </div>
+
           <div className="statRow">
             <div>
               <small>Total revenue</small>
               <strong>$24,680</strong>
               <em>↗ 12.8%</em>
             </div>
+
             <div>
               <small>Occupancy rate</small>
               <strong>94.2%</strong>
               <em>↗ 3.4%</em>
             </div>
           </div>
+
           <div className="chartPanel">
             <div className="panelHeader">
               <strong>Revenue overview</strong>
               <span>Last 6 months⌄</span>
             </div>
+
             <div className="barChart">
               <i style={{ height: "42%" }} />
               <i style={{ height: "58%" }} />
@@ -257,6 +283,7 @@ export default function Home() {
               <i style={{ height: "66%" }} />
               <i style={{ height: "92%" }} />
             </div>
+
             <div className="months">
               <span>Jan</span>
               <span>Feb</span>
@@ -272,33 +299,45 @@ export default function Home() {
       <section className="splitSection tenantSection" id="tenants">
         <div className="phoneMockup">
           <div className="phoneNotch" />
+
           <div className="phoneScreen">
             <div className="phoneHeader">
               <span>9:41</span>
               <span>● ● ▰</span>
             </div>
+
             <div className="appHeader">
               <span className="mockupBrand">unitvero</span>
               <span className="phoneAvatar">AM</span>
             </div>
+
             <small className="welcome">Good morning, Alex</small>
+
             <h3>Your home</h3>
+
             <div className="homeImage">
-              <img src="/unitvero-property.jpg" alt="Your property" />
+              <img
+                src="/unitvero-property.jpg"
+                alt="Your property"
+              />
             </div>
+
             <div className="phoneProperty">
               <strong>Willow Creek Apartments</strong>
               <small>Unit 204 · 2 bedroom</small>
             </div>
+
             <div className="phoneActions">
               <div>
                 <span>♧</span>
                 <small>Pay rent</small>
               </div>
+
               <div>
                 <span>⌁</span>
                 <small>Maintenance</small>
               </div>
+
               <div>
                 <span>☷</span>
                 <small>Documents</small>
@@ -312,11 +351,13 @@ export default function Home() {
             <span className="eyebrowDot" />
             For tenants
           </div>
+
           <h2>
             Home management,
             <br />
             <em>made human.</em>
           </h2>
+
           <p>
             Pay rent, report an issue, and stay connected with your property
             manager—all from a calm, intuitive app.
@@ -326,35 +367,45 @@ export default function Home() {
             <li>
               <span>✓</span> Pay rent in seconds
             </li>
+
             <li>
               <span>✓</span> Submit and track maintenance requests
             </li>
+
             <li>
               <span>✓</span> Message your property manager directly
             </li>
           </ul>
 
-          <button className="outlineButton">Discover the tenant app →</button>
+          <button className="outlineButton">
+            Discover the tenant app →
+          </button>
         </div>
       </section>
 
-      <section className="proSection">
+      <section className="proSection" id="pricing">
         <div className="proContent">
           <div className="eyebrow light">
             <span className="eyebrowDot" />
             Unitvero Pro
           </div>
+
           <h2>
             Built to grow
             <br />
             <em>with you.</em>
           </h2>
+
           <p>
-            Need more power? Unitvero Pro gives growing property teams advanced
-            tools, deeper insights, and dedicated support.
+            Need more power? Unitvero Pro gives growing property teams
+            advanced tools, deeper insights, and dedicated support.
           </p>
-          <button className="lightButton">Explore Unitvero Pro →</button>
+
+          <button className="lightButton">
+            Explore Unitvero Pro →
+          </button>
         </div>
+
         <div className="proDecoration">
           <div className="orbit orbitOne" />
           <div className="orbit orbitTwo" />
@@ -368,6 +419,7 @@ export default function Home() {
             <span className="eyebrowDot" />
             Loved by property people
           </div>
+
           <h2>
             Better tools.
             <br />
@@ -382,12 +434,14 @@ export default function Home() {
             role="Property owner · 24 units"
             initials="JM"
           />
+
           <Testimonial
             quote="Finally, a property app that feels like it was designed for actual humans. Everything is exactly where I expect it to be."
             name="Aisha Rahman"
             role="Tenant · Brooklyn, NY"
             initials="AR"
           />
+
           <Testimonial
             quote="Our tenants love the simplicity, and our team loves the visibility. Unitvero has become essential to our daily operations."
             name="Marcus Chen"
@@ -402,13 +456,18 @@ export default function Home() {
           <span className="eyebrowDot" />
           Ready when you are
         </div>
+
         <h2>
           Property management,
           <br />
           <em>finally made simple.</em>
         </h2>
+
         <p>Start your free account today. No credit card required.</p>
-        <button className="lightButton">Get started for free →</button>
+
+        <button className="lightButton">
+          Get started for free →
+        </button>
       </section>
 
       <footer className="footer">
@@ -417,6 +476,7 @@ export default function Home() {
             <a href="#" className="logo">
               unit<span>vero</span>
             </a>
+
             <p>
               The simpler way to manage
               <br />
@@ -431,12 +491,14 @@ export default function Home() {
               <a href="#pricing">Pricing</a>
               <a href="#">Updates</a>
             </div>
+
             <div>
               <strong>Company</strong>
               <a href="#">About</a>
               <a href="#">Careers</a>
               <a href="#">Contact</a>
             </div>
+
             <div>
               <strong>Legal</strong>
               <a href="#">Privacy</a>
@@ -453,8 +515,14 @@ export default function Home() {
       </footer>
 
       {showVideo && (
-        <div className="modalOverlay" onClick={() => setShowVideo(false)}>
-          <div className="videoModal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modalOverlay"
+          onClick={() => setShowVideo(false)}
+        >
+          <div
+            className="videoModal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               className="closeButton"
               onClick={() => setShowVideo(false)}
@@ -462,8 +530,12 @@ export default function Home() {
             >
               ×
             </button>
+
             <video controls autoPlay>
-              <source src="/unitvero-demo.mp4" type="video/mp4" />
+              <source
+                src="/unitvero-demo.mp4"
+                type="video/mp4"
+              />
               Your browser does not support video playback.
             </video>
           </div>
@@ -1026,10 +1098,6 @@ export default function Home() {
           margin: auto;
           max-width: 1184px;
           padding: 130px 0;
-        }
-
-        .splitSection:nth-of-type(even) {
-          background: transparent;
         }
 
         .splitText h2 {
@@ -1778,15 +1846,13 @@ function FeatureCard({
   text,
   large = false,
   wide = false,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-  large?: boolean;
-  wide?: boolean;
 }) {
   return (
-    <article className={`featureCard ${large ? "large" : ""} ${wide ? "wide" : ""}`}>
+    <article
+      className={`featureCard ${large ? "large" : ""} ${
+        wide ? "wide" : ""
+      }`}
+    >
       <div className="featureIcon">{icon}</div>
       <h3>{title}</h3>
       <p>{text}</p>
@@ -1799,18 +1865,16 @@ function Testimonial({
   name,
   role,
   initials,
-}: {
-  quote: string;
-  name: string;
-  role: string;
-  initials: string;
 }) {
   return (
     <article className="testimonial">
       <div className="quoteMark">“</div>
+
       <blockquote>{quote}</blockquote>
+
       <div className="person">
         <div className="personAvatar">{initials}</div>
+
         <div>
           <strong>{name}</strong>
           <small>{role}</small>
@@ -1819,13 +1883,3 @@ function Testimonial({
     </article>
   );
 }
-```
-
-
-
-```text
-public/unitvero-hero-house.jpg
-public/unitvero-property.jpg
-public/unitvero-demo.mp4
-```
-
