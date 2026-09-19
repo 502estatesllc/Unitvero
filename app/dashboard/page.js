@@ -81,7 +81,6 @@ export default function Dashboard() {
   const [bookkeepingYear, setBookkeepingYear] = useState(String(new Date().getFullYear()));
   const [bookkeepingMonth, setBookkeepingMonth] = useState("all");
   const [documents, setDocuments] = useState([]);
-  const [documentTemplates, setDocumentTemplates] = useState([]);
   const [documentBuilderOpen, setDocumentBuilderOpen] = useState(false);
   const [documentBuilderType, setDocumentBuilderType] = useState("lease");
   const [documentBuilderPropertyId, setDocumentBuilderPropertyId] = useState("");
@@ -98,10 +97,7 @@ export default function Dashboard() {
   const [signatureMode, setSignatureMode] = useState("draw");
   const [signatureSubmitting, setSignatureSubmitting] = useState(false);
   const [appLanguage, setAppLanguage] = useState("en");
-  const [proScreenOpen, setProScreenOpen] = useState(false);
-  const [rentalValueOpen, setRentalValueOpen] = useState(false);
   const [rentalPropertyId, setRentalPropertyId] = useState("");
-  const [rentalMonthlyRent, setRentalMonthlyRent] = useState("");
   const [rentEstimateAddress, setRentEstimateAddress] = useState("");
   const [rentEstimateLoading, setRentEstimateLoading] = useState(false);
   const [rentEstimateError, setRentEstimateError] = useState("");
@@ -117,7 +113,6 @@ export default function Dashboard() {
     { id: 3, address: "", rent: "", beds: "", baths: "", sqft: "" },
   ]);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [qaOpen, setQaOpen] = useState(false);
   const [qaFilter, setQaFilter] = useState("all");
   const [qaSearch, setQaSearch] = useState("");
   const [savedRentSearches, setSavedRentSearches] = useState([]);
@@ -1317,7 +1312,6 @@ export default function Dashboard() {
   }
 
   function openProScreen() {
-    setProScreenOpen(true);
     setView("pro");
   }
 
@@ -1412,10 +1406,6 @@ export default function Dashboard() {
 
     setRentEstimateAddress(fullAddress);
     setRentalPropertyId(property.id);
-    setRentalMonthlyRent(
-      property.rent || property.monthly_rent || ""
-    );
-
     setRentEstimateResult(null);
     setRentEstimateError("");
   }
@@ -1702,11 +1692,10 @@ export default function Dashboard() {
       setAnnouncements(announcementData || []);
     }
 
-    const [maintenanceResult, expenseResult, documentResult, templateResult] = await Promise.all([
+    const [maintenanceResult, expenseResult, documentResult] = await Promise.all([
       s.from("maintenance_requests").select("*").order("created_at", { ascending: false }),
       s.from("maintenance_expenses").select("*").eq("landlord_id", user.id).order("expense_date", { ascending: false }),
       s.from("documents").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }),
-      s.from("document_templates").select("*").eq("is_active", true).order("name", { ascending: true }),
     ]);
 
     if (maintenanceResult.error) console.error("Could not load maintenance:", maintenanceResult.error);
@@ -1736,8 +1725,6 @@ export default function Dashboard() {
     else setMaintenanceExpenses(expenseResult.data || []);
     if (documentResult.error) console.error("Could not load documents:", documentResult.error);
     else setDocuments(documentResult.data || []);
-    if (templateResult.error) console.error("Could not load templates:", templateResult.error);
-    else setDocumentTemplates(templateResult.data || []);
   }
 
   useEffect(() => {
@@ -12333,165 +12320,6 @@ function TenantPortal({
           </>
         )}
       
-      <div style={{
-        position:"fixed",
-        left:18,
-        bottom:18,
-        zIndex:1199,
-        background:"#fff",
-        border:"1px solid #dbe3ef",
-        borderRadius:12,
-        padding:"7px 9px",
-        boxShadow:"0 8px 24px rgba(0,0,0,.12)",
-      }}>
-        <select
-          aria-label="Choose language"
-          value={appLanguage}
-          onChange={(e) => setAppLanguage(e.target.value)}
-          style={{
-            border:0,
-            outline:"none",
-            background:"#fff",
-            fontWeight:700,
-            color:"#263247",
-          }}
-        >
-          {unitveroLanguages.map(([code, name]) => (
-            <option key={code} value={code}>{name}</option>
-          ))}
-        </select>
-      </div>
-
-      {privacyOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position:"fixed",
-            inset:0,
-            zIndex:1300,
-            background:"rgba(10,20,35,.58)",
-            display:"grid",
-            placeItems:"center",
-            padding:20,
-          }}
-        >
-          <div style={{
-            width:"min(820px,100%)",
-            maxHeight:"90vh",
-            overflow:"auto",
-            background:"#fff",
-            borderRadius:22,
-            padding:26,
-          }}>
-            <div style={{
-              display:"flex",
-              justifyContent:"space-between",
-              gap:14,
-              alignItems:"flex-start",
-            }}>
-              <div>
-                <small>UNITVERO</small>
-                <h2 style={{margin:"4px 0 6px"}}>Privacy Policy</h2>
-                <p style={{margin:0,color:"#667386"}}>
-                  Privacy information and data choices.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => setPrivacyOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{lineHeight:1.65,fontSize:13,marginTop:20}}>
-              <h3>1. Information We Collect</h3>
-              <p>
-                Unitvero may collect account information, property and tenancy
-                information, payment-related records, maintenance requests and
-                photos, messages, documents, signatures, and other information
-                that users choose to enter or upload. The exact categories depend
-                on the features a user uses.
-              </p>
-
-              <h3>2. How We Use Information</h3>
-              <p>
-                Information is used to provide property-management features,
-                authenticate accounts, process and display rental records,
-                facilitate communications, manage documents and signatures,
-                provide support, improve security, and operate requested
-                subscription features.
-              </p>
-
-              <h3>3. Sharing</h3>
-              <p>
-                Unitvero may use service providers that process information on
-                Unitvero's behalf, such as hosting, authentication, storage,
-                payment, email, messaging, analytics, or document-delivery
-                providers. Information may also be shared when a user explicitly
-                requests a transfer, such as sending a document to a tenant.
-              </p>
-
-              <h3>4. Security</h3>
-              <p>
-                Unitvero uses access controls and security measures designed to
-                protect stored information. No internet service can guarantee
-                absolute security.
-              </p>
-
-              <h3>5. Retention and Deletion</h3>
-              <p>
-                Unitvero retains information for as long as reasonably necessary
-                to provide the service, comply with legal obligations, resolve
-                disputes, and maintain legitimate business records. Users may
-                request account/data deletion through the account-support process,
-                subject to information that must be retained by law.
-              </p>
-
-              <h3>6. Privacy Choices</h3>
-              <p>
-                Users may contact Unitvero to request access, correction, or
-                deletion of applicable personal information and to ask questions
-                about data practices.
-              </p>
-
-              <h3>7. Children</h3>
-              <p>
-                Unitvero is not directed to children and should not be used by
-                children without appropriate authorization.
-              </p>
-
-              <h3>8. Changes</h3>
-              <p>
-                Unitvero may update this policy as its services or legal
-                requirements change. The current policy should be made available
-                through a public privacy-policy URL.
-              </p>
-
-              <h3>9. Contact</h3>
-              <p>
-                Privacy questions should be directed to the privacy/support
-                contact published by the Unitvero operator.
-              </p>
-
-              <div style={{
-                padding:14,
-                background:"#fff8e8",
-                border:"1px solid #ead9a9",
-                borderRadius:12,
-              }}>
-                <b>Before app-store submission:</b> replace the placeholder
-                operator/contact information with your actual legal business
-                name, privacy email, retention practices, and the exact third-party
-                services Unitvero uses. This policy should be reviewed for the
-                actual production data flows before submission.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 </main>
     </div>
   );
