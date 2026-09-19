@@ -1355,12 +1355,35 @@ export default function Dashboard() {
       }
 
       const response = await fetch(`/api/rent-estimate?${params.toString()}`);
-      const payload = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const rawResponse = await response.text();
+
+      let payload = null;
+
+      if (contentType.includes("application/json")) {
+        try {
+          payload = JSON.parse(rawResponse);
+        } catch {
+          payload = null;
+        }
+      }
 
       if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(
+            "The rent-estimate API route is missing from the deployment. Add app/api/rent-estimate/route.js and redeploy."
+          );
+        }
+
         throw new Error(
           payload?.error ||
-          "Could not retrieve a live rent estimate for that address."
+          `Rent estimate request failed (HTTP ${response.status}).`
+        );
+      }
+
+      if (!payload) {
+        throw new Error(
+          "The rent-estimate endpoint returned a webpage instead of JSON. Make sure app/api/rent-estimate/route.js exists in the deployed project."
         );
       }
 
