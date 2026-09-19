@@ -597,9 +597,9 @@ export default function Dashboard() {
 <style>
   @page { size: Letter; margin: 0.65in; }
   * { box-sizing:border-box; }
-  body { margin:0; font-family: Arial, Helvetica, sans-serif; color:#172033; line-height:1.52; background:#fff; }
+  body { margin:0; font-family: Arial, Helvetica, sans-serif; color:#f7f6f1; line-height:1.52; background:#fff; }
   .page { max-width:7.1in; margin:0 auto; }
-  .brand { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #172033; padding-bottom:14px; margin-bottom:24px; }
+  .brand { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #f7f6f1; padding-bottom:14px; margin-bottom:24px; }
   .brandName { font-size:22px; font-weight:900; letter-spacing:-.4px; }
   .brandSub { font-size:10px; color:#687386; margin-top:3px; text-transform:uppercase; letter-spacing:1.2px; }
   .docMeta { text-align:right; font-size:10px; color:#687386; }
@@ -620,7 +620,7 @@ export default function Dashboard() {
   .blankGrid { display:grid; gap:12px; font-size:11px; }
   .blankGrid span { display:inline-block; min-width:220px; border-bottom:1px solid #8d98a8; padding-bottom:2px; }
   .signatureGrid { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:65px; break-inside:avoid; }
-  .signatureLine { border-top:1px solid #172033; margin-bottom:7px; }
+  .signatureLine { border-top:1px solid #f7f6f1; margin-bottom:7px; }
   .signatureLabel { font-size:11px; font-weight:800; }
   .signatureMeta { font-size:9px; color:#687386; margin-top:3px; }
   .linedArea { min-height:170px; border:1px solid #dce3ec; border-radius:7px; background:repeating-linear-gradient(to bottom, #fff 0, #fff 27px, #dfe5ec 28px); }
@@ -825,7 +825,7 @@ export default function Dashboard() {
 
     ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#172033";
+    ctx.strokeStyle = "#f7f6f1";
 
     ctx.lineTo(point.clientX - rect.left, point.clientY - rect.top);
     ctx.stroke();
@@ -2653,7 +2653,7 @@ export default function Dashboard() {
 
         <div style={{
           padding:"12px 14px",
-          borderBottom:"1px solid #e5e9ef",
+          borderBottom:"1px solid #2a2b2a",
           display:"grid",
           gap:8,
         }}>
@@ -2685,7 +2685,7 @@ export default function Dashboard() {
             minHeight:44,
             border:0,
             borderRadius:12,
-            background:"linear-gradient(135deg,#172033,#324968)",
+            background:"linear-gradient(135deg,#f7f6f1,#324968)",
             color:"#fff",
             fontWeight:900,
             cursor:"pointer",
@@ -2831,7 +2831,7 @@ export default function Dashboard() {
         </nav>
         <div style={{
           padding:"12px 14px",
-          borderTop:"1px solid #e5e9ef",
+          borderTop:"1px solid #2a2b2a",
           display:"grid",
           gap:6,
           fontSize:12,
@@ -7367,7 +7367,7 @@ export default function Dashboard() {
                     marginTop:16,
                     padding:13,
                     borderRadius:12,
-                    background:"#f8fafc",
+                    background:"#080909",
                     color:"#5d6878",
                     fontSize:12,
                   }}>
@@ -7939,7 +7939,7 @@ export default function Dashboard() {
                     padding:14,
                     border:"1px solid #dbe3ef",
                     borderRadius:14,
-                    background:"#f8fafc",
+                    background:"#080909",
                   }}>
                     <b>Property and tenant information</b>
                     <p style={{margin:"6px 0 0",color:"#5d6878"}}>
@@ -8081,7 +8081,7 @@ export default function Dashboard() {
                     padding:14,
                     border:"1px solid #dbe3ef",
                     borderRadius:14,
-                    background:"#f8fafc",
+                    background:"#080909",
                   }}>
                     <b>Document signing record</b>
                     <p style={{margin:"6px 0 0",color:"#5d6878"}}>
@@ -8474,10 +8474,10 @@ export default function Dashboard() {
               </article>
 
               <article style={{
-                border:"2px solid #172033",
+                border:"2px solid #f7f6f1",
                 borderRadius:20,
                 padding:22,
-                background:"#f8fafc",
+                background:"#080909",
               }}>
                 <small>FULL MANAGEMENT</small>
                 <h2>Unitvero Pro</h2>
@@ -8572,7 +8572,7 @@ export default function Dashboard() {
                     <div style={{
                       width:`${percent}%`,
                       height:"100%",
-                      background:"#172033",
+                      background:"#f7f6f1",
                     }} />
                   </div>
                 </section>
@@ -11320,7 +11320,7 @@ export default function Dashboard() {
                   padding:"16px 18px",
                   border:"1px solid #dbe3ef",
                   borderRadius:14,
-                  background:"#f8fafc",
+                  background:"#080909",
                 }}
               >
                 <b>Bookkeeping note</b>
@@ -11393,7 +11393,7 @@ export default function Dashboard() {
             BlinkMacSystemFont,
             "Segoe UI",
             sans-serif;
-          color: #172033;
+          color: #f7f6f1;
         }
         .unitveroModern button,
         .unitveroModern input,
@@ -11531,7 +11531,7 @@ export default function Dashboard() {
           border: 1px solid #d9e1eb;
           border-radius: 12px;
           padding: 0 14px;
-          color: #172033;
+          color: #f7f6f1;
           background: #fbfcfe;
         }
         .propertyEditRow {
@@ -11993,6 +11993,53 @@ export default function Dashboard() {
 @media(max-width:680px){
   .unitveroModern .sidebar{width:100% !important}
   .unitveroModern .dash{padding:18px 14px 35px !important}
+}
+
+
+/* FINAL PALETTE LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
+.unitveroModern,
+.unitveroModern *{
+  --blue:#f4c84f !important;
+  --green:#f4c84f !important;
+  --orange:#f4c84f !important;
+  --purple:#f4c84f !important;
+  --teal:#f4c84f !important;
+  --cyan:#f4c84f !important;
+}
+.unitveroModern .green,
+.unitveroModern .blue,
+.unitveroModern .orange,
+.unitveroModern .purple,
+.unitveroModern .teal,
+.unitveroModern .cyan{
+  color:#f4c84f !important;
+  background-color:rgba(244,200,79,.08) !important;
+  border-color:rgba(244,200,79,.20) !important;
+}
+.unitveroModern [class*="blue"],
+.unitveroModern [class*="green"],
+.unitveroModern [class*="orange"],
+.unitveroModern [class*="purple"],
+.unitveroModern [class*="teal"],
+.unitveroModern [class*="cyan"]{
+  color:#f4c84f !important;
+  border-color:rgba(244,200,79,.20) !important;
+}
+.unitveroModern svg [fill],
+.unitveroModern svg [stroke]{
+  stroke:#f4c84f !important;
+  fill:currentColor !important;
+}
+
+
+/* FONT LOCK — INTER, matching the generated reference */
+html, body,
+.unitveroModern,
+.unitveroModern *,
+.homePage,
+.homePage *{
+  font-family:Inter,Arial,sans-serif !important;
+  font-synthesis:none !important;
 }
 
       `}</style>
