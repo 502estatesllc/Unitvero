@@ -82,6 +82,26 @@ export default function Dashboard() {
   const [bookkeepingMonth, setBookkeepingMonth] = useState("all");
   const [documents, setDocuments] = useState([]);
   const [documentTemplates, setDocumentTemplates] = useState([]);
+  const [documentBuilderOpen, setDocumentBuilderOpen] = useState(false);
+  const [documentBuilderType, setDocumentBuilderType] = useState("lease");
+  const [documentBuilderPropertyId, setDocumentBuilderPropertyId] = useState("");
+  const [documentBuilderState, setDocumentBuilderState] = useState("");
+  const [documentBuilderTenancyId, setDocumentBuilderTenancyId] = useState("");
+  const [documentBuilderTitle, setDocumentBuilderTitle] = useState("");
+  const [documentBuilderNotes, setDocumentBuilderNotes] = useState("");
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+  const [signingDocument, setSigningDocument] = useState(null);
+  const [signatureName, setSignatureName] = useState("");
+  const [signatureImage, setSignatureImage] = useState("");
+  const [signatureConsent, setSignatureConsent] = useState(false);
+  const [signatureMode, setSignatureMode] = useState("draw");
+  const [signatureSubmitting, setSignatureSubmitting] = useState(false);
+  const [documentEditorOpen, setDocumentEditorOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(null);
+  const [editingDocumentTitle, setEditingDocumentTitle] = useState("");
+  const [editingDocumentType, setEditingDocumentType] = useState("custom");
+  const [editingDocumentNotes, setEditingDocumentNotes] = useState("");
   const [subscription, setSubscription] = useState(null);
   const [entitlements, setEntitlements] = useState({});
   const [communicationTab, setCommunicationTab] = useState("messages");
@@ -207,6 +227,937 @@ export default function Dashboard() {
       .eq("landlord_id", landlordId)
       .maybeSingle();
     setSubscription(subscriptionData || { plan_code: "free", status: "active" });
+  }
+
+  const unitveroStates = [
+    ["AL", "Alabama"],
+    ["AK", "Alaska"],
+    ["AZ", "Arizona"],
+    ["AR", "Arkansas"],
+    ["CA", "California"],
+    ["CO", "Colorado"],
+    ["CT", "Connecticut"],
+    ["DE", "Delaware"],
+    ["FL", "Florida"],
+    ["GA", "Georgia"],
+    ["HI", "Hawaii"],
+    ["ID", "Idaho"],
+    ["IL", "Illinois"],
+    ["IN", "Indiana"],
+    ["IA", "Iowa"],
+    ["KS", "Kansas"],
+    ["KY", "Kentucky"],
+    ["LA", "Louisiana"],
+    ["ME", "Maine"],
+    ["MD", "Maryland"],
+    ["MA", "Massachusetts"],
+    ["MI", "Michigan"],
+    ["MN", "Minnesota"],
+    ["MS", "Mississippi"],
+    ["MO", "Missouri"],
+    ["MT", "Montana"],
+    ["NE", "Nebraska"],
+    ["NV", "Nevada"],
+    ["NH", "New Hampshire"],
+    ["NJ", "New Jersey"],
+    ["NM", "New Mexico"],
+    ["NY", "New York"],
+    ["NC", "North Carolina"],
+    ["ND", "North Dakota"],
+    ["OH", "Ohio"],
+    ["OK", "Oklahoma"],
+    ["OR", "Oregon"],
+    ["PA", "Pennsylvania"],
+    ["RI", "Rhode Island"],
+    ["SC", "South Carolina"],
+    ["SD", "South Dakota"],
+    ["TN", "Tennessee"],
+    ["TX", "Texas"],
+    ["UT", "Utah"],
+    ["VT", "Vermont"],
+    ["VA", "Virginia"],
+    ["WA", "Washington"],
+    ["WV", "West Virginia"],
+    ["WI", "Wisconsin"],
+    ["WY", "Wyoming"],
+    ["DC", "District of Columbia"]
+  ];
+
+  function getPropertyState(property) {
+    return String(
+      property?.state_code ||
+      property?.state ||
+      property?.state_abbreviation ||
+      ""
+    ).trim().toUpperCase();
+  }
+
+  function documentTypeLabel(type) {
+    const labels = {
+      lease: "Residential Lease",
+      lease_renewal: "Lease Renewal",
+      late_rent_notice: "Late Rent Notice",
+      notice_to_vacate: "Notice to Vacate",
+      notice_of_entry: "Notice of Entry",
+      rent_change_notice: "Rent Change Notice",
+      lease_addendum: "Lease Addendum",
+      move_in_out: "Move-In / Move-Out",
+      custom: "Custom Document",
+    };
+    return labels[type] || "Rental Document";
+  }
+
+  function escapeDocumentText(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function buildDocumentHtml({ title, type, property, tenancy, notes, stateCode }) {
+    const tenantName =
+      tenancy?.tenant_name ||
+      tenancy?.tenant_email ||
+      "Tenant";
+
+    const landlordName =
+      profile?.full_name ||
+      "Landlord / Property Manager";
+
+    const propertyAddress = [
+      property?.address,
+      property?.city,
+      property?.state,
+      property?.zip_code,
+    ].filter(Boolean).join(", ");
+
+    const rent =
+      tenancy?.rent_amount ??
+      tenancy?.monthly_rent ??
+      tenancy?.rent ??
+      "";
+
+    const deposit =
+      tenancy?.security_deposit ??
+      tenancy?.deposit_amount ??
+      tenancy?.deposit ??
+      "";
+
+    const startDate =
+      tenancy?.start_date ||
+      tenancy?.lease_start ||
+      tenancy?.lease_start_date ||
+      "";
+
+    const endDate =
+      tenancy?.end_date ||
+      tenancy?.lease_end ||
+      tenancy?.lease_end_date ||
+      "";
+
+    const today = new Date().toLocaleDateString();
+    const jurisdictionCode =
+      String(stateCode || getPropertyState(property) || "").toUpperCase();
+    const jurisdictionName =
+      unitveroStates.find(([code]) => code === jurisdictionCode)?.[1] ||
+      property?.state ||
+      "State not selected";
+
+    const safe = (value) =>
+      String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    const notesHtml = notes
+      ? `<div class="section">
+          <div class="sectionTitle">Additional Terms / Notes</div>
+          <div class="bodyText">${safe(notes).replaceAll("\n", "<br>")}</div>
+        </div>`
+      : "";
+
+    const signatureBlock = `
+      <div class="signatureGrid">
+        <div>
+          <div class="signatureLine"></div>
+          <div class="signatureLabel">${safe(landlordName)}</div>
+          <div class="signatureMeta">Landlord / Authorized Representative</div>
+          <div class="signatureMeta">Date: ____________________</div>
+        </div>
+        <div>
+          <div class="signatureLine"></div>
+          <div class="signatureLabel">${safe(tenantName)}</div>
+          <div class="signatureMeta">Tenant / Recipient</div>
+          <div class="signatureMeta">Date: ____________________</div>
+        </div>
+      </div>`;
+
+    const propertySection = `
+      <div class="section">
+        <div class="sectionTitle">Property & Parties</div>
+        <div class="infoGrid">
+          <div class="infoItem"><span>Property</span><strong>${safe(propertyAddress || "Rental property")}</strong></div>
+          <div class="infoItem"><span>Tenant</span><strong>${safe(tenantName)}</strong></div>
+          ${rent !== "" ? `<div class="infoItem"><span>Monthly Rent</span><strong>$${safe(rent)}</strong></div>` : ""}
+          ${deposit !== "" ? `<div class="infoItem"><span>Security Deposit</span><strong>$${safe(deposit)}</strong></div>` : ""}
+          ${startDate ? `<div class="infoItem"><span>Lease Start</span><strong>${safe(startDate)}</strong></div>` : ""}
+          ${endDate ? `<div class="infoItem"><span>Lease End</span><strong>${safe(endDate)}</strong></div>` : ""}
+        </div>
+      </div>`;
+
+    let body = "";
+
+    switch (type) {
+      case "lease":
+        body = `
+          <div class="section">
+            <div class="sectionTitle">Residential Lease Agreement</div>
+            <p class="bodyText">This Residential Lease Agreement identifies the rental property, parties, and principal lease terms selected in Unitvero. The final agreement should include all terms required by the applicable jurisdiction and any property-specific addenda.</p>
+          </div>
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Lease Terms</div>
+            <div class="numbered">
+              <p><b>1. Premises.</b> The rental premises are the property identified above.</p>
+              <p><b>2. Rent.</b> The monthly rent shown above is the rent amount entered by the landlord in Unitvero. Payment timing and accepted payment methods should follow the executed lease and applicable requirements.</p>
+              <p><b>3. Term.</b> The lease term is the start and end date shown above, subject to the executed agreement and applicable law.</p>
+              <p><b>4. Security Deposit.</b> The security deposit amount shown above reflects the amount entered by the landlord and is subject to the applicable rules governing deposits.</p>
+              <p><b>5. Property Rules.</b> Any additional property rules, utilities, occupants, pets, smoking restrictions, maintenance responsibilities, or other terms should be stated in the lease or an executed addendum.</p>
+              <p><b>6. Notices.</b> Formal notices should be delivered using a method permitted by the applicable lease and jurisdiction.</p>
+            </div>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "lease_renewal":
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Renewal Terms</div>
+            <p class="bodyText">The parties acknowledge the renewal information selected above. Any revised rent, term, deposit, utilities, occupants, or other material terms should be clearly stated before execution.</p>
+            <div class="numbered">
+              <p><b>1. Renewal Term.</b> The renewed term should be the dates entered and accepted by both parties.</p>
+              <p><b>2. Rent.</b> The applicable monthly rent should be confirmed by the parties before signing.</p>
+              <p><b>3. Continuing Terms.</b> Existing lease provisions remain subject to the original agreement, this renewal, and any applicable law unless expressly changed in writing.</p>
+            </div>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "late_rent_notice":
+        body = `
+          ${propertySection}
+          <div class="noticeBox"><b>PAYMENT NOTICE</b><br>This document records a written notice concerning a rent balance. Complete the balance, due date, and cure information before delivery.</div>
+          <div class="section">
+            <div class="sectionTitle">Balance Information</div>
+            <div class="blankGrid">
+              <div>Amount claimed due: <span>________________________</span></div>
+              <div>Original due date: <span>________________________</span></div>
+              <div>Date of notice: <span>${safe(today)}</span></div>
+              <div>Payment / cure deadline: <span>________________________</span></div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="sectionTitle">Notice</div>
+            <p class="bodyText">Please review the account information above and address any balance using the payment method provided by the landlord. This notice is a record of the information supplied by the landlord and should be used only in a form and manner permitted by the applicable jurisdiction.</p>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "notice_to_vacate":
+        body = `
+          ${propertySection}
+          <div class="noticeBox"><b>NOTICE TO VACATE / TERMINATION</b><br>Complete the effective date and delivery information before serving this notice.</div>
+          <div class="section">
+            <div class="sectionTitle">Effective Date</div>
+            <div class="blankGrid">
+              <div>Date of notice: <span>${safe(today)}</span></div>
+              <div>Effective / move-out date: <span>________________________</span></div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="sectionTitle">Notice</div>
+            <p class="bodyText">This document provides written notice concerning the tenancy identified above. The landlord should confirm that the notice period, reason, delivery method, and wording comply with the applicable lease and jurisdiction before serving it.</p>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "notice_of_entry":
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Planned Entry</div>
+            <div class="blankGrid">
+              <div>Entry date: <span>________________________</span></div>
+              <div>Approximate time: <span>________________________</span></div>
+              <div>Purpose of entry: <span>________________________</span></div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="sectionTitle">Notice</div>
+            <p class="bodyText">The landlord or authorized representative intends to request access to the premises for the purpose stated above. Entry should be conducted in accordance with the lease and applicable notice and access requirements.</p>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "rent_change_notice":
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Rent Change</div>
+            <div class="blankGrid">
+              <div>Current monthly rent: <span>$________________________</span></div>
+              <div>New monthly rent: <span>$________________________</span></div>
+              <div>Effective date: <span>________________________</span></div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="sectionTitle">Notice</div>
+            <p class="bodyText">This document records a proposed change to the rental amount. The landlord should confirm the permitted timing, notice period, lease terms, and any applicable restrictions before delivering the notice.</p>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "lease_addendum":
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Addendum Terms</div>
+            <p class="bodyText">This addendum is intended to document additional or amended terms relating to the tenancy identified above. The terms below should be completed and agreed to by all required parties.</p>
+            <div class="linedArea"></div>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      case "move_in_out":
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Property Condition Checklist</div>
+            <div class="checkGrid">
+              ${["Entry / Doors","Living Areas","Kitchen","Bathrooms","Bedrooms","Flooring","Walls / Paint","Windows","Appliances","Exterior","Smoke / CO Devices","Other"].map(item => `<div><b>${safe(item)}</b><span>Condition: __________________</span><span>Notes: _____________________</span></div>`).join("")}
+            </div>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+        break;
+
+      default:
+        body = `
+          ${propertySection}
+          <div class="section">
+            <div class="sectionTitle">Document Content</div>
+            <p class="bodyText">Complete the document content below. This document was created from the information selected in Unitvero.</p>
+            <div class="linedArea"></div>
+          </div>
+          ${notesHtml}
+          ${signatureBlock}`;
+    }
+
+    return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${safe(title)}</title>
+<style>
+  @page { size: Letter; margin: 0.65in; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: Arial, Helvetica, sans-serif; color:#172033; line-height:1.52; background:#fff; }
+  .page { max-width:7.1in; margin:0 auto; }
+  .brand { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid #172033; padding-bottom:14px; margin-bottom:24px; }
+  .brandName { font-size:22px; font-weight:900; letter-spacing:-.4px; }
+  .brandSub { font-size:10px; color:#687386; margin-top:3px; text-transform:uppercase; letter-spacing:1.2px; }
+  .docMeta { text-align:right; font-size:10px; color:#687386; }
+  h1 { margin:0 0 7px; text-align:center; font-size:23px; letter-spacing:-.3px; }
+  .subtitle { text-align:center; color:#687386; font-size:11px; margin-bottom:25px; }
+  .section { margin:23px 0; break-inside:avoid; }
+  .sectionTitle { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid #ccd5e1; padding-bottom:7px; margin-bottom:12px; }
+  .infoGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .infoItem { border:1px solid #dce3ec; border-radius:7px; padding:10px 11px; }
+  .infoItem span { display:block; font-size:9px; color:#687386; text-transform:uppercase; letter-spacing:.7px; margin-bottom:3px; }
+  .infoItem strong { font-size:12px; }
+  .bodyText { font-size:11px; }
+  .numbered p { font-size:11px; margin:11px 0; }
+  .noticeBox { border:1px solid #c8d3e0; background:#f5f7fa; padding:14px; border-radius:7px; font-size:11px; margin:18px 0; }
+  .jurisdictionNotice { border:1px solid #d7e0ec; background:#f7f9fc; border-radius:7px; padding:10px 12px; margin-bottom:20px; font-size:9px; }
+  .jurisdictionNotice b { display:block; font-size:10px; margin-bottom:3px; }
+  .jurisdictionNotice span { color:#687386; }
+  .blankGrid { display:grid; gap:12px; font-size:11px; }
+  .blankGrid span { display:inline-block; min-width:220px; border-bottom:1px solid #8d98a8; padding-bottom:2px; }
+  .signatureGrid { display:grid; grid-template-columns:1fr 1fr; gap:60px; margin-top:65px; break-inside:avoid; }
+  .signatureLine { border-top:1px solid #172033; margin-bottom:7px; }
+  .signatureLabel { font-size:11px; font-weight:800; }
+  .signatureMeta { font-size:9px; color:#687386; margin-top:3px; }
+  .linedArea { min-height:170px; border:1px solid #dce3ec; border-radius:7px; background:repeating-linear-gradient(to bottom, #fff 0, #fff 27px, #dfe5ec 28px); }
+  .checkGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .checkGrid > div { border:1px solid #dce3ec; border-radius:7px; padding:10px; min-height:75px; }
+  .checkGrid b { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:7px; }
+  .checkGrid span { display:block; font-size:9px; color:#5d697a; margin-top:4px; }
+  .footer { margin-top:45px; padding-top:10px; border-top:1px solid #dce3ec; display:flex; justify-content:space-between; color:#7b8797; font-size:8px; }
+  @media print {
+    .page { max-width:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">
+    <div>
+      <div class="brandName">UNITVERO</div>
+      <div class="brandSub">Property Management & Rental Documents</div>
+    </div>
+    <div class="docMeta">
+      Prepared ${safe(today)}<br>
+      ${safe(jurisdictionName)}
+    </div>
+  </div>
+
+  <h1>${safe(title)}</h1>
+  <div class="subtitle">${safe(documentTypeLabel(type))}</div>
+
+  <div class="jurisdictionNotice">
+    <b>${safe(jurisdictionName)} template framework</b>
+    <span>
+      This document is generated for the selected jurisdiction. State and local
+      requirements can change. Unitvero should only publish a jurisdiction-specific
+      template as current after its legal/content review process is complete.
+    </span>
+  </div>
+
+  ${body}
+
+  <div class="footer">
+    <span>Generated through Unitvero</span>
+    <span>Document ID: ${safe((crypto?.randomUUID?.() || Date.now()).toString())}</span>
+  </div>
+</div>
+</body>
+</html>`;
+  }
+
+  function openDocumentEditor(documentRecord) {
+    if (!documentRecord) return;
+
+    setEditingDocument(documentRecord);
+    setEditingDocumentTitle(documentRecord.title || "");
+    setEditingDocumentType(documentRecord.document_type || "custom");
+    setEditingDocumentNotes(documentRecord.description || "");
+    setDocumentEditorOpen(true);
+  }
+
+  async function saveEditedDocument(e) {
+    e.preventDefault();
+
+    if (!editingDocument) return;
+
+    const title = editingDocumentTitle.trim();
+    const notes = editingDocumentNotes.trim();
+
+    if (!title) {
+      alert("Enter a document title.");
+      return;
+    }
+
+    const property =
+      props.find((item) => item.id === editingDocument.property_id) || {};
+    const tenancy =
+      tenancies.find((item) => item.id === editingDocument.tenancy_id) || {};
+
+    const html = buildDocumentHtml({
+      title,
+      type: editingDocumentType,
+      property,
+      tenancy,
+      notes,
+      stateCode: getPropertyState(property),
+    });
+
+    const s = supabase();
+
+    const { data: { user } } = await s.auth.getUser();
+
+    if (!user) {
+      alert("Please sign in again.");
+      return;
+    }
+
+    const { data, error } = await s
+      .from("documents")
+      .update({
+        title,
+        description: notes,
+        document_type: editingDocumentType,
+        status: "draft",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingDocument.id)
+      .eq("landlord_id", user.id)
+      .select("*")
+      .single();
+
+    if (error) {
+      alert("Could not save document changes: " + error.message);
+      return;
+    }
+
+    const updated = { ...data, generated_html: html };
+
+    setDocuments((current) =>
+      current.map((documentRecord) =>
+        documentRecord.id === updated.id ? updated : documentRecord
+      )
+    );
+
+    setSelectedDocument(updated);
+    setEditingDocument(updated);
+    setDocumentEditorOpen(false);
+
+    alert("Document changes saved.");
+
+    // Give the landlord an immediate review/print option.
+    const printWindow = window.open("", "_blank", "width=900,height=900");
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+
+      setTimeout(() => {
+        printWindow.print();
+      }, 400);
+    }
+  }
+
+  async function deleteSavedDocument(documentRecord) {
+    if (!documentRecord) return;
+
+    if (
+      !window.confirm(
+        "Delete this saved document? This cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+
+    if (!user) {
+      alert("Please sign in again.");
+      return;
+    }
+
+    const { error } = await s
+      .from("documents")
+      .delete()
+      .eq("id", documentRecord.id)
+      .eq("landlord_id", user.id);
+
+    if (error) {
+      alert("Could not delete document: " + error.message);
+      return;
+    }
+
+    setDocuments((current) =>
+      current.filter((documentRecordItem) => documentRecordItem.id !== documentRecord.id)
+    );
+
+    if (selectedDocument?.id === documentRecord.id) {
+      setSelectedDocument(null);
+    }
+
+    alert("Document deleted.");
+  }
+
+  function openSignatureModal(documentRecord) {
+    if (!documentRecord) return;
+
+    setSigningDocument(documentRecord);
+    setSignatureName("");
+    setSignatureImage("");
+    setSignatureConsent(false);
+    setSignatureMode("draw");
+    setSignatureModalOpen(true);
+  }
+
+  function drawSignatureOnCanvas(canvas, event) {
+    const ctx = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const point = event.touches
+      ? event.touches[0]
+      : event;
+
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#172033";
+
+    ctx.lineTo(point.clientX - rect.left, point.clientY - rect.top);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(point.clientX - rect.left, point.clientY - rect.top);
+  }
+
+  function clearSignatureCanvas() {
+    const canvas = document.getElementById("unitveroSignatureCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+  }
+
+  function captureSignatureCanvas() {
+    const canvas = document.getElementById("unitveroSignatureCanvas");
+    if (!canvas) return "";
+
+    const blank = document.createElement("canvas");
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+
+    if (canvas.toDataURL() === blank.toDataURL()) {
+      return "";
+    }
+
+    return canvas.toDataURL("image/png");
+  }
+
+  async function sendDocumentForSignature(documentRecord) {
+    if (!documentRecord) return;
+
+    const tenancy = tenancies.find((t) => t.id === documentRecord.tenancy_id);
+    const email = tenancy?.tenant_email;
+
+    if (!email) {
+      alert("This tenant does not have an email address saved.");
+      return;
+    }
+
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+
+    if (!user) {
+      alert("Please sign in again.");
+      return;
+    }
+
+    const signingToken =
+      crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const { error } = await s
+      .from("documents")
+      .update({
+        status: "awaiting_signature",
+        shared_with_tenant: true,
+        signing_token: signingToken,
+        sent_at: new Date().toISOString(),
+      })
+      .eq("id", documentRecord.id)
+      .eq("landlord_id", user.id);
+
+    if (error) {
+      alert(
+        "The signature request could not be sent. Your Documents table needs the e-sign fields enabled: " +
+        error.message
+      );
+      return;
+    }
+
+    setDocuments((current) =>
+      current.map((item) =>
+        item.id === documentRecord.id
+          ? {
+              ...item,
+              status: "awaiting_signature",
+              shared_with_tenant: true,
+              signing_token: signingToken,
+              sent_at: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+
+    const subject = encodeURIComponent(
+      `Signature requested: ${documentRecord.title || "Unitvero document"}`
+    );
+
+    const body = encodeURIComponent(
+      `Hello ${tenancy?.tenant_name || "Tenant"},\n\n` +
+      `A document from your landlord is ready for signature in Unitvero.\n\n` +
+      `Document: ${documentRecord.title || "Unitvero document"}\n\n` +
+      `Sign in to your Unitvero tenant portal to review and sign it.\n\n` +
+      `Please do not reply to this automated message.`
+    );
+
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+
+    alert("Signature request created. The document is now awaiting the tenant's signature.");
+  }
+
+  async function completeDocumentSignature(e) {
+    e.preventDefault();
+
+    if (!signingDocument) return;
+
+    if (!signatureConsent) {
+      alert("The signer must agree to use the electronic signature.");
+      return;
+    }
+
+    if (!signatureName.trim()) {
+      alert("Enter the signer's full legal name.");
+      return;
+    }
+
+    setSignatureSubmitting(true);
+
+    try {
+      const image =
+        signatureMode === "draw"
+          ? captureSignatureCanvas()
+          : signatureImage;
+
+      if (!image) {
+        alert(
+          signatureMode === "draw"
+            ? "Draw your signature before signing."
+            : "Upload a signature image before signing."
+        );
+        return;
+      }
+
+      const s = supabase();
+      const { data: { user } } = await s.auth.getUser();
+
+      if (!user) {
+        alert("Please sign in again.");
+        return;
+      }
+
+      const signatureId =
+        crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      const signedAt = new Date().toISOString();
+
+      // The dedicated signature record keeps the audit trail separate from
+      // the document's main text and status.
+      const { error: signatureError } = await s
+        .from("document_signatures")
+        .insert({
+          id: signatureId,
+          document_id: signingDocument.id,
+          signer_id: user.id,
+          signer_name: signatureName.trim(),
+          signature_image: image,
+          signed_at: signedAt,
+          consented_to_electronic_signature: true,
+          signature_method: signatureMode,
+        });
+
+      if (signatureError) {
+        alert(
+          "The signature could not be saved. Make sure the document_signatures table and its RLS policies are installed."
+        );
+        return;
+      }
+
+      const { data: updatedDocument, error: documentError } = await s
+        .from("documents")
+        .update({
+          status: "signed",
+          signed_at: signedAt,
+          signed_by: user.id,
+        })
+        .eq("id", signingDocument.id)
+        .select("*")
+        .single();
+
+      if (documentError) {
+        alert("Signature was saved, but the document status could not be updated: " + documentError.message);
+        return;
+      }
+
+      setDocuments((current) =>
+        current.map((item) =>
+          item.id === signingDocument.id
+            ? { ...item, ...updatedDocument, signed_at: signedAt }
+            : item
+        )
+      );
+
+      setSignatureModalOpen(false);
+      setSigningDocument(null);
+
+      alert("Document signed successfully.");
+    } finally {
+      setSignatureSubmitting(false);
+    }
+  }
+
+  async function createUnitveroDocument(e) {
+    e.preventDefault();
+
+    if (!hasFeature("document_center")) {
+      requirePro("document_center", "Document Center");
+      return;
+    }
+
+    const property = props.find((item) => item.id === documentBuilderPropertyId);
+    const tenancy = tenancies.find((item) => item.id === documentBuilderTenancyId);
+
+    if (!property) {
+      alert("Select a property.");
+      return;
+    }
+
+    if (!tenancy) {
+      alert("Select a tenant.");
+      return;
+    }
+
+    const title =
+      documentBuilderTitle.trim() ||
+      `${documentTypeLabel(documentBuilderType)} - ${tenancy.tenant_name || "Tenant"}`;
+
+    const selectedStateCode =
+      documentBuilderState || getPropertyState(property);
+
+    if (!selectedStateCode) {
+      alert("Select the property's state before creating the document.");
+      return;
+    }
+
+    const html = buildDocumentHtml({
+      title,
+      type: documentBuilderType,
+      property,
+      tenancy,
+      notes: documentBuilderNotes.trim(),
+      stateCode: selectedStateCode,
+    });
+
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+
+    if (!user) {
+      alert("Please sign in again.");
+      return;
+    }
+
+    const payload = {
+      landlord_id: user.id,
+      property_id: property.id,
+      tenancy_id: tenancy.id,
+      tenant_id: tenancy.tenant_id || null,
+      title,
+      description: documentBuilderNotes.trim() || documentTypeLabel(documentBuilderType),
+      document_type: documentBuilderType,
+      status: "draft",
+      shared_with_tenant: false,
+    };
+
+    const { data, error } = await s
+      .from("documents")
+      .insert(payload)
+      .select("*")
+      .single();
+
+    if (error) {
+      alert("Could not save the document: " + error.message);
+      return;
+    }
+
+    const generated = { ...data, generated_html: html };
+    setDocuments((current) => [generated, ...current]);
+    setSelectedDocument(generated);
+    setDocumentBuilderOpen(false);
+
+    // Open the finished document immediately so the landlord can review or print it.
+    const printWindow = window.open("", "_blank", "width=900,height=900");
+    if (!printWindow) {
+      alert("Document saved. Your browser blocked the print window; open the document from the Documents list.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 400);
+
+    setDocumentBuilderTitle("");
+    setDocumentBuilderNotes("");
+    setDocumentBuilderPropertyId("");
+    setDocumentBuilderTenancyId("");
+    setDocumentBuilderState("");
+  }
+
+  function printSavedDocument(documentRecord) {
+    if (!documentRecord) return;
+
+    const property =
+      props.find((item) => item.id === documentRecord.property_id) || {};
+    const tenancy =
+      tenancies.find((item) => item.id === documentRecord.tenancy_id) || {};
+
+    const html =
+      documentRecord.generated_html ||
+      buildDocumentHtml({
+        title: documentRecord.title || "Unitvero Document",
+        type: documentRecord.document_type || "custom",
+        property,
+        tenancy,
+        notes: documentRecord.description || "",
+      });
+
+    const printWindow = window.open("", "_blank", "width=900,height=900");
+    if (!printWindow) {
+      alert("Your browser blocked the print window.");
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 400);
+  }
+
+  function emailSavedDocument(documentRecord) {
+    if (!documentRecord) return;
+
+    const tenancy =
+      tenancies.find((item) => item.id === documentRecord.tenancy_id) || {};
+    const email = tenancy.tenant_email;
+
+    if (!email) {
+      alert("This tenant does not have an email address saved.");
+      return;
+    }
+
+    const subject = encodeURIComponent(documentRecord.title || "Unitvero Document");
+    const body = encodeURIComponent(
+      `Hello ${tenancy.tenant_name || "Tenant"},\\n\\nYour document "${documentRecord.title || "Unitvero Document"}" is available in Unitvero.\\n\\nPlease sign in to your tenant portal to review the document.`
+    );
+
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   }
 
   async function load() {
@@ -5776,12 +6727,12 @@ export default function Dashboard() {
               <div>
                 <small>DOCUMENT CENTER</small>
                 <h1>Documents</h1>
-
                 <p>
-                  Create, send, track, and prepare rental documents for
-                  eSignature.
+                  Create, save, print, deliver, and track rental documents from one place.
                 </p>
-                <span style={{fontWeight:800,fontSize:12}}>{String(subscription?.plan_code || "free").toUpperCase()} PLAN</span>
+                <span style={{fontWeight:800,fontSize:12}}>
+                  {String(subscription?.plan_code || "free").toUpperCase()} PLAN
+                </span>
               </div>
 
               <button
@@ -5789,7 +6740,7 @@ export default function Dashboard() {
                 className="primary"
                 onClick={() => {
                   if (!requirePro("document_center", "Document Center")) return;
-                  alert("Document creation is ready for the next step: selecting a state template, property, and tenant.");
+                  setDocumentBuilderOpen(true);
                 }}
               >
                 + Create Document
@@ -5802,138 +6753,840 @@ export default function Dashboard() {
                 <b>{documents.length}</b>
                 <small>ALL DOCUMENTS</small>
               </article>
-
               <article>
                 <span>Awaiting Signature</span>
                 <b>{documents.filter(d => ["sent","viewed","awaiting_signature"].includes(String(d.status || "").toLowerCase())).length}</b>
                 <small>ESIGN</small>
               </article>
-
               <article>
                 <span>Completed</span>
                 <b>{documents.filter(d => ["signed","completed"].includes(String(d.status || "").toLowerCase())).length}</b>
                 <small>SIGNED & STORED</small>
               </article>
-
               <article>
-                <span>Revenue</span>
-                <b>$0</b>
-                <small>DOCUMENT SERVICES</small>
+                <span>Drafts</span>
+                <b>{documents.filter(d => String(d.status || "").toLowerCase() === "draft").length}</b>
+                <small>READY TO REVIEW</small>
               </article>
             </div>
 
-            <section className="documentLibrary">
-              <div className="documentLibraryHeader">
+            <section className="commandCard" style={{marginTop:22}}>
+              <div className="commandCardHeader">
                 <div>
-                  <h2>Template Library</h2>
-
-                  <p>
-                    Unitvero uses the property's state to show the correct versioned template. Templates are only published after state-rule review.
-                  </p>
+                  <span className="commandSectionIcon">◎</span>
+                  <div>
+                    <h2>50-State Template Framework</h2>
+                    <p>
+                      Unitvero ties each document to the property's jurisdiction
+                      so the correct state template version can be selected.
+                    </p>
+                  </div>
                 </div>
-
-                <span>Templates</span>
+                <span>{unitveroStates.length} jurisdictions</span>
               </div>
-
-              <div className="documentTemplateGrid">
-                {(documentTemplates.length ? documentTemplates.map((template) => [
-                  "▤",
-                  template.name || "Rental Document",
-                  template.description || `Versioned ${template.state_code || template.state || template.jurisdiction || "state"} rental template.`,
-                  String(template.document_type || template.type || "DOCUMENT").toUpperCase(),
-                  template
-                ]) : [
-                  [
-                    "▤",
-                    "Residential Lease",
-                    "State-specific residential lease template. Available after jurisdiction review.",
-                    "LEASE",
-                    null
-                  ],
-                  [
-                    "↻",
-                    "Lease Renewal",
-                    "Prepare updated lease terms for an existing tenant.",
-                    "LEASE",
-                  ],
-                  [
-                    "!",
-                    "Late Rent Notice",
-                    "Create a written notice concerning an outstanding rent balance.",
-                    "NOTICE",
-                  ],
-                  [
-                    "⌂",
-                    "Notice to Vacate",
-                    "Prepare a state-specific notice to end or recover possession of a tenancy.",
-                    "NOTICE",
-                  ],
-                  [
-                    "$",
-                    "Rent Change Notice",
-                    "Document an upcoming rent change for a tenant.",
-                    "NOTICE",
-                  ],
-                  [
-                    "⌁",
-                    "Notice of Entry",
-                    "Create written notice of planned property access.",
-                    "NOTICE",
-                  ],
-                  [
-                    "+",
-                    "Lease Addendum",
-                    "Add property rules or additional terms to an existing lease.",
-                    "ADDENDUM",
-                  ],
-                  [
-                    "✓",
-                    "Move-In / Move-Out",
-                    "Create condition and turnover documentation.",
-                    "PROPERTY",
-                  ],
-                ]).map(([icon, title, description, type, template]) => (
-                  <article className="documentTemplateCard" key={title}>
-                    <div className="documentTemplateIcon">{icon}</div>
-
-                    <span className="documentType">{type}</span>
-
-                    <h3>{title}</h3>
-
-                    <p>{description}</p>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!requirePro("state_template_library", "State Template Library")) return;
-                        if (!template) return alert(`${title} will appear once a reviewed state version is published.`);
-                        alert(`${title} selected. Property/tenant auto-fill is the next document workflow step.`);
-                      }}
-                    >
-                      Create document →
-                    </button>
-                  </article>
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",
+                gap:8,
+                marginTop:14,
+              }}>
+                {unitveroStates.map(([code, name]) => (
+                  <div key={code} style={{
+                    padding:"9px 10px",
+                    border:"1px solid #e1e7ef",
+                    borderRadius:10,
+                    background:"#fff",
+                  }}>
+                    <b style={{fontSize:12}}>{code}</b>
+                    <span style={{display:"block",fontSize:11,color:"#6b778c"}}>
+                      {name}
+                    </span>
+                  </div>
                 ))}
               </div>
             </section>
 
-            <section className="esignBanner">
-              <div className="esignBannerIcon">✎</div>
-
-              <div>
-                <small>ESIGN FOUNDATION</small>
-
-                <h2>Electronic signatures inside Unitvero</h2>
-
-                <p>
-                  The document workflow is being structured for Draft → Sent →
-                  Viewed → Signed → Completed. Provider connection and real
-                  charges will be added before launch.
-                </p>
+            <section className="documentLibrary">
+              <div className="documentLibraryHeader">
+                <div>
+                  <h2>Document Builder</h2>
+                  <p>
+                    Select a document type, property, and tenant. Unitvero fills
+                    the available rental information automatically.
+                  </p>
+                </div>
+                <span>PRO WORKFLOW</span>
               </div>
 
-              <span>COMING NEXT</span>
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",
+                gap:14,
+                marginTop:18
+              }}>
+                {[
+                  ["lease","▤","Residential Lease"],
+                  ["lease_renewal","↻","Lease Renewal"],
+                  ["late_rent_notice","!","Late Rent Notice"],
+                  ["notice_to_vacate","⌂","Notice to Vacate"],
+                  ["notice_of_entry","⌁","Notice of Entry"],
+                  ["rent_change_notice","$","Rent Change Notice"],
+                  ["lease_addendum","+","Lease Addendum"],
+                  ["move_in_out","✓","Move-In / Move-Out"],
+                  ["custom","✎","Custom Document"],
+                ].map(([type, icon, title]) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => {
+                      if (!requirePro("document_center", "Document Center")) return;
+                      setDocumentBuilderType(type);
+                      setDocumentBuilderOpen(true);
+                    }}
+                    style={{
+                      textAlign:"left",
+                      padding:18,
+                      border:"1px solid #dbe3ef",
+                      borderRadius:16,
+                      background:"#fff",
+                      cursor:"pointer",
+                    }}
+                  >
+                    <div style={{fontSize:26,fontWeight:900}}>{icon}</div>
+                    <b style={{display:"block",marginTop:8}}>{title}</b>
+                    <span style={{display:"block",marginTop:5,color:"#6b778c",fontSize:13}}>
+                      Auto-fill property and tenant details
+                    </span>
+                  </button>
+                ))}
+              </div>
             </section>
+
+            <section className="commandCard" style={{marginTop:22}}>
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">▧</span>
+                  <div>
+                    <h2>Saved Documents</h2>
+                    <p>Review, print, and prepare saved documents for delivery.</p>
+                  </div>
+                </div>
+              </div>
+
+              {documents.length === 0 ? (
+                <div className="featureEmpty" style={{marginTop:16}}>
+                  <div className="featureEmptyIcon">▧</div>
+                  <b>No documents yet</b>
+                  <span>Create your first document above.</span>
+                </div>
+              ) : (
+                <div style={{display:"grid",gap:10,marginTop:16}}>
+                  {documents.map((doc) => {
+                    const tenancy = tenancies.find((t) => t.id === doc.tenancy_id);
+                    const property = props.find((p) => p.id === doc.property_id);
+
+                    return (
+                      <article
+                        key={doc.id}
+                        style={{
+                          display:"grid",
+                          gridTemplateColumns:"minmax(220px,1.7fr) minmax(160px,1fr) auto",
+                          gap:16,
+                          alignItems:"center",
+                          padding:"15px 16px",
+                          border:"1px solid #e1e7ef",
+                          borderRadius:14,
+                          background:"#fff",
+                        }}
+                      >
+                        <div>
+                          <b>{doc.title || "Unitvero Document"}</b>
+                          <span style={{display:"block",fontSize:13,color:"#6b778c",marginTop:4}}>
+                            {tenancy?.tenant_name || tenancy?.tenant_email || "Tenant"}
+                            {" · "}
+                            {property?.address || "Property"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span style={{
+                            display:"inline-flex",
+                            padding:"5px 9px",
+                            borderRadius:999,
+                            background:"#eef3fb",
+                            fontSize:12,
+                            fontWeight:800,
+                            textTransform:"uppercase"
+                          }}>
+                            {String(doc.status || "draft").replaceAll("_"," ")}
+                          </span>
+                          <small style={{display:"block",marginTop:5,color:"#6b778c"}}>
+                            {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : "—"}
+                          </small>
+                        </div>
+
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => openDocumentEditor(doc)}
+                          >
+                            Edit
+                          </button>
+                          {String(doc.status || "").toLowerCase() !== "signed" && (
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => openSignatureModal(doc)}
+                            >
+                              Sign
+                            </button>
+                          )}
+                          {String(doc.status || "").toLowerCase() !== "signed" && (
+                            <button
+                              type="button"
+                              className="secondary"
+                              onClick={() => sendDocumentForSignature(doc)}
+                            >
+                              Request Signature
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => printSavedDocument(doc)}
+                          >
+                            Print
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() => emailSavedDocument(doc)}
+                          >
+                            Email
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteSavedDocument(doc)}
+                            style={{
+                              minHeight:40,
+                              padding:"0 12px",
+                              border:"1px solid #efcaca",
+                              borderRadius:10,
+                              background:"#fff5f5",
+                              color:"#b42318",
+                              fontWeight:800,
+                              cursor:"pointer",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <section className="commandCard" style={{marginTop:22}}>
+              <div className="commandCardHeader">
+                <div>
+                  <span className="commandSectionIcon">✎</span>
+                  <div>
+                    <h2>Unitvero eSignature</h2>
+                    <p>
+                      Sign in-app or request a tenant signature without leaving
+                      the Documents workspace.
+                    </p>
+                  </div>
+                </div>
+                <span>PRO</span>
+              </div>
+
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",
+                gap:12,
+                marginTop:16,
+              }}>
+                {[
+                  ["1","Prepare","Create or edit the document."],
+                  ["2","Request","Send the tenant a signature request."],
+                  ["3","Review","Tenant reviews the document in Unitvero."],
+                  ["4","Sign","Tenant draws or uploads a signature and consents."],
+                  ["5","Complete","Unitvero records the signed status and audit data."],
+                ].map(([num,title,desc]) => (
+                  <div key={num} style={{
+                    padding:14,
+                    border:"1px solid #e1e7ef",
+                    borderRadius:14,
+                    background:"#fff",
+                  }}>
+                    <b style={{display:"inline-grid",placeItems:"center",width:28,height:28,borderRadius:999,background:"#eef3fb"}}>{num}</b>
+                    <strong style={{display:"block",marginTop:9}}>{title}</strong>
+                    <span style={{display:"block",fontSize:12,color:"#6b778c",marginTop:4}}>{desc}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="esignBanner" style={{marginTop:22}}>
+              <div className="esignBannerIcon">✎</div>
+              <div>
+                <small>ESIGNATURE + MAILING</small>
+                <h2>Ready for the next delivery integrations</h2>
+                <p>
+                  Unitvero now creates and saves documents, auto-fills rental
+                  information, and provides browser printing and email delivery.
+                  E-signature and physical print-and-mail delivery can be connected
+                  to a dedicated provider without changing the document workflow.
+                </p>
+              </div>
+              <span>READY</span>
+            </section>
+
+            {documentEditorOpen && editingDocument && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                style={{
+                  position:"fixed",
+                  inset:0,
+                  zIndex:1001,
+                  background:"rgba(10,20,35,.48)",
+                  display:"grid",
+                  placeItems:"center",
+                  padding:20,
+                }}
+              >
+                <form
+                  onSubmit={saveEditedDocument}
+                  style={{
+                    width:"min(760px,100%)",
+                    maxHeight:"90vh",
+                    overflow:"auto",
+                    background:"#fff",
+                    borderRadius:22,
+                    padding:24,
+                    boxShadow:"0 24px 70px rgba(0,0,0,.2)",
+                  }}
+                >
+                  <div style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    alignItems:"flex-start",
+                    gap:16,
+                  }}>
+                    <div>
+                      <small>EDIT DOCUMENT</small>
+                      <h2 style={{margin:"4px 0 6px"}}>Customize your document</h2>
+                      <p style={{margin:0,color:"#6b778c"}}>
+                        Change the title, document type, and additional terms before
+                        printing or sending it.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setDocumentEditorOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div style={{
+                    marginTop:18,
+                    padding:14,
+                    border:"1px solid #dbe3ef",
+                    borderRadius:14,
+                    background:"#f8fafc",
+                  }}>
+                    <b>Property and tenant information</b>
+                    <p style={{margin:"6px 0 0",color:"#5d6878"}}>
+                      The property and tenant stay connected to the saved document.
+                      Edit the underlying lease/property record when those source
+                      details need to change.
+                    </p>
+                  </div>
+
+                  <div style={{display:"grid",gap:14,marginTop:18}}>
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Document Type</b>
+                      <select
+                        value={editingDocumentType}
+                        onChange={(e) => setEditingDocumentType(e.target.value)}
+                      >
+                        <option value="lease">Residential Lease</option>
+                        <option value="lease_renewal">Lease Renewal</option>
+                        <option value="late_rent_notice">Late Rent Notice</option>
+                        <option value="notice_to_vacate">Notice to Vacate</option>
+                        <option value="notice_of_entry">Notice of Entry</option>
+                        <option value="rent_change_notice">Rent Change Notice</option>
+                        <option value="lease_addendum">Lease Addendum</option>
+                        <option value="move_in_out">Move-In / Move-Out</option>
+                        <option value="custom">Custom Document</option>
+                      </select>
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Document Title</b>
+                      <input
+                        value={editingDocumentTitle}
+                        onChange={(e) => setEditingDocumentTitle(e.target.value)}
+                        placeholder="Document title"
+                      />
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Additional Terms / Notes</b>
+                      <textarea
+                        rows={10}
+                        value={editingDocumentNotes}
+                        onChange={(e) => setEditingDocumentNotes(e.target.value)}
+                        placeholder="Change or add the wording you want included..."
+                      />
+                    </label>
+
+                    <div style={{
+                      padding:14,
+                      border:"1px solid #e2e7ee",
+                      borderRadius:14,
+                    }}>
+                      <b>Customize before finalizing</b>
+                      <p style={{margin:"6px 0 0",color:"#667386"}}>
+                        You can edit the document information and wording before
+                        printing or sending. Keep jurisdiction-specific requirements
+                        in mind when changing legal language.
+                      </p>
+                    </div>
+
+                    <div style={{
+                      display:"flex",
+                      justifyContent:"flex-end",
+                      gap:10,
+                      flexWrap:"wrap",
+                    }}>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setDocumentEditorOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="primary"
+                      >
+                        Save Changes & Print
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {signatureModalOpen && signingDocument && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                style={{
+                  position:"fixed",
+                  inset:0,
+                  zIndex:1100,
+                  background:"rgba(10,20,35,.52)",
+                  display:"grid",
+                  placeItems:"center",
+                  padding:20,
+                }}
+              >
+                <form
+                  onSubmit={completeDocumentSignature}
+                  style={{
+                    width:"min(760px,100%)",
+                    maxHeight:"92vh",
+                    overflow:"auto",
+                    background:"#fff",
+                    borderRadius:22,
+                    padding:24,
+                    boxShadow:"0 24px 70px rgba(0,0,0,.25)",
+                  }}
+                >
+                  <div style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    alignItems:"flex-start",
+                    gap:16,
+                  }}>
+                    <div>
+                      <small>ELECTRONIC SIGNATURE</small>
+                      <h2 style={{margin:"4px 0 6px"}}>
+                        Sign {signingDocument.title || "Document"}
+                      </h2>
+                      <p style={{margin:0,color:"#6b778c"}}>
+                        Review the document before applying your electronic signature.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setSignatureModalOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div style={{
+                    marginTop:18,
+                    padding:14,
+                    border:"1px solid #dbe3ef",
+                    borderRadius:14,
+                    background:"#f8fafc",
+                  }}>
+                    <b>Document signing record</b>
+                    <p style={{margin:"6px 0 0",color:"#5d6878"}}>
+                      Your signature is recorded with the document, signing time,
+                      signing method, and consent to electronic signing.
+                    </p>
+                  </div>
+
+                  <div style={{display:"grid",gap:14,marginTop:18}}>
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Signer Full Name</b>
+                      <input
+                        required
+                        value={signatureName}
+                        onChange={(e) => setSignatureName(e.target.value)}
+                        placeholder="Enter your full legal name"
+                      />
+                    </label>
+
+                    <div>
+                      <b>Signature</b>
+
+                      <div style={{
+                        display:"flex",
+                        gap:8,
+                        marginTop:8,
+                        marginBottom:10,
+                        flexWrap:"wrap",
+                      }}>
+                        <button
+                          type="button"
+                          className={signatureMode === "draw" ? "primary" : "secondary"}
+                          onClick={() => setSignatureMode("draw")}
+                        >
+                          Draw Signature
+                        </button>
+                        <button
+                          type="button"
+                          className={signatureMode === "type" ? "primary" : "secondary"}
+                          onClick={() => setSignatureMode("type")}
+                        >
+                          Type Signature
+                        </button>
+                      </div>
+
+                      {signatureMode === "draw" ? (
+                        <div>
+                          <canvas
+                            id="unitveroSignatureCanvas"
+                            width={680}
+                            height={210}
+                            style={{
+                              width:"100%",
+                              height:210,
+                              border:"1px solid #ccd5e1",
+                              borderRadius:12,
+                              background:"#fff",
+                              touchAction:"none",
+                              cursor:"crosshair",
+                            }}
+                            onPointerDown={(event) => {
+                              const canvas = event.currentTarget;
+                              canvas.setPointerCapture?.(event.pointerId);
+                              const ctx = canvas.getContext("2d");
+                              const rect = canvas.getBoundingClientRect();
+                              ctx.beginPath();
+                              ctx.moveTo(
+                                event.clientX - rect.left,
+                                event.clientY - rect.top
+                              );
+                            }}
+                            onPointerMove={(event) => {
+                              if (event.buttons !== 1) return;
+                              drawSignatureOnCanvas(event.currentTarget, event);
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            className="secondary"
+                            style={{marginTop:8}}
+                            onClick={clearSignatureCanvas}
+                          >
+                            Clear Signature
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{
+                          border:"1px solid #ccd5e1",
+                          borderRadius:12,
+                          padding:14,
+                        }}>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+
+                              if (file.size > 5 * 1024 * 1024) {
+                                alert("Signature image must be 5 MB or smaller.");
+                                return;
+                              }
+
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                setSignatureImage(String(reader.result || ""));
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+
+                          {signatureImage && (
+                            <img
+                              src={signatureImage}
+                              alt="Signature preview"
+                              style={{
+                                display:"block",
+                                maxWidth:"100%",
+                                maxHeight:150,
+                                marginTop:12,
+                                border:"1px solid #e1e7ef",
+                                borderRadius:8,
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <label style={{
+                      display:"flex",
+                      gap:10,
+                      alignItems:"flex-start",
+                      padding:14,
+                      border:"1px solid #dbe3ef",
+                      borderRadius:12,
+                      background:"#fbfcfe",
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={signatureConsent}
+                        onChange={(e) => setSignatureConsent(e.target.checked)}
+                        style={{marginTop:3}}
+                      />
+                      <span style={{fontSize:13,lineHeight:1.5}}>
+                        I agree to use my electronic signature for this document.
+                        I understand that the signature is intended to be associated
+                        with this document and recorded with the signing date and time.
+                      </span>
+                    </label>
+
+                    <div style={{
+                      display:"flex",
+                      justifyContent:"flex-end",
+                      gap:10,
+                      flexWrap:"wrap",
+                    }}>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setSignatureModalOpen(false)}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="primary"
+                        disabled={signatureSubmitting}
+                      >
+                        {signatureSubmitting ? "Signing..." : "Sign Document"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {documentBuilderOpen && (
+              <div
+                role="dialog"
+                aria-modal="true"
+                style={{
+                  position:"fixed",
+                  inset:0,
+                  zIndex:1000,
+                  background:"rgba(10,20,35,.48)",
+                  display:"grid",
+                  placeItems:"center",
+                  padding:20,
+                }}
+              >
+                <form
+                  onSubmit={createUnitveroDocument}
+                  style={{
+                    width:"min(720px,100%)",
+                    maxHeight:"90vh",
+                    overflow:"auto",
+                    background:"#fff",
+                    borderRadius:22,
+                    padding:24,
+                    boxShadow:"0 24px 70px rgba(0,0,0,.2)",
+                  }}
+                >
+                  <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"flex-start"}}>
+                    <div>
+                      <small>CREATE DOCUMENT</small>
+                      <h2 style={{margin:"4px 0 6px"}}>{documentTypeLabel(documentBuilderType)}</h2>
+                      <p style={{margin:0,color:"#6b778c"}}>
+                        Unitvero will automatically use the selected rental records.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setDocumentBuilderOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div style={{display:"grid",gap:14,marginTop:22}}>
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Document Type</b>
+                      <select
+                        value={documentBuilderType}
+                        onChange={(e) => setDocumentBuilderType(e.target.value)}
+                      >
+                        <option value="lease">Residential Lease</option>
+                        <option value="lease_renewal">Lease Renewal</option>
+                        <option value="late_rent_notice">Late Rent Notice</option>
+                        <option value="notice_to_vacate">Notice to Vacate</option>
+                        <option value="notice_of_entry">Notice of Entry</option>
+                        <option value="rent_change_notice">Rent Change Notice</option>
+                        <option value="lease_addendum">Lease Addendum</option>
+                        <option value="move_in_out">Move-In / Move-Out</option>
+                        <option value="custom">Custom Document</option>
+                      </select>
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Property</b>
+                      <select
+                        required
+                        value={documentBuilderPropertyId}
+                        onChange={(e) => {
+                          const selectedProperty = props.find(
+                            (item) => item.id === e.target.value
+                          );
+                          setDocumentBuilderPropertyId(e.target.value);
+                          setDocumentBuilderTenancyId("");
+                          setDocumentBuilderState(getPropertyState(selectedProperty));
+                        }}
+                      >
+                        <option value="">Select a property...</option>
+                        {props.map((property) => (
+                          <option key={property.id} value={property.id}>
+                            {property.address}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>State / Jurisdiction</b>
+                      <select
+                        required
+                        value={documentBuilderState}
+                        onChange={(e) => setDocumentBuilderState(e.target.value)}
+                      >
+                        <option value="">Select a state...</option>
+                        {unitveroStates.map(([code, name]) => (
+                          <option key={code} value={code}>{name}</option>
+                        ))}
+                      </select>
+                      <small style={{color:"#6b778c"}}>
+                        The state controls the jurisdictional template framework.
+                      </small>
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Tenant</b>
+                      <select
+                        required
+                        value={documentBuilderTenancyId}
+                        onChange={(e) => setDocumentBuilderTenancyId(e.target.value)}
+                      >
+                        <option value="">Select a tenant...</option>
+                        {tenancies
+                          .filter((tenancy) =>
+                            !documentBuilderPropertyId ||
+                            tenancy.property_id === documentBuilderPropertyId
+                          )
+                          .map((tenancy) => (
+                            <option key={tenancy.id} value={tenancy.id}>
+                              {tenancy.tenant_name || tenancy.tenant_email || "Tenant"}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Document Title</b>
+                      <input
+                        value={documentBuilderTitle}
+                        onChange={(e) => setDocumentBuilderTitle(e.target.value)}
+                        placeholder={documentTypeLabel(documentBuilderType)}
+                      />
+                    </label>
+
+                    <label style={{display:"grid",gap:6}}>
+                      <b>Additional Terms / Notes</b>
+                      <textarea
+                        rows={6}
+                        value={documentBuilderNotes}
+                        onChange={(e) => setDocumentBuilderNotes(e.target.value)}
+                        placeholder="Add any information you want included in the document..."
+                      />
+                    </label>
+
+                    <div style={{
+                      display:"flex",
+                      justifyContent:"flex-end",
+                      gap:10,
+                      flexWrap:"wrap",
+                      paddingTop:6,
+                    }}>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setDocumentBuilderOpen(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button type="submit" className="primary">
+                        Create, Save & Print
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
           </section>
         )}
 
