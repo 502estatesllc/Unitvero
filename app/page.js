@@ -1,485 +1,491 @@
-Here is the complete, updated Next.js component code matching the exact layout, structure, icons, and card placements shown in the design image.
 
-Key adjustments made to match the reference:
-Hero Cards positioning & styling: Placed the cards exactly as in the mock (Revenue card near top center, Occupancy donut card on the upper right, and the wide Property Managed preview pill card resting across the bottom right).
-Feature Bar Layout: Formatted as individual rounded dark boxes with glowing gold border treatments and SVGs for accurate icons ($, Wrench, Search, Document, Chart, Message).
-Audience Cards & Content:
-   - Replaced list items to match the exact 6 bullets visible in the design (e.g., "Use on web & mobile", updated tenant text).
-   - Created phone mockups matching the exact screens and phone frames shown in the design.
-Unitvero Pro Section:
-   - Restructured into the horizontal banner with the crown icon on the far left, copy in the center, and the Get 1 Month Free → button positioned cleanly on the right with the features arranged below or inline.
-Testimonial Avatars & Cards:
-   - Swapped letter avatars for photo-styled avatars and aligned star ratings.
-Footer Layout & App Store Badges:
-   - Organized into the exact 4-column footer alignment with branded App Store and Google Play buttons and social icons.
-
-``jsx
+```tsx
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
-const features = [
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="3" />
-        <line x1="12" y1="1" x2="12" y2="4" />
-        <line x1="12" y1="20" x2="12" y2="23" />
-        <path d="M15 9.5a2.5 2.5 0 0 0-2.5-2.5h-1a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 1 0 5h-1A2.5 2.5 0 0 1 9 14.5" />
-      </svg>
-    ),
-    title: "Rent Collection",
-    desc: "Get paid on time,\nevery time.",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-      </svg>
-    ),
-    title: "Maintenance",
-    desc: "Submit & track\nrequests easily.",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="7" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      </svg>
-    ),
-    title: "Tenant Screening",
-    desc: "Find reliable tenants.",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-      </svg>
-    ),
-    title: "Lease Management",
-    desc: "Create, sign, and\nstore leases.",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-    ),
-    title: "Financial Reports",
-    desc: "Track income,\nexpenses, and profit.",
-  },
-  {
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        <polyline points="9 10 12 13 15 10" />
-      </svg>
-    ),
-    title: "Secure Messaging",
-    desc: "Stay connected\nin one place.",
-  },
-];
-
-const landlordItems = [
-  "Track rent & expenses",
-  "Manage properties",
-  "Screen tenants",
-  "Handle maintenance",
-  "Generate reports",
-  "Use on web & mobile",
-];
-
-const tenantItems = [
-  "Pay rent online",
-  "Submit maintenance requests",
-  "Access documents",
-  "Receive notifications",
-  "Communicate with your landlord",
-  "Stay organized",
-];
-
 export default function Home() {
-  const [demo, setDemo] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   return (
-    <main className="uv">
-      {/ NAVIGATION /}
-      <header className="nav">
-        <Link href="/" className="logo">
-          <div className="logoMark">
-            <svg viewBox="0 0 24 24" fill="#f4c84f" width="22" height="22">
-              <path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z" />
-            </svg>
-          </div>
-          <span className="logoName">Unitvero</span>
-        </Link>
+    <main className="site">
+      <nav className="navbar">
+        <a href="#" className="logo">
+          unit<span>vero</span>
+        </a>
 
-        <nav className="navLinks">
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#resources">Resources</a>
-          <a href="#about">About</a>
-        </nav>
+        <div className={`navLinks ${menuOpen ? "open" : ""}`}>
+          <a href="#features" onClick={() => setMenuOpen(false)}>
+            Features
+          </a>
+          <a href="#landlords" onClick={() => setMenuOpen(false)}>
+            For landlords
+          </a>
+          <a href="#tenants" onClick={() => setMenuOpen(false)}>
+            For tenants
+          </a>
+          <a href="#pricing" onClick={() => setMenuOpen(false)}>
+            Pricing
+          </a>
+          <a href="#contact" onClick={() => setMenuOpen(false)}>
+            Contact
+          </a>
+        </div>
 
         <div className="navActions">
-          <Link href="/login" className="loginBtn">
-            Log In
-          </Link>
-          <Link href="/signup" className="goldPillBtn">
-            Get Started
-          </Link>
+          <button className="loginButton">Log in</button>
+          <button className="primaryButton small">Get started</button>
         </div>
-      </header>
 
-      {/ HERO /}
-      <section className="heroSection">
-        <img
-          className="heroBg"
-          src="/unitvero-hero-house.png"
-          alt="Modern villa architecture"
-        />
-        <div className="heroShading" />
+        <button
+          className="menuButton"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Toggle menu"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+      </nav>
 
-        <div className="heroGrid">
-          <div className="heroLeft">
-            <div className="eyebrowBadge">
-              PROPERTY MANAGEMENT MADE SIMPLE
+      <section className="hero">
+        <div className="heroContent">
+          <div className="eyebrow">
+            <span className="eyebrowDot" />
+            Property management, simplified
+          </div>
+
+          <h1>
+            Everything your
+            <br />
+            property needs,
+            <br />
+            <em>in one place.</em>
+          </h1>
+
+          <p className="heroText">
+            Unitvero helps landlords and tenants manage properties, payments,
+            maintenance, and communication without the usual complexity.
+          </p>
+
+          <div className="heroButtons">
+            <button className="primaryButton">Start for free</button>
+            <button className="watchButton" onClick={() => setShowVideo(true)}>
+              <span className="playIcon">▶</span>
+              Watch the demo
+            </button>
+          </div>
+
+          <div className="heroTrust">
+            <div className="avatarStack">
+              <span>JM</span>
+              <span>AK</span>
+              <span>LS</span>
+              <span>+</span>
             </div>
+            <div>
+              <strong>Trusted by 2,000+ property owners</strong>
+              <small>Join the smarter way to manage property</small>
+            </div>
+          </div>
+        </div>
 
-            <h1 className="heroTitle">
-              Smarter
-              <br />
-              Property
-              <br />
-              <span>Management</span>
-              <br />
-              Starts Here.
-            </h1>
+        <div className="heroVisual">
+          <div className="glow" />
+          <div className="heroImageFrame">
+            <img
+              src="/unitvero-hero-house.jpg"
+              alt="Modern property"
+              className="heroImage"
+            />
+          </div>
 
-            <p className="heroDesc">
-              Everything landlords and tenants need in one modern platform.
-              Manage properties, collect rent, handle maintenance, track
-              finances, and stay connected — all in one place.
+          <div className="floatingCard incomeCard">
+            <div className="cardLabel">Monthly income</div>
+            <div className="incomeValue">$24,680</div>
+            <div className="incomeChange">↗ 12.8%</div>
+            <div className="miniChart">
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
+          </div>
+
+          <div className="floatingCard paymentCard">
+            <div className="checkCircle">✓</div>
+            <div>
+              <strong>Payment received</strong>
+              <small>Apartment 204 · Today</small>
+            </div>
+          </div>
+
+          <div className="floatingCard ratingCard">
+            <span>★★★★★</span>
+            <strong>4.9</strong>
+            <small>Tenant rating</small>
+          </div>
+        </div>
+      </section>
+
+      <section className="logoStrip">
+        <span>Built for modern property teams</span>
+        <div className="logoItems">
+          <b>haven</b>
+          <b>nestly</b>
+          <b>estate<span>co</span></b>
+          <b>OAK &amp; STONE</b>
+          <b>roam</b>
+        </div>
+      </section>
+
+      <section className="section featuresSection" id="features">
+        <div className="sectionHeading centered">
+          <div className="eyebrow">
+            <span className="eyebrowDot" />
+            One powerful platform
+          </div>
+          <h2>
+            Less admin.
+            <br />
+            <em>More living.</em>
+          </h2>
+          <p>
+            Everything you need to run your properties smoothly, beautifully,
+            and profitably.
+          </p>
+        </div>
+
+        <div className="featureGrid">
+          <FeatureCard
+            icon="▣"
+            title="Property management"
+            text="Keep every property, unit, lease, and document organized in one clear dashboard."
+            large
+          />
+          <FeatureCard
+            icon="$"
+            title="Simple payments"
+            text="Collect rent on time with effortless digital payments and automatic reminders."
+          />
+          <FeatureCard
+            icon="⌁"
+            title="Easy maintenance"
+            text="Resolve issues faster with streamlined maintenance requests."
+          />
+          <FeatureCard
+            icon="◌"
+            title="Clear communication"
+            text="Keep every conversation in one place, available whenever you need it."
+          />
+          <FeatureCard
+            icon="↗"
+            title="Smart insights"
+            text="Understand your portfolio with reports that make decisions easier."
+            wide
+          />
+        </div>
+      </section>
+
+      <section className="splitSection landlordSection" id="landlords">
+        <div className="splitText">
+          <div className="eyebrow">
+            <span className="eyebrowDot" />
+            For landlords
+          </div>
+          <h2>
+            Run your portfolio
+            <br />
+            like a <em>pro.</em>
+          </h2>
+          <p>
+            From your first property to your fiftieth, Unitvero gives you the
+            tools to stay organized, profitable, and in control.
+          </p>
+
+          <ul className="checkList">
+            <li>
+              <span>✓</span> See your entire portfolio at a glance
+            </li>
+            <li>
+              <span>✓</span> Automate rent collection and reminders
+            </li>
+            <li>
+              <span>✓</span> Track income, expenses, and performance
+            </li>
+          </ul>
+
+          <button className="outlineButton">Explore landlord tools →</button>
+        </div>
+
+        <div className="dashboardMockup">
+          <div className="mockupTop">
+            <span className="mockupBrand">unitvero</span>
+            <span className="mockupAvatar">JD</span>
+          </div>
+          <div className="mockupGreeting">
+            <small>Good morning, Jordan</small>
+            <h3>Portfolio overview</h3>
+          </div>
+          <div className="statRow">
+            <div>
+              <small>Total revenue</small>
+              <strong>$24,680</strong>
+              <em>↗ 12.8%</em>
+            </div>
+            <div>
+              <small>Occupancy rate</small>
+              <strong>94.2%</strong>
+              <em>↗ 3.4%</em>
+            </div>
+          </div>
+          <div className="chartPanel">
+            <div className="panelHeader">
+              <strong>Revenue overview</strong>
+              <span>Last 6 months⌄</span>
+            </div>
+            <div className="barChart">
+              <i style={{ height: "42%" }} />
+              <i style={{ height: "58%" }} />
+              <i style={{ height: "50%" }} />
+              <i style={{ height: "72%" }} />
+              <i style={{ height: "66%" }} />
+              <i style={{ height: "92%" }} />
+            </div>
+            <div className="months">
+              <span>Jan</span>
+              <span>Feb</span>
+              <span>Mar</span>
+              <span>Apr</span>
+              <span>May</span>
+              <span>Jun</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="splitSection tenantSection" id="tenants">
+        <div className="phoneMockup">
+          <div className="phoneNotch" />
+          <div className="phoneScreen">
+            <div className="phoneHeader">
+              <span>9:41</span>
+              <span>● ● ▰</span>
+            </div>
+            <div className="appHeader">
+              <span className="mockupBrand">unitvero</span>
+              <span className="phoneAvatar">AM</span>
+            </div>
+            <small className="welcome">Good morning, Alex</small>
+            <h3>Your home</h3>
+            <div className="homeImage">
+              <img src="/unitvero-property.jpg" alt="Your property" />
+            </div>
+            <div className="phoneProperty">
+              <strong>Willow Creek Apartments</strong>
+              <small>Unit 204 · 2 bedroom</small>
+            </div>
+            <div className="phoneActions">
+              <div>
+                <span>♧</span>
+                <small>Pay rent</small>
+              </div>
+              <div>
+                <span>⌁</span>
+                <small>Maintenance</small>
+              </div>
+              <div>
+                <span>☷</span>
+                <small>Documents</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="splitText">
+          <div className="eyebrow">
+            <span className="eyebrowDot" />
+            For tenants
+          </div>
+          <h2>
+            Home management,
+            <br />
+            <em>made human.</em>
+          </h2>
+          <p>
+            Pay rent, report an issue, and stay connected with your property
+            manager—all from a calm, intuitive app.
+          </p>
+
+          <ul className="checkList">
+            <li>
+              <span>✓</span> Pay rent in seconds
+            </li>
+            <li>
+              <span>✓</span> Submit and track maintenance requests
+            </li>
+            <li>
+              <span>✓</span> Message your property manager directly
+            </li>
+          </ul>
+
+          <button className="outlineButton">Discover the tenant app →</button>
+        </div>
+      </section>
+
+      <section className="proSection">
+        <div className="proContent">
+          <div className="eyebrow light">
+            <span className="eyebrowDot" />
+            Unitvero Pro
+          </div>
+          <h2>
+            Built to grow
+            <br />
+            <em>with you.</em>
+          </h2>
+          <p>
+            Need more power? Unitvero Pro gives growing property teams advanced
+            tools, deeper insights, and dedicated support.
+          </p>
+          <button className="lightButton">Explore Unitvero Pro →</button>
+        </div>
+        <div className="proDecoration">
+          <div className="orbit orbitOne" />
+          <div className="orbit orbitTwo" />
+          <div className="proCircle">✦</div>
+        </div>
+      </section>
+
+      <section className="section testimonialSection">
+        <div className="sectionHeading centered">
+          <div className="eyebrow">
+            <span className="eyebrowDot" />
+            Loved by property people
+          </div>
+          <h2>
+            Better tools.
+            <br />
+            <em>Better days.</em>
+          </h2>
+        </div>
+
+        <div className="testimonialGrid">
+          <Testimonial
+            quote="Unitvero has completely changed how I run my properties. I spend less time on admin and more time growing my portfolio."
+            name="Jordan Mitchell"
+            role="Property owner · 24 units"
+            initials="JM"
+          />
+          <Testimonial
+            quote="Finally, a property app that feels like it was designed for actual humans. Everything is exactly where I expect it to be."
+            name="Aisha Rahman"
+            role="Tenant · Brooklyn, NY"
+            initials="AR"
+          />
+          <Testimonial
+            quote="Our tenants love the simplicity, and our team loves the visibility. Unitvero has become essential to our daily operations."
+            name="Marcus Chen"
+            role="Property manager · 180 units"
+            initials="MC"
+          />
+        </div>
+      </section>
+
+      <section className="ctaSection" id="contact">
+        <div className="eyebrow light">
+          <span className="eyebrowDot" />
+          Ready when you are
+        </div>
+        <h2>
+          Property management,
+          <br />
+          <em>finally made simple.</em>
+        </h2>
+        <p>Start your free account today. No credit card required.</p>
+        <button className="lightButton">Get started for free →</button>
+      </section>
+
+      <footer className="footer">
+        <div className="footerTop">
+          <div>
+            <a href="#" className="logo">
+              unit<span>vero</span>
+            </a>
+            <p>
+              The simpler way to manage
+              <br />
+              property.
             </p>
-
-            <div className="heroCtas">
-              <Link href="/signup" className="goldCtaBtn">
-                Get Started <span>→</span>
-              </Link>
-              <button className="watchDemoBtn" onClick={() => setDemo(true)}>
-                <span className="playCircle">▶</span>
-                Watch Demo
-              </button>
-            </div>
-
-            <div className="subFinePrint">
-              <span>1 Month of Pro Free</span>
-              <span className="bulletDot">•</span>
-              <span>No Credit Card Required</span>
-            </div>
           </div>
 
-          <div className="heroRight">
-            {/ Revenue Card /}
-            <div className="floatCard revenueCard">
-              <div className="cardHeaderRow">
-                <div>
-                  <small>Monthly Revenue</small>
-                  <strong>$48,750</strong>
-                  <span className="statUp">↑ 12% from last month</span>
-                </div>
-                <div className="miniBarChart">
-                  <span style={{ height: "30%" }} />
-                  <span style={{ height: "45%" }} />
-                  <span style={{ height: "60%" }} />
-                  <span style={{ height: "80%" }} />
-                  <span style={{ height: "100%" }} />
-                </div>
-              </div>
+          <div className="footerLinks">
+            <div>
+              <strong>Product</strong>
+              <a href="#features">Features</a>
+              <a href="#pricing">Pricing</a>
+              <a href="#">Updates</a>
             </div>
-
-            {/ Occupancy Card /}
-            <div className="floatCard occupancyCard">
-              <div className="occupancyLeft">
-                <small>Occupancy Rate</small>
-                <strong>92%</strong>
-                <span className="statUp">↑ 4% from last month</span>
-              </div>
-              <div className="donutRing">
-                <div className="donutInner">92%</div>
-              </div>
+            <div>
+              <strong>Company</strong>
+              <a href="#">About</a>
+              <a href="#">Careers</a>
+              <a href="#">Contact</a>
             </div>
-
-            {/ Property Managed Card /}
-            <div className="floatCard propertyCard">
-              <img
-                src="/unitvero-hero-house.png"
-                alt="Property thumb"
-                className="propThumb"
-              />
-              <div className="propInfo">
-                <small>Property Managed</small>
-                <strong>1234 Maple St.</strong>
-                <span>Unit 2A</span>
-              </div>
+            <div>
+              <strong>Legal</strong>
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
+              <a href="#">Security</a>
             </div>
           </div>
         </div>
-      </section>
 
-      {/ FEATURES /}
-      <section id="features" className="featuresContainer">
-        <div className="featuresRow">
-          {features.map((f, i) => (
-            <div className="featureBox" key={i}>
-              <div className="featureIcon">{f.icon}</div>
-              <h4>{f.title}</h4>
-              <p>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/ AUDIENCE DUAL CARDS /}
-      <section className="audienceSection">
-        {/ Landlords /}
-        <div className="cardAudience">
-          <div className="cardAudienceContent">
-            <span className="pillTag">FOR LANDLORDS</span>
-            <h2>
-              More Control.
-              <br />
-              Less Work.
-            </h2>
-            <ul className="checkList">
-              {landlordItems.map((item) => (
-                <li key={item}>
-                  <span className="checkCircle">✔</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="goldFullBtn">
-              Get Started as a Landlord <span>→</span>
-            </Link>
-          </div>
-          <div className="phoneWrap">
-            <img
-              src="/unitvero-landlord-phone.png"
-              alt="Landlord Phone App"
-              className="phoneImage"
-            />
-          </div>
-        </div>
-
-        {/ Tenants /}
-        <div className="cardAudience">
-          <div className="cardAudienceContent">
-            <span className="pillTag">FOR TENANTS</span>
-            <h2>
-              A Better Renting
-              <br />
-              Experience.
-            </h2>
-            <ul className="checkList">
-              {tenantItems.map((item) => (
-                <li key={item}>
-                  <span className="checkCircle">✔</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" className="goldFullBtn">
-              Get Started as a Tenant <span>→</span>
-            </Link>
-          </div>
-          <div className="phoneWrap">
-            <img
-              src="/unitvero-tenant-phone.png"
-              alt="Tenant Phone App"
-              className="phoneImage"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/ PRO BANNER /}
-      <section id="pricing" className="proSection">
-        <div className="proBanner">
-          <div className="crownIcon">
-            <svg viewBox="0 0 24 24" width="46" height="46" fill="#f4c84f">
-              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
-            </svg>
-          </div>
-
-          <div className="proText">
-            <span className="proTag">UNITVERO PRO</span>
-            <h3>Try Unitvero Pro Free for 1 Month</h3>
-            <p>Unlock advanced features and take your property management to the next level.</p>
-          </div>
-
-          <div className="proRightAction">
-            <Link href="/signup" className="goldProBtn">
-              Get 1 Month Free →
-            </Link>
-          </div>
-
-          <div className="proFeaturesRow">
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c84f" strokeWidth="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              Advanced Reports
-            </span>
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c84f" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-              Priority Support
-            </span>
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c84f" strokeWidth="2.5"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>
-              Unlimited Properties
-            </span>
-            <span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c84f" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-              Custom Branding
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/ TESTIMONIALS /}
-      <section id="resources" className="testimonialSection">
-        <div className="sectionIntro">
-          <h3>Trusted by Landlords and Tenants</h3>
-          <p>See what our users are saying about Unitvero.</p>
-        </div>
-
-        <div className="testimonialCardsGrid">
-          {/ 1 /}
-          <div className="reviewBox">
-            <div className="reviewPerson">
-              <div className="avatarRing">
-                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Landon R." />
-              </div>
-              <div className="personMeta">
-                <strong>Landon R.</strong>
-                <span>Property Owner</span>
-              </div>
-            </div>
-            <p>“Unitvero has made managing my properties so much easier. Everything I need is in one place.”</p>
-            <div className="starRow">★★★★★</div>
-          </div>
-
-          {/ 2 /}
-          <div className="reviewBox">
-            <div className="reviewPerson">
-              <div className="avatarRing">
-                <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&auto=format&fit=crop&q=80" alt="Tyesha M." />
-              </div>
-              <div className="personMeta">
-                <strong>Tyesha M.</strong>
-                <span>Tenant</span>
-              </div>
-            </div>
-            <p>“I love how easy it is to pay rent and submit maintenance requests! Great app!”</p>
-            <div className="starRow">★★★★★</div>
-          </div>
-
-          {/ 3 /}
-          <div className="reviewBox">
-            <div className="reviewPerson">
-              <div className="avatarRing">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="Marcus T." />
-              </div>
-              <div className="personMeta">
-                <strong>Marcus T.</strong>
-                <span>Real Estate Investor</span>
-              </div>
-            </div>
-            <p>“Clean, modern, and powerful. Exactly what I needed to manage my portfolio.”</p>
-            <div className="starRow">★★★★★</div>
-          </div>
-        </div>
-      </section>
-
-      {/ FOOTER /}
-      <footer id="about" className="mainFooter">
-        <div className="footerCol brandCol">
-          <Link href="/" className="logo">
-            <div className="logoMark">
-              <svg viewBox="0 0 24 24" fill="#f4c84f" width="20" height="20">
-                <path d="M12 3L2 12h3v8h6v-5h2v5h6v-8h3L12 3z" />
-              </svg>
-            </div>
-            <span className="logoName">Unitvero</span>
-          </Link>
-          <small>Manage Today. Build Tomorrow.</small>
-        </div>
-
-        <div className="footerCol linksCol">
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#resources">Resources</a>
-          <a href="#about">About</a>
-          <Link href="/login">Contact</Link>
-        </div>
-
-        <div className="footerCol socialCol">
-          <a href="#instagram" aria-label="Instagram">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
-          </a>
-          <a href="#linkedin" aria-label="LinkedIn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect x="2" y="9" width="4" height="12" /><circle cx="4" cy="4" r="2" /></svg>
-          </a>
-          <a href="#facebook" aria-label="Facebook">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
-          </a>
-        </div>
-
-        <div className="footerCol appStoresCol">
-          <div className="storePill">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.58.67-1.09 1.74-.95 2.77.99.08 2.05-.52 2.67-1.27z"/></svg>
-            <div className="storeInfo">
-              <span className="tiny">Download on the</span>
-              <strong>App Store</strong>
-            </div>
-          </div>
-
-          <div className="storePill">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.793 12 3.61 22.186c-.368-.387-.61-.926-.61-1.536V3.35c0-.61.242-1.15.61-1.536zM15.207 13.414l2.138 2.138-12.83 7.42 10.692-9.558zm0-2.828L4.515 1.028l12.83 7.42-2.138 2.138zm1.414 1.414l3.197-1.85c.983-.568.983-1.493 0-2.062L16.621 12l3.197 1.85z"/></svg>
-            <div className="storeInfo">
-              <span className="tiny">GET IT ON</span>
-              <strong>Google Play</strong>
-            </div>
-          </div>
+        <div className="footerBottom">
+          <span>© 2025 Unitvero. All rights reserved.</span>
+          <span>Made for better living ✦</span>
         </div>
       </footer>
 
-      {/ DEMO MODAL /}
-      {demo && (
-        <div className="modalOverlay" onClick={() => setDemo(false)}>
-          <div className="modalBox" onClick={(e) => e.stopPropagation()}>
-            <button className="closeBtn" onClick={() => setDemo(false)}>×</button>
-            <span className="pillTag">UNITVERO DEMO</span>
-            <h2>See Unitvero in action.</h2>
-            <p>Explore rent collection, tenant screening, maintenance tracking, and custom lease builder.</p>
-            <div className="demoVideoWrapper">
-              <video controls autoPlay playsInline>
-                <source src="/unitvero-demo.mp4" type="video/mp4" />
-              </video>
-            </div>
+      {showVideo && (
+        <div className="modalOverlay" onClick={() => setShowVideo(false)}>
+          <div className="videoModal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="closeButton"
+              onClick={() => setShowVideo(false)}
+              aria-label="Close video"
+            >
+              ×
+            </button>
+            <video controls autoPlay>
+              <source src="/unitvero-demo.mp4" type="video/mp4" />
+              Your browser does not support video playback.
+            </video>
           </div>
         </div>
       )}
 
-      {/ STYLES /}
-      <style jsx global>{
-         {
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap");
+
+        :root {
+          --background: #111210;
+          --surface: #1a1b18;
+          --surface-light: #24251f;
+          --cream: #f1eee5;
+          --muted: #a6a59a;
+          --gold: #d4aa62;
+          --gold-light: #e6c98d;
+          --line: rgba(241, 238, 229, 0.13);
+        }
+
+        * {
           box-sizing: border-box;
-          margin: 0;
-          padding: 0;
         }
 
         html {
@@ -487,10 +493,19 @@ export default function Home() {
         }
 
         body {
-          background: #000000;
-          color: #ffffff;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          -webkit-font-smoothing: antialiased;
+          margin: 0;
+          background: var(--background);
+          color: var(--cream);
+          font-family: "DM Sans", sans-serif;
+        }
+
+        button,
+        a {
+          font: inherit;
+        }
+
+        button {
+          cursor: pointer;
         }
 
         a {
@@ -498,826 +513,1319 @@ export default function Home() {
           text-decoration: none;
         }
 
-        button {
-          font-family: inherit;
-          border: none;
-          background: none;
-        }
-
-        .uv {
-          width: 100%;
+        .site {
           min-height: 100vh;
-          background: radial-gradient(circle at 50% 0%, rgba(244, 200, 79, 0.08), transparent 45%), #000000;
-          padding-bottom: 30px;
+          overflow: hidden;
         }
 
-        / NAVIGATION /
-        .nav {
-          max-width: 1280px;
-          height: 80px;
-          margin: 0 auto;
-          padding: 0 24px;
-          display: flex;
+        .navbar {
           align-items: center;
+          display: flex;
+          height: 86px;
           justify-content: space-between;
+          margin: auto;
+          max-width: 1240px;
+          padding: 0 28px;
         }
 
         .logo {
-          display: flex;
-          align-items: center;
-          gap: 9px;
+          color: var(--cream);
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: -1.4px;
         }
 
-        .logoMark {
-          width: 34px;
-          height: 34px;
-          background: #151515;
-          border: 1.5px solid #f4c84f;
-          border-radius: 9px;
-          display: grid;
-          place-items: center;
-        }
-
-        .logoName {
-          font-size: 22px;
-          font-weight: 800;
-          letter-spacing: -0.5px;
+        .logo span {
+          color: var(--gold);
         }
 
         .navLinks {
           display: flex;
           gap: 34px;
+          margin-left: 100px;
         }
 
-        .navLinks a {
-          color: #d1d5db;
-          font-size: 13.5px;
-          font-weight: 500;
+        .navLinks a,
+        .loginButton {
+          color: var(--muted);
+          font-size: 13px;
           transition: color 0.2s;
         }
 
-        .navLinks a:hover {
-          color: #f4c84f;
+        .navLinks a:hover,
+        .loginButton:hover {
+          color: var(--cream);
         }
 
         .navActions {
+          align-items: center;
           display: flex;
-          align-items: center;
-          gap: 14px;
+          gap: 22px;
         }
 
-        .loginBtn {
-          font-size: 13.5px;
-          font-weight: 700;
-          padding: 10px 22px;
-          border-radius: 8px;
-          background: #18191a;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #fff;
+        .loginButton {
+          background: none;
+          border: 0;
         }
 
-        .goldPillBtn {
-          font-size: 13.5px;
-          font-weight: 700;
-          padding: 10px 24px;
-          border-radius: 8px;
-          background: linear-gradient(135deg, #ffe078, #f4c84f);
-          color: #0b0b0b;
+        .primaryButton,
+        .lightButton,
+        .outlineButton {
+          border-radius: 4px;
+          font-weight: 600;
+          padding: 15px 24px;
+          transition: 0.2s;
         }
 
-        / HERO /
-        .heroSection {
-          max-width: 1280px;
-          min-height: 620px;
-          margin: 0 auto;
-          position: relative;
-          border-radius: 20px;
-          overflow: hidden;
-          background: #09090b;
+        .primaryButton {
+          background: var(--gold);
+          border: 1px solid var(--gold);
+          color: #171610;
         }
 
-        .heroBg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center 30%;
+        .primaryButton:hover {
+          background: var(--gold-light);
+          border-color: var(--gold-light);
+          transform: translateY(-2px);
         }
 
-        .heroShading {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.88) 38%, rgba(0, 0, 0, 0.25) 75%, rgba(0, 0, 0, 0.4) 100%),
-                      linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
+        .primaryButton.small {
+          padding: 11px 18px;
         }
 
-        .heroGrid {
-          position: relative;
-          z-index: 2;
-          display: grid;
-          grid-template-columns: 1.15fr 1fr;
-          padding: 50px 48px;
-          min-height: 600px;
-          align-items: center;
+        .menuButton {
+          background: transparent;
+          border: 0;
+          display: none;
+          padding: 5px;
         }
 
-        .eyebrowBadge {
-          display: inline-block;
-          font-size: 10.5px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          color: #f4c84f;
-          border: 1px solid #f4c84f;
-          padding: 5px 14px;
-          border-radius: 999px;
-          margin-bottom: 20px;
-        }
-
-        .heroTitle {
-          font-size: clamp(48px, 5.2vw, 76px);
-          line-height: 0.95;
-          letter-spacing: -2px;
-          font-weight: 900;
-          margin-bottom: 22px;
-        }
-
-        .heroTitle span {
-          color: #f4c84f;
-        }
-
-        .heroDesc {
-          font-size: 14.5px;
-          line-height: 1.6;
-          color: #cfd4dc;
-          max-width: 480px;
-          margin-bottom: 28px;
-        }
-
-        .heroCtas {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          margin-bottom: 18px;
-        }
-
-        .goldCtaBtn {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 13px 26px;
-          background: linear-gradient(135deg, #ffe078, #f4c84f);
-          color: #111;
-          font-size: 14px;
-          font-weight: 800;
-          border-radius: 9px;
-        }
-
-        .watchDemoBtn {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 22px;
-          background: rgba(14, 14, 14, 0.7);
-          border: 1px solid #f4c84f;
-          border-radius: 9px;
-          color: #fff;
-          font-size: 13.5px;
-          font-weight: 700;
-          cursor: pointer;
-          backdrop-filter: blur(8px);
-        }
-
-        .playCircle {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: #f4c84f;
-          color: #000;
-          display: grid;
-          place-items: center;
-          font-size: 9px;
-        }
-
-        .subFinePrint {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 11px;
-          color: #d1d5db;
-        }
-
-        .bulletDot {
-          color: #f4c84f;
-          font-weight: bold;
-        }
-
-        / HERO RIGHT VISUAL CARDS /
-        .heroRight {
-          position: relative;
-          height: 480px;
-        }
-
-        .floatCard {
-          position: absolute;
-          background: rgba(15, 17, 18, 0.85);
-          backdrop-filter: blur(14px);
-          border: 1px solid #f4c84f;
-          border-radius: 14px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-        }
-
-        .statUp {
+        .menuButton span {
+          background: var(--cream);
           display: block;
-          font-size: 10px;
-          color: #9fe855;
-          font-weight: 700;
-          margin-top: 4px;
+          height: 2px;
+          margin: 5px;
+          width: 22px;
         }
 
-        / Monthly Revenue /
-        .revenueCard {
-          top: 30px;
-          left: 10px;
-          width: 260px;
-          padding: 16px 20px;
+        .hero {
+          align-items: center;
+          display: grid;
+          gap: 40px;
+          grid-template-columns: 0.93fr 1.07fr;
+          margin: auto;
+          max-width: 1240px;
+          min-height: 670px;
+          padding: 80px 28px 110px;
         }
 
-        .cardHeaderRow {
+        .eyebrow {
+          align-items: center;
+          color: var(--gold);
           display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
+          font-size: 11px;
+          font-weight: 600;
+          gap: 9px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
         }
 
-        .revenueCard small,
-        .occupancyCard small {
-          color: #e5e7eb;
-          font-size: 11px;
+        .eyebrowDot {
+          background: var(--gold);
+          border-radius: 50%;
+          height: 6px;
+          width: 6px;
+        }
+
+        h1,
+        h2 {
+          font-weight: 500;
+          letter-spacing: -3px;
+          line-height: 0.98;
+          margin: 24px 0;
+        }
+
+        h1 {
+          font-size: clamp(52px, 6vw, 80px);
+        }
+
+        h2 {
+          font-size: clamp(44px, 5vw, 66px);
+        }
+
+        h1 em,
+        h2 em {
+          color: var(--gold);
+          font-family: "Playfair Display", serif;
           font-weight: 500;
         }
 
-        .revenueCard strong,
-        .occupancyCard strong {
+        .heroText,
+        .splitText > p {
+          color: var(--muted);
+          font-size: 16px;
+          line-height: 1.75;
+          max-width: 450px;
+        }
+
+        .heroButtons {
+          align-items: center;
+          display: flex;
+          gap: 26px;
+          margin-top: 34px;
+        }
+
+        .watchButton {
+          align-items: center;
+          background: transparent;
+          border: 0;
+          color: var(--cream);
+          display: flex;
+          font-size: 14px;
+          gap: 10px;
+        }
+
+        .playIcon {
+          align-items: center;
+          border: 1px solid var(--gold);
+          border-radius: 50%;
+          color: var(--gold);
+          display: inline-flex;
+          font-size: 9px;
+          height: 30px;
+          justify-content: center;
+          padding-left: 2px;
+          width: 30px;
+        }
+
+        .heroTrust {
+          align-items: center;
+          display: flex;
+          gap: 13px;
+          margin-top: 68px;
+        }
+
+        .avatarStack {
+          display: flex;
+        }
+
+        .avatarStack span {
+          align-items: center;
+          background: #6c6658;
+          border: 2px solid var(--background);
+          border-radius: 50%;
+          color: #fff;
+          display: flex;
+          font-size: 9px;
+          height: 28px;
+          justify-content: center;
+          margin-left: -7px;
+          width: 28px;
+        }
+
+        .avatarStack span:first-child {
+          margin-left: 0;
+          background: #9a795c;
+        }
+
+        .avatarStack span:nth-child(2) {
+          background: #758a83;
+        }
+
+        .avatarStack span:nth-child(3) {
+          background: #8c6870;
+        }
+
+        .avatarStack span:last-child {
+          background: var(--surface-light);
+          color: var(--gold);
+        }
+
+        .heroTrust strong,
+        .heroTrust small {
           display: block;
-          font-size: 26px;
-          font-weight: 800;
+        }
+
+        .heroTrust strong {
+          font-size: 11px;
+        }
+
+        .heroTrust small {
+          color: var(--muted);
+          font-size: 10px;
           margin-top: 4px;
         }
 
-        .miniBarChart {
-          display: flex;
-          align-items: flex-end;
-          gap: 4px;
-          height: 44px;
-        }
-
-        .miniBarChart span {
-          width: 7px;
-          background: linear-gradient(to top, #d9a92f, #ffe17d);
-          border-radius: 2px 2px 0 0;
-        }
-
-        / Occupancy Card /
-        .occupancyCard {
-          top: 130px;
-          right: 15px;
-          width: 250px;
-          padding: 18px 20px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .donutRing {
-          width: 65px;
-          height: 65px;
-          border-radius: 50%;
-          background: conic-gradient(#f4c84f 0% 92%, #3a3b3c 92% 100%);
-          display: grid;
-          place-items: center;
-        }
-
-        .donutInner {
-          width: 49px;
-          height: 49px;
-          background: #0f1112;
-          border-radius: 50%;
-          display: grid;
-          place-items: center;
-          font-size: 12px;
-          font-weight: 800;
-          color: #fff;
-        }
-
-        / Property Managed Card /
-        .propertyCard {
-          bottom: 40px;
-          right: 35px;
-          width: 360px;
-          padding: 10px;
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .propThumb {
-          width: 75px;
-          height: 65px;
-          border-radius: 8px;
-          object-fit: cover;
-        }
-
-        .propInfo small {
-          color: #9ca3af;
-          font-size: 10.5px;
-        }
-
-        .propInfo strong {
-          display: block;
-          font-size: 15px;
-          font-weight: 700;
-          margin-top: 2px;
-        }
-
-        .propInfo span {
-          font-size: 12px;
-          color: #e5e7eb;
-        }
-
-        / FEATURES BAR /
-        .featuresContainer {
-          max-width: 1280px;
-          margin: 18px auto 0;
-        }
-
-        .featuresRow {
-          display: grid;
-          grid-template-columns: repeat(6, 1fr);
-          gap: 12px;
-        }
-
-        .featureBox {
-          background: #090a0a;
-          border: 1px solid #23221b;
-          border-radius: 12px;
-          padding: 18px 12px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          transition: border-color 0.2s;
-        }
-
-        .featureBox:hover {
-          border-color: #f4c84f;
-        }
-
-        .featureIcon {
-          width: 44px;
-          height: 44px;
-          border: 1px solid rgba(244, 200, 79, 0.4);
-          border-radius: 10px;
-          background: #111313;
-          display: grid;
-          place-items: center;
-          color: #f4c84f;
-          margin-bottom: 12px;
-        }
-
-        .featureBox h4 {
-          font-size: 13.5px;
-          font-weight: 700;
-          margin-bottom: 6px;
-        }
-
-        .featureBox p {
-          font-size: 11px;
-          line-height: 1.35;
-          color: #9ca3af;
-          white-space: pre-line;
-        }
-
-        / AUDIENCE SECTION /
-        .audienceSection {
-          max-width: 1280px;
-          margin: 20px auto 0;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
-        }
-
-        .cardAudience {
-          background: #070808;
-          border: 1px solid #f4c84f;
-          border-radius: 16px;
-          display: grid;
-          grid-template-columns: 1.15fr 0.95fr;
-          overflow: hidden;
-          padding: 32px 0 0 32px;
+        .heroVisual {
+          min-height: 500px;
           position: relative;
         }
 
-        .pillTag {
-          display: inline-block;
-          font-size: 9.5px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          color: #f4c84f;
-          margin-bottom: 8px;
+        .glow {
+          background: rgba(188, 145, 75, 0.18);
+          border-radius: 50%;
+          filter: blur(80px);
+          height: 280px;
+          position: absolute;
+          right: 20%;
+          top: 18%;
+          width: 280px;
         }
 
-        .cardAudienceContent h2 {
-          font-size: 36px;
-          line-height: 1;
-          letter-spacing: -1.2px;
-          font-weight: 800;
-          margin-bottom: 22px;
+        .heroImageFrame {
+          border-radius: 2px;
+          height: 430px;
+          overflow: hidden;
+          position: absolute;
+          right: 4%;
+          top: 28px;
+          transform: rotate(3deg);
+          width: 78%;
+        }
+
+        .heroImage {
+          height: 100%;
+          object-fit: cover;
+          width: 100%;
+        }
+
+        .floatingCard {
+          backdrop-filter: blur(15px);
+          background: rgba(29, 30, 26, 0.93);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 5px;
+          box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+          position: absolute;
+          z-index: 2;
+        }
+
+        .incomeCard {
+          left: 3%;
+          padding: 18px;
+          top: 105px;
+          width: 170px;
+        }
+
+        .cardLabel,
+        .paymentCard small,
+        .ratingCard small {
+          color: var(--muted);
+          display: block;
+          font-size: 10px;
+        }
+
+        .incomeValue {
+          font-size: 24px;
+          font-weight: 600;
+          margin-top: 5px;
+        }
+
+        .incomeChange {
+          color: #83b897;
+          font-size: 10px;
+          margin-top: 4px;
+        }
+
+        .miniChart {
+          align-items: end;
+          display: flex;
+          gap: 4px;
+          height: 35px;
+          margin-top: 12px;
+        }
+
+        .miniChart i {
+          background: var(--gold);
+          display: block;
+          flex: 1;
+          height: 35%;
+        }
+
+        .miniChart i:nth-child(2) {
+          height: 55%;
+        }
+
+        .miniChart i:nth-child(3) {
+          height: 45%;
+        }
+
+        .miniChart i:nth-child(4) {
+          height: 70%;
+        }
+
+        .miniChart i:nth-child(5) {
+          height: 58%;
+        }
+
+        .miniChart i:nth-child(6) {
+          height: 88%;
+        }
+
+        .miniChart i:nth-child(7) {
+          height: 72%;
+        }
+
+        .miniChart i:nth-child(8) {
+          height: 100%;
+        }
+
+        .paymentCard {
+          align-items: center;
+          bottom: 38px;
+          display: flex;
+          gap: 10px;
+          left: 12%;
+          padding: 13px;
+        }
+
+        .checkCircle {
+          align-items: center;
+          background: #789b7b;
+          border-radius: 50%;
+          color: white;
+          display: flex;
+          height: 26px;
+          justify-content: center;
+          width: 26px;
+        }
+
+        .paymentCard strong {
+          display: block;
+          font-size: 11px;
+          margin-bottom: 3px;
+        }
+
+        .ratingCard {
+          bottom: 110px;
+          padding: 13px 17px;
+          right: 0;
+        }
+
+        .ratingCard span {
+          color: var(--gold);
+          font-size: 12px;
+          letter-spacing: 2px;
+        }
+
+        .ratingCard strong {
+          display: block;
+          font-size: 21px;
+          margin-top: 4px;
+        }
+
+        .logoStrip {
+          border-bottom: 1px solid var(--line);
+          border-top: 1px solid var(--line);
+          color: var(--muted);
+          display: flex;
+          justify-content: space-between;
+          margin: auto;
+          max-width: 1184px;
+          padding: 24px 0;
+        }
+
+        .logoStrip > span {
+          font-size: 11px;
+        }
+
+        .logoItems {
+          align-items: center;
+          display: flex;
+          gap: 42px;
+        }
+
+        .logoItems b {
+          color: #716f65;
+          font-size: 14px;
+        }
+
+        .logoItems span {
+          color: var(--gold);
+        }
+
+        .section {
+          margin: auto;
+          max-width: 1184px;
+          padding: 145px 0;
+        }
+
+        .sectionHeading.centered {
+          margin: auto;
+          text-align: center;
+        }
+
+        .sectionHeading.centered .eyebrow {
+          justify-content: center;
+        }
+
+        .sectionHeading h2 {
+          margin: 22px 0 18px;
+        }
+
+        .sectionHeading p {
+          color: var(--muted);
+          line-height: 1.7;
+          margin: auto;
+          max-width: 450px;
+        }
+
+        .featureGrid {
+          display: grid;
+          gap: 14px;
+          grid-template-columns: repeat(3, 1fr);
+          margin-top: 65px;
+        }
+
+        .featureCard {
+          background: var(--surface);
+          border: 1px solid var(--line);
+          min-height: 210px;
+          padding: 27px;
+        }
+
+        .featureCard.large {
+          grid-row: span 2;
+          min-height: 434px;
+        }
+
+        .featureCard.wide {
+          grid-column: span 2;
+        }
+
+        .featureIcon {
+          align-items: center;
+          background: rgba(212, 170, 98, 0.12);
+          border-radius: 50%;
+          color: var(--gold);
+          display: flex;
+          font-size: 20px;
+          height: 45px;
+          justify-content: center;
+          width: 45px;
+        }
+
+        .featureCard h3 {
+          font-size: 18px;
+          font-weight: 500;
+          margin: 28px 0 10px;
+        }
+
+        .featureCard p {
+          color: var(--muted);
+          font-size: 13px;
+          line-height: 1.7;
+          margin: 0;
+          max-width: 270px;
+        }
+
+        .splitSection {
+          align-items: center;
+          display: grid;
+          gap: 110px;
+          grid-template-columns: 1fr 1fr;
+          margin: auto;
+          max-width: 1184px;
+          padding: 130px 0;
+        }
+
+        .splitSection:nth-of-type(even) {
+          background: transparent;
+        }
+
+        .splitText h2 {
+          margin-bottom: 24px;
         }
 
         .checkList {
           list-style: none;
-          display: flex;
-          flex-direction: column;
-          gap: 11px;
-          margin-bottom: 26px;
+          margin: 30px 0;
+          padding: 0;
         }
 
         .checkList li {
+          align-items: center;
+          color: var(--cream);
           display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 12.5px;
-          color: #ececec;
-        }
-
-        .checkCircle {
-          width: 17px;
-          height: 17px;
-          border-radius: 50%;
-          background: #f4c84f;
-          color: #0b0b0b;
-          font-size: 10px;
-          display: grid;
-          place-items: center;
-          font-weight: 900;
-        }
-
-        .goldFullBtn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          width: calc(100% - 20px);
-          max-width: 250px;
-          padding: 11px 16px;
-          background: linear-gradient(135deg, #ffe078, #f4c84f);
-          color: #111;
-          font-size: 12px;
-          font-weight: 800;
-          border-radius: 8px;
-          margin-bottom: 30px;
-        }
-
-        .phoneWrap {
-          position: relative;
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .phoneImage {
-          width: 260px;
-          transform: translateY(12px);
-          display: block;
-          filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.8));
-        }
-
-        / PRO BANNER /
-        .proSection {
-          max-width: 1280px;
-          margin: 20px auto 0;
-        }
-
-        .proBanner {
-          background: #0b0c0c;
-          border: 1px solid #f4c84f;
-          border-radius: 14px;
-          padding: 24px 34px;
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-          align-items: center;
-          gap: 24px;
-        }
-
-        .crownIcon {
-          display: grid;
-          place-items: center;
-        }
-
-        .proTag {
-          font-size: 9.5px;
-          font-weight: 800;
-          color: #f4c84f;
-          letter-spacing: 0.08em;
-          display: block;
-        }
-
-        .proText h3 {
-          font-size: 22px;
-          font-weight: 800;
-          margin: 2px 0 4px;
-        }
-
-        .proText p {
-          font-size: 11.5px;
-          color: #9ca3af;
-        }
-
-        .goldProBtn {
-          display: inline-flex;
-          align-items: center;
-          padding: 12px 24px;
-          background: linear-gradient(135deg, #ffe078, #f4c84f);
-          color: #111;
-          font-size: 12.5px;
-          font-weight: 800;
-          border-radius: 8px;
-          white-space: nowrap;
-        }
-
-        .proFeaturesRow {
-          grid-column: 1 / -1;
-          border-top: 1px solid rgba(255, 255, 255, 0.07);
-          padding-top: 14px;
-          display: flex;
-          justify-content: flex-end;
-          gap: 26px;
-        }
-
-        .proFeaturesRow span {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          font-size: 11px;
-          color: #cbd5e1;
-        }
-
-        / TESTIMONIALS /
-        .testimonialSection {
-          max-width: 1280px;
-          margin: 36px auto 0;
-        }
-
-        .sectionIntro h3 {
-          font-size: 22px;
-          font-weight: 800;
-          margin-bottom: 4px;
-        }
-
-        .sectionIntro p {
-          font-size: 12px;
-          color: #9ca3af;
-          margin-bottom: 18px;
-        }
-
-        .testimonialCardsGrid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-        }
-
-        .reviewBox {
-          background: #090a0a;
-          border: 1px solid rgba(244, 200, 79, 0.25);
-          border-radius: 12px;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          min-height: 180px;
-        }
-
-        .reviewPerson {
-          display: flex;
-          align-items: center;
+          font-size: 13px;
           gap: 12px;
+          margin: 15px 0;
         }
 
-        .avatarRing {
-          width: 44px;
-          height: 44px;
+        .checkList span {
+          align-items: center;
+          background: rgba(212, 170, 98, 0.14);
           border-radius: 50%;
-          border: 1.5px solid #f4c84f;
-          overflow: hidden;
-        }
-
-        .avatarRing img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .personMeta strong {
-          display: block;
-          font-size: 13.5px;
-        }
-
-        .personMeta span {
+          color: var(--gold);
+          display: flex;
           font-size: 11px;
-          color: #9ca3af;
+          height: 21px;
+          justify-content: center;
+          width: 21px;
         }
 
-        .reviewBox p {
-          font-size: 12.5px;
-          line-height: 1.5;
-          color: #d1d5db;
-          margin: 12px 0;
-        }
-
-        .starRow {
-          color: #f4c84f;
-          letter-spacing: 2px;
+        .outlineButton {
+          background: transparent;
+          border: 1px solid var(--gold);
+          color: var(--gold);
           font-size: 13px;
         }
 
-        / FOOTER /
-        .mainFooter {
-          max-width: 1280px;
-          margin: 40px auto 0;
-          padding-top: 24px;
-          border-top: 1px solid rgba(255, 255, 255, 0.12);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 20px;
+        .outlineButton:hover {
+          background: var(--gold);
+          color: #171610;
         }
 
-        .brandCol small {
+        .dashboardMockup {
+          background: #e8e3d8;
+          border-radius: 6px;
+          box-shadow: 20px 24px 50px rgba(0, 0, 0, 0.3);
+          color: #242720;
+          padding: 22px;
+          transform: rotate(2deg);
+        }
+
+        .mockupTop,
+        .panelHeader,
+        .phoneHeader,
+        .appHeader {
+          align-items: center;
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .mockupBrand {
+          color: #20251f;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: -0.8px;
+        }
+
+        .mockupAvatar,
+        .phoneAvatar {
+          align-items: center;
+          background: #b58a58;
+          border-radius: 50%;
+          color: white;
+          display: flex;
+          font-size: 9px;
+          height: 27px;
+          justify-content: center;
+          width: 27px;
+        }
+
+        .mockupGreeting {
+          margin: 37px 0 20px;
+        }
+
+        .mockupGreeting small,
+        .statRow small {
+          color: #77796e;
           display: block;
-          color: #9ca3af;
+          font-size: 10px;
+        }
+
+        .mockupGreeting h3 {
+          font-size: 25px;
+          font-weight: 500;
+          margin: 6px 0;
+        }
+
+        .statRow {
+          display: grid;
+          gap: 10px;
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .statRow > div,
+        .chartPanel {
+          background: #f5f1e9;
+          padding: 15px;
+        }
+
+        .statRow strong {
+          display: block;
+          font-size: 22px;
+          margin: 7px 0 3px;
+        }
+
+        .statRow em {
+          color: #63896c;
+          font-size: 10px;
+          font-style: normal;
+        }
+
+        .chartPanel {
+          margin-top: 10px;
+        }
+
+        .panelHeader {
           font-size: 11px;
+        }
+
+        .panelHeader span {
+          color: #8b8a80;
+          font-size: 9px;
+        }
+
+        .barChart {
+          align-items: end;
+          display: flex;
+          gap: 9px;
+          height: 130px;
+          margin: 16px 5px 6px;
+        }
+
+        .barChart i {
+          background: #c3a066;
+          border-radius: 2px 2px 0 0;
+          flex: 1;
+        }
+
+        .months {
+          color: #929185;
+          display: flex;
+          font-size: 8px;
+          justify-content: space-between;
+        }
+
+        .tenantSection {
+          grid-template-columns: 0.9fr 1.1fr;
+        }
+
+        .phoneMockup {
+          background: #282923;
+          border: 7px solid #3a3b34;
+          border-radius: 33px;
+          box-shadow: 20px 25px 50px rgba(0, 0, 0, 0.35);
+          justify-self: center;
+          padding: 8px;
+          position: relative;
+          transform: rotate(-5deg);
+          width: 275px;
+        }
+
+        .phoneNotch {
+          background: #3a3b34;
+          border-radius: 0 0 12px 12px;
+          height: 18px;
+          left: 50%;
+          position: absolute;
+          top: -7px;
+          transform: translateX(-50%);
+          width: 90px;
+          z-index: 2;
+        }
+
+        .phoneScreen {
+          background: #ede9df;
+          border-radius: 22px;
+          color: #272821;
+          min-height: 510px;
+          padding: 15px;
+        }
+
+        .phoneHeader {
+          font-size: 8px;
+          margin-bottom: 24px;
+        }
+
+        .appHeader {
+          margin-bottom: 25px;
+        }
+
+        .phoneScreen .mockupBrand {
+          font-size: 16px;
+        }
+
+        .welcome {
+          color: #85857c;
+          font-size: 10px;
+        }
+
+        .phoneScreen h3 {
+          font-size: 23px;
+          font-weight: 500;
+          margin: 5px 0 16px;
+        }
+
+        .homeImage {
+          border-radius: 8px;
+          height: 132px;
+          overflow: hidden;
+        }
+
+        .homeImage img {
+          height: 100%;
+          object-fit: cover;
+          width: 100%;
+        }
+
+        .phoneProperty {
+          margin: 12px 0 23px;
+        }
+
+        .phoneProperty strong,
+        .phoneProperty small {
+          display: block;
+        }
+
+        .phoneProperty strong {
+          font-size: 13px;
+        }
+
+        .phoneProperty small {
+          color: #86857a;
+          font-size: 9px;
           margin-top: 4px;
         }
 
-        .linksCol {
+        .phoneActions {
+          border-top: 1px solid #d5d0c5;
           display: flex;
-          gap: 24px;
+          justify-content: space-between;
+          padding-top: 20px;
+          text-align: center;
         }
 
-        .linksCol a {
-          color: #d1d5db;
-          font-size: 12px;
-        }
-
-        .linksCol a:hover {
-          color: #f4c84f;
-        }
-
-        .socialCol {
-          display: flex;
-          gap: 14px;
-        }
-
-        .socialCol a {
-          color: #fff;
-          opacity: 0.8;
-          transition: opacity 0.2s;
-        }
-
-        .socialCol a:hover {
-          opacity: 1;
-        }
-
-        .appStoresCol {
-          display: flex;
-          gap: 10px;
-        }
-
-        .storePill {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          border: 1px solid #444;
-          background: #111;
-          border-radius: 8px;
-          padding: 6px 14px;
-        }
-
-        .storeInfo {
+        .phoneActions div {
           display: flex;
           flex-direction: column;
+          gap: 7px;
         }
 
-        .storeInfo .tiny {
-          font-size: 8.5px;
-          color: #9ca3af;
-          line-height: 1;
+        .phoneActions span {
+          color: #b38b58;
+          font-size: 21px;
         }
 
-        .storeInfo strong {
-          font-size: 12px;
-          line-height: 1.2;
+        .phoneActions small {
+          color: #74746b;
+          font-size: 8px;
         }
 
-        / DEMO MODAL /
-        .modalOverlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.85);
-          backdrop-filter: blur(8px);
-          z-index: 1000;
-          display: grid;
-          place-items: center;
-          padding: 20px;
-        }
-
-        .modalBox {
+        .proSection,
+        .ctaSection {
+          background: var(--gold);
+          color: #1c1c16;
+          margin: 70px auto 0;
+          max-width: 1184px;
+          min-height: 440px;
+          overflow: hidden;
+          padding: 85px;
           position: relative;
-          background: #0d0f10;
-          border: 1px solid #f4c84f;
-          border-radius: 16px;
-          max-width: 840px;
-          width: 100%;
+        }
+
+        .proContent {
+          position: relative;
+          z-index: 2;
+        }
+
+        .proSection .eyebrow,
+        .ctaSection .eyebrow {
+          color: #564729;
+        }
+
+        .proSection .eyebrowDot,
+        .ctaSection .eyebrowDot {
+          background: #564729;
+        }
+
+        .proSection h2,
+        .ctaSection h2 {
+          margin: 22px 0;
+        }
+
+        .proSection h2 em,
+        .ctaSection h2 em {
+          color: #66502a;
+        }
+
+        .proSection p,
+        .ctaSection p {
+          color: #665a3f;
+          font-size: 15px;
+          line-height: 1.7;
+          max-width: 400px;
+        }
+
+        .lightButton {
+          background: #1d1e18;
+          border: 1px solid #1d1e18;
+          color: var(--cream);
+          margin-top: 18px;
+        }
+
+        .lightButton:hover {
+          background: #36372b;
+        }
+
+        .proDecoration {
+          height: 420px;
+          position: absolute;
+          right: 60px;
+          top: 0;
+          width: 420px;
+        }
+
+        .orbit {
+          border: 1px solid rgba(46, 41, 24, 0.35);
+          border-radius: 50%;
+          height: 360px;
+          left: 30px;
+          position: absolute;
+          top: 32px;
+          transform: rotate(35deg);
+          width: 360px;
+        }
+
+        .orbitTwo {
+          height: 270px;
+          left: 75px;
+          top: 78px;
+          transform: rotate(-35deg);
+          width: 270px;
+        }
+
+        .proCircle {
+          align-items: center;
+          background: #ead09a;
+          border-radius: 50%;
+          display: flex;
+          font-size: 45px;
+          height: 125px;
+          justify-content: center;
+          left: 148px;
+          position: absolute;
+          top: 145px;
+          width: 125px;
+        }
+
+        .testimonialSection {
+          padding-bottom: 130px;
+        }
+
+        .testimonialGrid {
+          display: grid;
+          gap: 15px;
+          grid-template-columns: repeat(3, 1fr);
+          margin-top: 65px;
+        }
+
+        .testimonial {
+          background: var(--surface);
+          border: 1px solid var(--line);
           padding: 28px;
         }
 
-        .closeBtn {
-          position: absolute;
-          top: 14px;
-          right: 18px;
-          font-size: 26px;
-          color: #f4c84f;
-          cursor: pointer;
+        .quoteMark {
+          color: var(--gold);
+          font-family: Georgia, serif;
+          font-size: 42px;
+          line-height: 0.8;
         }
 
-        .modalBox h2 {
-          font-size: 26px;
-          margin: 6px 0 4px;
+        .testimonial blockquote {
+          font-family: "Playfair Display", serif;
+          font-size: 17px;
+          line-height: 1.6;
+          margin: 20px 0 30px;
         }
 
-        .modalBox p {
+        .person {
+          align-items: center;
+          display: flex;
+          gap: 11px;
+        }
+
+        .personAvatar {
+          align-items: center;
+          background: #92705d;
+          border-radius: 50%;
+          display: flex;
+          font-size: 10px;
+          height: 32px;
+          justify-content: center;
+          width: 32px;
+        }
+
+        .person strong,
+        .person small {
+          display: block;
+        }
+
+        .person strong {
+          font-size: 11px;
+        }
+
+        .person small {
+          color: var(--muted);
+          font-size: 9px;
+          margin-top: 3px;
+        }
+
+        .ctaSection {
+          align-items: center;
+          display: flex;
+          flex-direction: column;
+          margin-top: 0;
+          min-height: 400px;
+          padding: 75px 20px;
+          text-align: center;
+        }
+
+        .ctaSection p {
+          margin: 0;
+        }
+
+        .ctaSection h2 {
+          margin: 20px 0;
+        }
+
+        .footer {
+          margin: auto;
+          max-width: 1184px;
+          padding: 70px 0 25px;
+        }
+
+        .footerTop {
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .footerTop p {
+          color: var(--muted);
           font-size: 13px;
-          color: #9ca3af;
-          margin-bottom: 18px;
+          line-height: 1.6;
+          margin-top: 22px;
         }
 
-        .demoVideoWrapper {
-          width: 100%;
-          height: 420px;
+        .footerLinks {
+          display: flex;
+          gap: 90px;
+        }
+
+        .footerLinks div {
+          display: flex;
+          flex-direction: column;
+          gap: 13px;
+        }
+
+        .footerLinks strong {
+          color: var(--cream);
+          font-size: 11px;
+          margin-bottom: 5px;
+        }
+
+        .footerLinks a {
+          color: var(--muted);
+          font-size: 11px;
+        }
+
+        .footerLinks a:hover {
+          color: var(--gold);
+        }
+
+        .footerBottom {
+          border-top: 1px solid var(--line);
+          color: #686961;
+          display: flex;
+          font-size: 10px;
+          justify-content: space-between;
+          margin-top: 70px;
+          padding-top: 20px;
+        }
+
+        .modalOverlay {
+          align-items: center;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          inset: 0;
+          justify-content: center;
+          padding: 20px;
+          position: fixed;
+          z-index: 20;
+        }
+
+        .videoModal {
           background: #000;
-          border-radius: 10px;
-          overflow: hidden;
-        }
-
-        .demoVideoWrapper video {
+          max-width: 900px;
+          position: relative;
           width: 100%;
-          height: 100%;
-          object-fit: cover;
         }
 
-        / RESPONSIVE */
-        @media (max-width: 1100px) {
-          .heroGrid {
-            grid-template-columns: 1fr;
-          }
-          .heroRight {
-            display: none;
-          }
-          .featuresRow {
-            grid-template-columns: repeat(3, 1fr);
-          }
-          .audienceSection {
-            grid-template-columns: 1fr;
-          }
-          .proBanner {
-            grid-template-columns: 1fr;
-          }
-          .mainFooter {
-            flex-wrap: wrap;
-          }
+        .videoModal video {
+          display: block;
+          width: 100%;
         }
 
-        @media (max-width: 680px) {
+        .closeButton {
+          background: var(--gold);
+          border: 0;
+          border-radius: 50%;
+          font-size: 25px;
+          height: 34px;
+          line-height: 1;
+          position: absolute;
+          right: -15px;
+          top: -15px;
+          width: 34px;
+          z-index: 2;
+        }
+
+        @media (max-width: 900px) {
           .navLinks {
-            display: none;
+            gap: 16px;
+            margin-left: 20px;
           }
-          .featuresRow {
-            grid-template-columns: repeat(2, 1fr);
+
+          .hero,
+          .splitSection {
+            gap: 50px;
           }
-          .cardAudience {
-            grid-template-columns: 1fr;
-            padding: 24px;
+
+          .logoStrip,
+          .section,
+          .splitSection,
+          .footer {
+            margin-left: 24px;
+            margin-right: 24px;
           }
-          .phoneWrap {
-            margin-top: 14px;
+
+          .proSection,
+          .ctaSection {
+            margin-left: 24px;
+            margin-right: 24px;
           }
-          .testimonialCardsGrid {
-            grid-template-columns: 1fr;
+
+          .proDecoration {
+            opacity: 0.45;
+            right: -100px;
           }
         }
-      }</style>
+
+        @media (max-width: 700px) {
+          .navbar {
+            height: 72px;
+            padding: 0 20px;
+          }
+
+          .navLinks {
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+            display: none;
+            flex-direction: column;
+            gap: 22px;
+            left: 0;
+            margin: 0;
+            padding: 25px 24px;
+            position: absolute;
+            right: 0;
+            top: 72px;
+            z-index: 10;
+          }
+
+          .navLinks.open {
+            display: flex;
+          }
+
+          .navActions {
+            display: none;
+          }
+
+          .menuButton {
+            display: block;
+          }
+
+          .hero {
+            display: block;
+            min-height: auto;
+            padding: 70px 20px 80px;
+          }
+
+          h1 {
+            font-size: 53px;
+          }
+
+          h2 {
+            font-size: 45px;
+          }
+
+          .heroTrust {
+            margin-top: 45px;
+          }
+
+          .heroVisual {
+            margin-top: 50px;
+            min-height: 390px;
+          }
+
+          .heroImageFrame {
+            height: 330px;
+            right: 2%;
+            width: 88%;
+          }
+
+          .incomeCard {
+            left: 0;
+            top: 70px;
+          }
+
+          .paymentCard {
+            bottom: 17px;
+            left: 4%;
+          }
+
+          .ratingCard {
+            bottom: 70px;
+          }
+
+          .logoStrip {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 20px;
+            margin: 0 20px;
+          }
+
+          .logoItems {
+            flex-wrap: wrap;
+            gap: 20px;
+          }
+
+          .section,
+          .splitSection {
+            margin-left: 20px;
+            margin-right: 20px;
+            padding: 90px 0;
+          }
+
+          .featureGrid {
+            grid-template-columns: 1fr;
+            margin-top: 45px;
+          }
+
+          .featureCard.large,
+          .featureCard.wide {
+            grid-column: auto;
+            grid-row: auto;
+            min-height: 210px;
+          }
+
+          .splitSection,
+          .tenantSection {
+            display: flex;
+            flex-direction: column;
+            gap: 65px;
+          }
+
+          .landlordSection .splitText {
+            order: 1;
+          }
+
+          .landlordSection .dashboardMockup {
+            order: 2;
+          }
+
+          .dashboardMockup {
+            width: 100%;
+          }
+
+          .phoneMockup {
+            align-self: center;
+          }
+
+          .proSection,
+          .ctaSection {
+            margin-left: 0;
+            margin-right: 0;
+            padding: 75px 25px;
+          }
+
+          .proDecoration {
+            right: -170px;
+          }
+
+          .testimonialGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .footer {
+            margin: 0 20px;
+          }
+
+          .footerTop {
+            flex-direction: column;
+            gap: 45px;
+          }
+
+          .footerLinks {
+            gap: 35px;
+            justify-content: space-between;
+          }
+
+          .footerBottom {
+            gap: 10px;
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </main>
   );
 }
-``
+
+function FeatureCard({
+  icon,
+  title,
+  text,
+  large = false,
+  wide = false,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+  large?: boolean;
+  wide?: boolean;
+}) {
+  return (
+    <article className={`featureCard ${large ? "large" : ""} ${wide ? "wide" : ""}`}>
+      <div className="featureIcon">{icon}</div>
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </article>
+  );
+}
+
+function Testimonial({
+  quote,
+  name,
+  role,
+  initials,
+}: {
+  quote: string;
+  name: string;
+  role: string;
+  initials: string;
+}) {
+  return (
+    <article className="testimonial">
+      <div className="quoteMark">“</div>
+      <blockquote>{quote}</blockquote>
+      <div className="person">
+        <div className="personAvatar">{initials}</div>
+        <div>
+          <strong>{name}</strong>
+          <small>{role}</small>
+        </div>
+      </div>
+    </article>
+  );
+}
+```
+
+
+
+```text
+public/unitvero-hero-house.jpg
+public/unitvero-property.jpg
+public/unitvero-demo.mp4
+```
+
