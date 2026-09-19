@@ -8172,82 +8172,50 @@ function TenantPortal({
 
   const words = {
     en: {
-      home: "Home",
-      payments: "Payments",
-      lease: "Lease",
-      messages: "Messages",
-      maintenance: "Maintenance",
-      documents: "Documents",
-      settings: "Settings",
-      hello: "Welcome home",
-      subtitle: "Everything about your rental, in one secure place.",
-      rent: "Monthly rent",
-      property: "Your property",
-      leaseDates: "Lease dates",
-      status: "Account status",
-      active: "Active",
-      payRent: "Pay rent",
-      contact: "Message landlord",
-      alerts: "Alerts & announcements",
-      noAlerts: "No new announcements.",
-      inbox: "Your messages",
-      noMessages: "No messages yet.",
-      send: "Send",
-      typeMessage: "Write a message…",
-      signOut: "Sign out",
-      privacy: "Privacy mode",
-      language: "Language",
-      notifications: "Phone notifications",
-      notifyCopy: "Push notification setup is being connected next. In-app unread alerts are active now.",
-      maintenanceCopy: "Maintenance requests will be available here without exposing landlord-only controls.",
-      docsCopy: "Lease files and shared documents will appear here.",
-      paymentCopy: "Online tenant rent payment will appear here once the tenant payment checkout is connected.",
+      home: "Home", payments: "Payments", lease: "Lease", messages: "Messages",
+      maintenance: "Maintenance", documents: "Documents", settings: "Settings",
+      welcome: "Welcome back", subtitle: "Manage your rental, payments, messages, and documents.",
+      monthlyRent: "Monthly rent", leaseStatus: "Lease status", leaseTerm: "Lease term",
+      active: "Active", property: "Property", payRent: "Pay rent", messageLandlord: "Message landlord",
+      recentActivity: "Recent activity", propertyUpdates: "Property updates", noUpdates: "You're all caught up. No new property updates.",
+      paymentCenter: "Payment center", paymentHistory: "Payment history", paymentSoon: "Online rent payments will be available here once checkout is connected.",
+      leaseDetails: "Lease details", startDate: "Start date", endDate: "End date", unit: "Unit",
+      inbox: "Messages", noMessages: "No messages yet. Start a conversation with your landlord below.",
+      typeMessage: "Write a message…", send: "Send",
+      maintenanceTitle: "Maintenance requests", maintenanceText: "Submit and track repair requests from this page.",
+      documentsTitle: "Documents", documentsText: "Your lease and shared rental documents will appear here.",
+      account: "Account settings", privacy: "Privacy mode", privacyText: "Hide financial amounts while using Unitvero in public.",
+      language: "Language", notifications: "Notifications", notificationText: "In-app alerts are active. Phone push notifications are being connected next.",
+      signOut: "Sign out", noRental: "No active rental is connected to this account yet.", refresh: "Refresh",
+      connected: "Connected", unread: "unread", month: "month"
     },
     es: {
-      home: "Inicio",
-      payments: "Pagos",
-      lease: "Contrato",
-      messages: "Mensajes",
-      maintenance: "Mantenimiento",
-      documents: "Documentos",
-      settings: "Ajustes",
-      hello: "Bienvenido a casa",
-      subtitle: "Todo sobre tu alquiler, en un solo lugar seguro.",
-      rent: "Renta mensual",
-      property: "Tu propiedad",
-      leaseDates: "Fechas del contrato",
-      status: "Estado de la cuenta",
-      active: "Activo",
-      payRent: "Pagar renta",
-      contact: "Enviar mensaje",
-      alerts: "Alertas y anuncios",
-      noAlerts: "No hay anuncios nuevos.",
-      inbox: "Tus mensajes",
-      noMessages: "Aún no hay mensajes.",
-      send: "Enviar",
-      typeMessage: "Escribe un mensaje…",
-      signOut: "Cerrar sesión",
-      privacy: "Modo privado",
-      language: "Idioma",
-      notifications: "Notificaciones del teléfono",
-      notifyCopy: "La configuración de notificaciones push se conectará a continuación. Las alertas dentro de la app ya están activas.",
-      maintenanceCopy: "Las solicitudes de mantenimiento estarán disponibles aquí sin mostrar controles del propietario.",
-      docsCopy: "Los contratos y documentos compartidos aparecerán aquí.",
-      paymentCopy: "El pago de renta en línea aparecerá aquí cuando conectemos el pago para inquilinos.",
-    },
+      home: "Inicio", payments: "Pagos", lease: "Contrato", messages: "Mensajes",
+      maintenance: "Mantenimiento", documents: "Documentos", settings: "Ajustes",
+      welcome: "Bienvenido", subtitle: "Administra tu alquiler, pagos, mensajes y documentos.",
+      monthlyRent: "Renta mensual", leaseStatus: "Estado del contrato", leaseTerm: "Duración del contrato",
+      active: "Activo", property: "Propiedad", payRent: "Pagar renta", messageLandlord: "Enviar mensaje",
+      recentActivity: "Actividad reciente", propertyUpdates: "Actualizaciones", noUpdates: "Todo está al día. No hay nuevas actualizaciones.",
+      paymentCenter: "Centro de pagos", paymentHistory: "Historial de pagos", paymentSoon: "Los pagos de renta en línea aparecerán aquí cuando se conecte el pago.",
+      leaseDetails: "Detalles del contrato", startDate: "Fecha de inicio", endDate: "Fecha final", unit: "Unidad",
+      inbox: "Mensajes", noMessages: "Aún no hay mensajes. Inicia una conversación con tu propietario abajo.",
+      typeMessage: "Escribe un mensaje…", send: "Enviar",
+      maintenanceTitle: "Solicitudes de mantenimiento", maintenanceText: "Envía y revisa solicitudes de reparación desde esta página.",
+      documentsTitle: "Documentos", documentsText: "Tu contrato y documentos compartidos aparecerán aquí.",
+      account: "Ajustes de cuenta", privacy: "Modo privado", privacyText: "Oculta cantidades financieras mientras usas Unitvero en público.",
+      language: "Idioma", notifications: "Notificaciones", notificationText: "Las alertas dentro de la app están activas. Las notificaciones del teléfono se conectarán después.",
+      signOut: "Cerrar sesión", noRental: "Aún no hay un alquiler activo conectado a esta cuenta.", refresh: "Actualizar",
+      connected: "Conectado", unread: "sin leer", month: "mes"
+    }
   };
 
-  const tx = (key) => words[language]?.[key] || words.en[key] || key;
+  const t = (key) => words[language]?.[key] || words.en[key] || key;
 
   async function loadTenant() {
     setLoading(true);
     setNotice("");
     const s = supabase();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await s.auth.getUser();
+    const { data: { user }, error: userError } = await s.auth.getUser();
 
     if (userError || !user) {
       setNotice("Your session expired. Please sign in again.");
@@ -8271,46 +8239,37 @@ function TenantPortal({
     }
 
     setTenancy(tenancyData || null);
-
     if (!tenancyData) {
       setLoading(false);
       return;
     }
 
-    const [
-      propertyResult,
-      conversationResult,
-      announcementResult,
-    ] = await Promise.all([
+    const [propertyResult, conversationResult, announcementResult] = await Promise.all([
       s.from("properties").select("*").eq("id", tenancyData.property_id).maybeSingle(),
       s.from("conversations").select("*").eq("tenancy_id", tenancyData.id).order("updated_at", { ascending: false }),
-      s.from("announcements").select("*").or(
-        `tenancy_id.eq.${tenancyData.id},property_id.eq.${tenancyData.property_id}`
-      ).order("created_at", { ascending: false }),
+      s.from("announcements").select("*")
+        .or(`tenancy_id.eq.${tenancyData.id},property_id.eq.${tenancyData.property_id}`)
+        .order("created_at", { ascending: false }),
     ]);
 
-    if (propertyResult.data) setProperty(propertyResult.data);
+    setProperty(propertyResult.data || null);
 
     if (tenancyData.unit_id) {
-      const { data: unitData } = await s
-        .from("units")
-        .select("*")
-        .eq("id", tenancyData.unit_id)
-        .maybeSingle();
+      const { data: unitData } = await s.from("units").select("*").eq("id", tenancyData.unit_id).maybeSingle();
       setUnit(unitData || null);
+    } else {
+      setUnit(null);
     }
 
-    const conversationRows = conversationResult.data || [];
-    setConversations(conversationRows);
-    setSelectedConversation((current) => current || conversationRows[0] || null);
+    const rows = conversationResult.data || [];
+    setConversations(rows);
+    const activeConversation = rows[0] || null;
+    setSelectedConversation(activeConversation);
 
-    if (conversationRows.length) {
-      const ids = conversationRows.map((item) => item.id);
-      const { data: messageRows } = await s
-        .from("messages")
-        .select("*")
-        .in("conversation_id", ids)
-        .order("created_at", { ascending: true });
+    if (rows.length) {
+      const ids = rows.map((item) => item.id);
+      const { data: messageRows } = await s.from("messages").select("*")
+        .in("conversation_id", ids).order("created_at", { ascending: true });
       setMessages(messageRows || []);
     } else {
       setMessages([]);
@@ -8320,32 +8279,25 @@ function TenantPortal({
     setLoading(false);
   }
 
-  useEffect(() => {
-    loadTenant();
-  }, []);
+  useEffect(() => { loadTenant(); }, []);
 
   async function ensureConversation() {
     if (selectedConversation) return selectedConversation;
     if (!tenancy || !property?.landlord_id) return null;
 
     const s = supabase();
-    const { data, error } = await s
-      .from("conversations")
-      .insert({
-        landlord_id: property.landlord_id,
-        property_id: tenancy.property_id,
-        tenancy_id: tenancy.id,
-        subject: "Tenant conversation",
-        updated_at: new Date().toISOString(),
-      })
-      .select("*")
-      .single();
+    const { data, error } = await s.from("conversations").insert({
+      landlord_id: property.landlord_id,
+      property_id: tenancy.property_id,
+      tenancy_id: tenancy.id,
+      subject: "Tenant conversation",
+      updated_at: new Date().toISOString(),
+    }).select("*").single();
 
     if (error) {
       setNotice("Could not start the conversation: " + error.message);
       return null;
     }
-
     setConversations([data]);
     setSelectedConversation(data);
     return data;
@@ -8361,10 +8313,7 @@ function TenantPortal({
     if (!conversation) return;
 
     const s = supabase();
-    const {
-      data: { user },
-    } = await s.auth.getUser();
-
+    const { data: { user } } = await s.auth.getUser();
     const { error } = await s.from("messages").insert({
       conversation_id: conversation.id,
       landlord_id: property.landlord_id,
@@ -8378,281 +8327,309 @@ function TenantPortal({
       return;
     }
 
-    await s
-      .from("conversations")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversation.id);
-
+    await s.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversation.id);
     form.reset();
     await loadTenant();
     setView("messages");
   }
 
-  const unreadMessages = messages.filter(
-    (message) => message.sender_type === "landlord" && !message.read_at,
-  ).length;
+  const unreadMessages = messages.filter((m) => m.sender_type === "landlord" && !m.read_at).length;
+  const money = (value) => privacyMode ? "••••" : `$${Number(value || 0).toLocaleString()}`;
+  const formatDate = (value) => value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString(language === "es" ? "es-US" : "en-US", {
+        month: "short", day: "numeric", year: "numeric"
+      })
+    : "—";
 
-  const money = (value) =>
-    privacyMode ? "••••" : `$${Number(value || 0).toLocaleString()}`;
+  const firstName = (profile?.full_name || tenancy?.tenant_name || "Tenant").split(" ")[0];
+  const propertyLine = property
+    ? [property.address, property.city, property.state, property.zip_code].filter(Boolean).join(", ")
+    : "Your rental property";
 
-  const formatDate = (value) =>
-    value
-      ? new Date(`${value}T00:00:00`).toLocaleDateString(
-          language === "es" ? "es-US" : "en-US",
-          { month: "short", day: "numeric", year: "numeric" },
-        )
-      : "—";
+  const nav = [
+    ["home", "⌂", t("home")],
+    ["payments", "$", t("payments")],
+    ["lease", "▤", t("lease")],
+    ["messages", "✉", t("messages")],
+    ["maintenance", "◇", t("maintenance")],
+    ["documents", "▧", t("documents")],
+    ["settings", "⚙", t("settings")],
+  ];
 
   if (loading) {
     return (
-      <div className="tenantLoading">
-        <div className="tenantBrand">unit<span>vero</span></div>
-        <p>Loading your rental…</p>
+      <div className="utLoading">
+        <div className="utLogo">unit<span>vero</span></div>
+        <p>Loading your account…</p>
         <TenantStyles />
       </div>
     );
   }
 
   return (
-    <div className="tenantApp">
+    <div className="utShell">
       <TenantStyles />
 
-      <aside className="tenantSidebar">
-        <div>
-          <div className="tenantBrand">unit<span>vero</span></div>
-          <small className="tenantBrandSub">TENANT PORTAL</small>
-        </div>
+      <aside className="utSidebar">
+        <div className="utLogo">unit<span>vero</span></div>
+        <div className="utPortalLabel">TENANT PORTAL</div>
 
-        <nav>
-          {[
-            ["home", "⌂", tx("home")],
-            ["payments", "$", tx("payments")],
-            ["lease", "▤", tx("lease")],
-            ["messages", "✉", tx("messages")],
-            ["maintenance", "◇", tx("maintenance")],
-            ["documents", "▧", tx("documents")],
-            ["settings", "⚙", tx("settings")],
-          ].map(([key, icon, label]) => (
-            <button
-              type="button"
-              key={key}
-              className={view === key ? "active" : ""}
-              onClick={() => setView(key)}
-            >
-              <span>{icon}</span>
-              <b>{label}</b>
-              {key === "messages" && unreadMessages > 0 && (
-                <i>{unreadMessages}</i>
-              )}
+        <nav className="utNav">
+          {nav.map(([key, icon, label]) => (
+            <button key={key} type="button" className={view === key ? "active" : ""} onClick={() => setView(key)}>
+              <span className="utNavIcon">{icon}</span>
+              <span>{label}</span>
+              {key === "messages" && unreadMessages > 0 && <b>{unreadMessages}</b>}
             </button>
           ))}
         </nav>
 
-        <div className="tenantAccount">
-          <div className="tenantAvatar">
-            {(profile?.full_name || tenancy?.tenant_name || "T").charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <b>{profile?.full_name || tenancy?.tenant_name || "Tenant"}</b>
+        <div className="utUser">
+          <div className="utAvatar">{firstName.charAt(0).toUpperCase()}</div>
+          <div className="utUserText">
+            <strong>{profile?.full_name || tenancy?.tenant_name || "Tenant"}</strong>
             <span>Tenant</span>
           </div>
-          <button type="button" onClick={onSignOut} title={tx("signOut")}>↗</button>
+          <button type="button" onClick={onSignOut} title={t("signOut")}>↗</button>
         </div>
       </aside>
 
-      <main className="tenantMain">
-        <header className="tenantTopbar">
+      <main className="utMain">
+        <header className="utHeader">
           <div>
-            <small>TENANT DASHBOARD</small>
-            <h1>{tx("hello")}{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}.</h1>
-            <p>{tx("subtitle")}</p>
+            <div className="utEyebrow">TENANT DASHBOARD</div>
+            <h1>{t("welcome")}, {firstName}.</h1>
+            <p>{t("subtitle")}</p>
           </div>
-          <div className="tenantTools">
+          <div className="utHeaderActions">
             <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
               <option value="en">English</option>
               <option value="es">Español</option>
             </select>
-            <button type="button" onClick={togglePrivacy}>
-              {privacyMode ? "◉" : "◎"} {tx("privacy")}
-            </button>
-            <button type="button" className="tenantBell" onClick={() => setView("messages")}>
+            <button type="button" onClick={togglePrivacy}>{privacyMode ? "Show amounts" : "Hide amounts"}</button>
+            <button type="button" className="utIconButton" onClick={() => setView("messages")} aria-label="Notifications">
               ♢
-              {(unreadMessages + announcements.length) > 0 && (
-                <span>{unreadMessages + announcements.length}</span>
-              )}
+              {(unreadMessages + announcements.length) > 0 && <i>{unreadMessages + announcements.length}</i>}
             </button>
           </div>
         </header>
 
-        {notice && <div className="tenantNotice">{notice}</div>}
+        {notice && <div className="utNotice">{notice}</div>}
 
         {!tenancy ? (
-          <section className="tenantEmpty">
-            <div>⌂</div>
-            <h2>Your tenant account is ready</h2>
-            <p>No active rental is connected to this account yet. If you just accepted an invitation, refresh once or contact your landlord.</p>
-            <button type="button" onClick={loadTenant}>Refresh</button>
+          <section className="utEmptyCard">
+            <div className="utEmptyIcon">⌂</div>
+            <h2>{t("noRental")}</h2>
+            <p>If you recently accepted an invitation, refresh your account.</p>
+            <button type="button" className="utPrimary" onClick={loadTenant}>{t("refresh")}</button>
           </section>
         ) : (
           <>
             {view === "home" && (
-              <>
-                <section className="tenantHero">
-                  <div>
-                    <small>{tx("property")}</small>
-                    <h2>{property?.address || "Your rental property"}</h2>
-                    <p>
-                      {[unit?.unit_name, property?.city, property?.state, property?.zip_code]
-                        .filter(Boolean).join(" • ")}
-                    </p>
-                  </div>
-                  <div className="tenantHeroRent">
-                    <small>{tx("rent")}</small>
-                    <b>{money(tenancy.monthly_rent)}</b>
-                    <span>/ month</span>
-                  </div>
-                </section>
-
-                <div className="tenantStats">
-                  <article>
-                    <span>▤</span>
-                    <small>{tx("leaseDates")}</small>
-                    <b>{formatDate(tenancy.start_date)}</b>
-                    <p>{tenancy.end_date ? `to ${formatDate(tenancy.end_date)}` : "Open ended"}</p>
-                  </article>
-                  <article>
-                    <span>✓</span>
-                    <small>{tx("status")}</small>
-                    <b>{tx("active")}</b>
-                    <p>Your rental account is connected.</p>
-                  </article>
-                  <article className="tenantActionCard">
-                    <span>$</span>
-                    <small>{tx("payments")}</small>
-                    <b>{money(tenancy.monthly_rent)}</b>
-                    <button type="button" onClick={() => setView("payments")}>{tx("payRent")} →</button>
-                  </article>
-                  <article className="tenantActionCard">
-                    <span>✉</span>
-                    <small>{tx("messages")}</small>
-                    <b>{unreadMessages} unread</b>
-                    <button type="button" onClick={() => setView("messages")}>{tx("contact")} →</button>
-                  </article>
-                </div>
-
-                <section className="tenantPanel">
-                  <div className="tenantPanelHead">
+              <div className="utPage">
+                <section className="utPropertyCard">
+                  <div className="utPropertyTop">
                     <div>
-                      <small>PROPERTY UPDATES</small>
-                      <h2>{tx("alerts")}</h2>
+                      <div className="utEyebrow light">{t("property")}</div>
+                      <h2>{property?.address || "Your rental property"}</h2>
+                      <p>{[property?.city, property?.state, property?.zip_code].filter(Boolean).join(" • ")}</p>
                     </div>
-                    <span>{announcements.length}</span>
+                    <div className="utRentBlock">
+                      <span>{t("monthlyRent")}</span>
+                      <strong>{money(tenancy.monthly_rent)}</strong>
+                      <small>/ {t("month")}</small>
+                    </div>
                   </div>
-                  {announcements.length === 0 ? (
-                    <div className="tenantPanelEmpty">{tx("noAlerts")}</div>
-                  ) : (
-                    <div className="tenantAnnouncementList">
-                      {announcements.slice(0, 5).map((item) => (
-                        <article key={item.id}>
-                          <div className={`tenantPriority ${item.priority || "normal"}`}></div>
-                          <div>
-                            <b>{item.title}</b>
-                            <p>{item.message}</p>
-                            <small>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</small>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
+                  <div className="utPropertyActions">
+                    <button type="button" onClick={() => setView("payments")}>{t("payRent")}</button>
+                    <button type="button" onClick={() => setView("messages")}>{t("messageLandlord")}</button>
+                  </div>
                 </section>
-              </>
-            )}
 
-            {view === "messages" && (
-              <section className="tenantPanel tenantMessages">
-                <div className="tenantPanelHead">
-                  <div><small>COMMUNICATION</small><h2>{tx("inbox")}</h2></div>
-                  <span>{unreadMessages}</span>
-                </div>
-                <div className="tenantMessageHistory">
-                  {messages.length === 0 ? (
-                    <div className="tenantPanelEmpty">{tx("noMessages")}</div>
-                  ) : (
-                    messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={message.sender_type === "tenant" ? "tenantBubble mine" : "tenantBubble"}
-                      >
-                        <small>{message.sender_type === "tenant" ? "You" : "Landlord"}</small>
-                        <p>{message.message}</p>
-                        <span>{message.created_at ? new Date(message.created_at).toLocaleString() : ""}</span>
+                <section className="utMetricGrid">
+                  <article>
+                    <div className="utMetricIcon">✓</div>
+                    <span>{t("leaseStatus")}</span>
+                    <strong>{t("active")}</strong>
+                    <small>{t("connected")}</small>
+                  </article>
+                  <article>
+                    <div className="utMetricIcon">▤</div>
+                    <span>{t("leaseTerm")}</span>
+                    <strong>{formatDate(tenancy.start_date)}</strong>
+                    <small>{tenancy.end_date ? `to ${formatDate(tenancy.end_date)}` : "Open ended"}</small>
+                  </article>
+                  <article>
+                    <div className="utMetricIcon">$</div>
+                    <span>{t("monthlyRent")}</span>
+                    <strong>{money(tenancy.monthly_rent)}</strong>
+                    <small>Rent amount</small>
+                  </article>
+                  <article>
+                    <div className="utMetricIcon">✉</div>
+                    <span>{t("messages")}</span>
+                    <strong>{unreadMessages}</strong>
+                    <small>{t("unread")}</small>
+                  </article>
+                </section>
+
+                <div className="utTwoCol">
+                  <section className="utCard">
+                    <div className="utCardHead">
+                      <div>
+                        <div className="utEyebrow">{t("propertyUpdates")}</div>
+                        <h2>Announcements</h2>
                       </div>
-                    ))
-                  )}
-                </div>
-                <form className="tenantMessageForm" onSubmit={sendTenantMessage}>
-                  <input name="message" placeholder={tx("typeMessage")} autoComplete="off" />
-                  <button type="submit">{tx("send")}</button>
-                </form>
-              </section>
-            )}
+                      <span className="utCount">{announcements.length}</span>
+                    </div>
+                    {announcements.length === 0 ? (
+                      <div className="utEmptyInline">
+                        <div>✓</div>
+                        <strong>All caught up</strong>
+                        <p>{t("noUpdates")}</p>
+                      </div>
+                    ) : (
+                      <div className="utFeed">
+                        {announcements.slice(0, 5).map((item) => (
+                          <article key={item.id}>
+                            <div className="utDot"></div>
+                            <div>
+                              <strong>{item.title}</strong>
+                              <p>{item.message}</p>
+                              <small>{item.created_at ? new Date(item.created_at).toLocaleString() : ""}</small>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    )}
+                  </section>
 
-            {view === "lease" && (
-              <section className="tenantPanel">
-                <div className="tenantPanelHead"><div><small>RENTAL AGREEMENT</small><h2>{tx("lease")}</h2></div></div>
-                <div className="tenantDetailGrid">
-                  <div><small>Property</small><b>{property?.address || "—"}</b></div>
-                  <div><small>Unit</small><b>{unit?.unit_name || "—"}</b></div>
-                  <div><small>Start date</small><b>{formatDate(tenancy.start_date)}</b></div>
-                  <div><small>End date</small><b>{tenancy.end_date ? formatDate(tenancy.end_date) : "Open ended"}</b></div>
-                  <div><small>Monthly rent</small><b>{money(tenancy.monthly_rent)}</b></div>
-                  <div><small>Status</small><b>{tenancy.status || "active"}</b></div>
+                  <section className="utCard">
+                    <div className="utCardHead">
+                      <div>
+                        <div className="utEyebrow">{t("recentActivity")}</div>
+                        <h2>Quick access</h2>
+                      </div>
+                    </div>
+                    <div className="utQuickList">
+                      <button type="button" onClick={() => setView("lease")}><span>▤</span><div><b>{t("lease")}</b><small>View rental details</small></div><i>›</i></button>
+                      <button type="button" onClick={() => setView("maintenance")}><span>◇</span><div><b>{t("maintenance")}</b><small>Repairs and requests</small></div><i>›</i></button>
+                      <button type="button" onClick={() => setView("documents")}><span>▧</span><div><b>{t("documents")}</b><small>Lease and shared files</small></div><i>›</i></button>
+                    </div>
+                  </section>
                 </div>
-              </section>
+              </div>
             )}
 
             {view === "payments" && (
-              <section className="tenantPanel">
-                <div className="tenantPanelHead"><div><small>RENT CENTER</small><h2>{tx("payments")}</h2></div></div>
-                <div className="tenantFeaturePlaceholder">
-                  <span>$</span><h3>{money(tenancy.monthly_rent)} / month</h3><p>{tx("paymentCopy")}</p>
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">RENT</div><h2>{t("paymentCenter")}</h2><p>View your rent amount and payment activity.</p></div>
+                <div className="utPaymentGrid">
+                  <section className="utCard utPaymentHero">
+                    <span>{t("monthlyRent")}</span>
+                    <strong>{money(tenancy.monthly_rent)}</strong>
+                    <small>/ {t("month")}</small>
+                    <button type="button" className="utPrimary" disabled>Pay rent</button>
+                    <p>{t("paymentSoon")}</p>
+                  </section>
+                  <section className="utCard">
+                    <div className="utCardHead"><div><div className="utEyebrow">ACTIVITY</div><h2>{t("paymentHistory")}</h2></div></div>
+                    <div className="utEmptyInline"><div>$</div><strong>No online payments yet</strong><p>Your completed online payments will be listed here.</p></div>
+                  </section>
                 </div>
-              </section>
+              </div>
+            )}
+
+            {view === "lease" && (
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">RENTAL AGREEMENT</div><h2>{t("leaseDetails")}</h2><p>Key information for your current rental.</p></div>
+                <section className="utCard">
+                  <div className="utLeaseHeader">
+                    <div><span>{t("property")}</span><h3>{propertyLine}</h3></div>
+                    <span className="utStatus">● {t("active")}</span>
+                  </div>
+                  <div className="utDetails">
+                    <div><span>{t("startDate")}</span><strong>{formatDate(tenancy.start_date)}</strong></div>
+                    <div><span>{t("endDate")}</span><strong>{tenancy.end_date ? formatDate(tenancy.end_date) : "Open ended"}</strong></div>
+                    <div><span>{t("monthlyRent")}</span><strong>{money(tenancy.monthly_rent)}</strong></div>
+                    <div><span>{t("unit")}</span><strong>{unit?.unit_name || unit?.name || "—"}</strong></div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {view === "messages" && (
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">COMMUNICATION</div><h2>{t("inbox")}</h2><p>Keep rental conversations organized in one place.</p></div>
+                <section className="utCard utChat">
+                  <div className="utChatHead">
+                    <div className="utAvatar landlord">L</div>
+                    <div><strong>Property management</strong><span>{property?.address || "Your rental"}</span></div>
+                    <span className="utStatus">● Active</span>
+                  </div>
+                  <div className="utMessageHistory">
+                    {messages.length === 0 ? (
+                      <div className="utEmptyInline chatEmpty"><div>✉</div><strong>No messages yet</strong><p>{t("noMessages")}</p></div>
+                    ) : messages.map((message) => (
+                      <div key={message.id} className={`utBubble ${message.sender_type === "tenant" ? "mine" : ""}`}>
+                        <span>{message.sender_type === "tenant" ? "You" : "Landlord"}</span>
+                        <p>{message.message}</p>
+                        <small>{message.created_at ? new Date(message.created_at).toLocaleString() : ""}</small>
+                      </div>
+                    ))}
+                  </div>
+                  <form className="utComposer" onSubmit={sendTenantMessage}>
+                    <input name="message" placeholder={t("typeMessage")} autoComplete="off" />
+                    <button type="submit">{t("send")}</button>
+                  </form>
+                </section>
+              </div>
             )}
 
             {view === "maintenance" && (
-              <section className="tenantPanel">
-                <div className="tenantPanelHead"><div><small>PROPERTY CARE</small><h2>{tx("maintenance")}</h2></div></div>
-                <div className="tenantFeaturePlaceholder"><span>◇</span><h3>Maintenance center</h3><p>{tx("maintenanceCopy")}</p></div>
-              </section>
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">PROPERTY CARE</div><h2>{t("maintenanceTitle")}</h2><p>Keep repair requests and updates organized.</p></div>
+                <section className="utCard">
+                  <div className="utEmptyInline large"><div>◇</div><strong>No open maintenance requests</strong><p>{t("maintenanceText")}</p><button type="button" className="utPrimary" disabled>+ New request</button></div>
+                </section>
+              </div>
             )}
 
             {view === "documents" && (
-              <section className="tenantPanel">
-                <div className="tenantPanelHead"><div><small>SECURE FILES</small><h2>{tx("documents")}</h2></div></div>
-                <div className="tenantFeaturePlaceholder"><span>▧</span><h3>Documents</h3><p>{tx("docsCopy")}</p></div>
-              </section>
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">FILES</div><h2>{t("documentsTitle")}</h2><p>Rental documents shared with your account.</p></div>
+                <section className="utCard">
+                  <div className="utEmptyInline large"><div>▧</div><strong>No documents shared yet</strong><p>{t("documentsText")}</p></div>
+                </section>
+              </div>
             )}
 
             {view === "settings" && (
-              <section className="tenantPanel">
-                <div className="tenantPanelHead"><div><small>ACCOUNT</small><h2>{tx("settings")}</h2></div></div>
-                <div className="tenantSettingsGrid">
-                  <article>
-                    <span>◉</span><div><b>{tx("notifications")}</b><p>{tx("notifyCopy")}</p></div>
-                  </article>
-                  <article>
-                    <span>◎</span><div><b>{tx("privacy")}</b><p>Hide rent and other financial amounts while using Unitvero in public.</p></div>
-                    <button type="button" onClick={togglePrivacy}>{privacyMode ? "On" : "Off"}</button>
-                  </article>
-                  <article>
-                    <span>文</span><div><b>{tx("language")}</b><p>Choose the language used in your tenant portal.</p></div>
-                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
-                      <option value="en">English</option><option value="es">Español</option>
-                    </select>
-                  </article>
-                </div>
-              </section>
+              <div className="utPage">
+                <div className="utPageTitle"><div className="utEyebrow">ACCOUNT</div><h2>{t("account")}</h2><p>Control your Unitvero tenant experience.</p></div>
+                <section className="utCard utSettings">
+                  <div className="utSettingRow">
+                    <div className="utSettingIcon">◎</div>
+                    <div><strong>{t("privacy")}</strong><p>{t("privacyText")}</p></div>
+                    <button type="button" className="utSecondary" onClick={togglePrivacy}>{privacyMode ? "On" : "Off"}</button>
+                  </div>
+                  <div className="utSettingRow">
+                    <div className="utSettingIcon">文</div>
+                    <div><strong>{t("language")}</strong><p>Choose the language used throughout your tenant portal.</p></div>
+                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}><option value="en">English</option><option value="es">Español</option></select>
+                  </div>
+                  <div className="utSettingRow">
+                    <div className="utSettingIcon">♢</div>
+                    <div><strong>{t("notifications")}</strong><p>{t("notificationText")}</p></div>
+                    <span className="utStatus">In-app on</span>
+                  </div>
+                  <div className="utSettingRow">
+                    <div className="utSettingIcon">↗</div>
+                    <div><strong>{t("signOut")}</strong><p>Sign out of this device.</p></div>
+                    <button type="button" className="utSecondary" onClick={onSignOut}>{t("signOut")}</button>
+                  </div>
+                </section>
+              </div>
             )}
           </>
         )}
@@ -8664,21 +8641,23 @@ function TenantPortal({
 function TenantStyles() {
   return (
     <style jsx global>{`
-      .tenantApp{min-height:100vh;background:#f5f7f6;color:#183c34;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-columns:250px 1fr}
-      .tenantSidebar{background:#113c32;color:#fff;padding:28px 18px;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh}
-      .tenantBrand{font-size:27px;font-weight:900;letter-spacing:-1.3px}.tenantBrand span{color:#57d4ad}.tenantBrandSub{display:block;margin-top:4px;color:#9ec8ba;font-size:9px;letter-spacing:2px;font-weight:800}
-      .tenantSidebar nav{display:flex;flex-direction:column;gap:5px;margin-top:38px;flex:1}.tenantSidebar nav button{border:0;background:transparent;color:#b9d0c8;border-radius:12px;padding:12px 13px;display:grid;grid-template-columns:25px 1fr auto;align-items:center;text-align:left;cursor:pointer}.tenantSidebar nav button:hover,.tenantSidebar nav button.active{background:#1d5548;color:#fff}.tenantSidebar nav button b{font-size:13px}.tenantSidebar nav button i{font-style:normal;background:#ff665e;color:#fff;border-radius:999px;min-width:20px;height:20px;display:grid;place-items:center;font-size:10px}
-      .tenantAccount{border-top:1px solid rgba(255,255,255,.12);padding-top:18px;display:grid;grid-template-columns:38px 1fr 30px;gap:10px;align-items:center}.tenantAvatar{width:38px;height:38px;border-radius:12px;background:#57d4ad;color:#113c32;display:grid;place-items:center;font-weight:900}.tenantAccount b,.tenantAccount span{display:block}.tenantAccount b{font-size:12px}.tenantAccount span{font-size:10px;color:#9ec8ba;text-transform:capitalize}.tenantAccount button{border:0;background:transparent;color:#c7ddd6;font-size:18px;cursor:pointer}
-      .tenantMain{padding:42px;max-width:1450px;width:100%;box-sizing:border-box}.tenantTopbar{display:flex;justify-content:space-between;gap:25px;align-items:flex-start;margin-bottom:28px}.tenantTopbar small,.tenantPanelHead small,.tenantHero small,.tenantStats small{font-size:9px;letter-spacing:1.6px;font-weight:850;color:#71827d}.tenantTopbar h1{font-size:34px;letter-spacing:-1.3px;margin:5px 0 4px}.tenantTopbar p{margin:0;color:#71827d}.tenantTools{display:flex;gap:8px;align-items:center}.tenantTools select,.tenantTools button{height:40px;border:1px solid #dce5e1;background:#fff;border-radius:10px;padding:0 12px;color:#31564d;font-weight:700}.tenantBell{position:relative;font-size:18px}.tenantBell span{position:absolute;right:-5px;top:-7px;background:#e85c54;color:#fff;border-radius:99px;font-size:9px;min-width:18px;height:18px;display:grid;place-items:center}
-      .tenantNotice{padding:12px 15px;border:1px solid #f1d4a5;background:#fff8e9;border-radius:12px;margin-bottom:18px;color:#7b5a22}.tenantHero{background:linear-gradient(135deg,#164b3f,#246b59);color:#fff;border-radius:22px;padding:30px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 18px 40px rgba(19,61,52,.12)}.tenantHero small{color:#a9d1c4}.tenantHero h2{font-size:28px;margin:8px 0 5px}.tenantHero p{margin:0;color:#c4ded6}.tenantHeroRent{text-align:right}.tenantHeroRent b{display:block;font-size:34px;margin-top:5px}.tenantHeroRent span{color:#b7d7cd;font-size:12px}
-      .tenantStats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.tenantStats article,.tenantPanel{background:#fff;border:1px solid #e3e9e6;border-radius:17px;box-shadow:0 5px 20px rgba(28,63,54,.035)}.tenantStats article{padding:20px}.tenantStats article>span{display:grid;width:34px;height:34px;border-radius:10px;background:#edf7f3;place-items:center;margin-bottom:15px;color:#27856c}.tenantStats b{display:block;font-size:17px;margin:5px 0}.tenantStats p{font-size:11px;color:#7b8985;margin:0}.tenantActionCard button{border:0;background:transparent;padding:9px 0 0;color:#24836a;font-weight:800;cursor:pointer}
-      .tenantPanel{padding:24px;margin-top:16px}.tenantPanelHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.tenantPanelHead h2{margin:4px 0 0;font-size:21px}.tenantPanelHead>span{background:#edf7f3;color:#267c67;border-radius:999px;min-width:30px;height:30px;display:grid;place-items:center;font-size:11px;font-weight:850}.tenantPanelEmpty{text-align:center;padding:35px;color:#80908b}.tenantAnnouncementList article{display:grid;grid-template-columns:4px 1fr;gap:14px;padding:15px 0;border-top:1px solid #edf0ef}.tenantPriority{border-radius:99px;background:#56ad91}.tenantPriority.high,.tenantPriority.urgent{background:#df6c61}.tenantAnnouncementList b{font-size:13px}.tenantAnnouncementList p{margin:4px 0;color:#5e716b;font-size:13px}.tenantAnnouncementList small{color:#95a19d}
-      .tenantMessageHistory{min-height:320px;max-height:520px;overflow:auto;padding:10px;background:#f7f9f8;border-radius:14px}.tenantBubble{max-width:70%;background:#fff;border:1px solid #e3e9e6;padding:11px 13px;border-radius:14px 14px 14px 4px;margin:8px 0}.tenantBubble.mine{margin-left:auto;background:#1d6856;color:#fff;border-color:#1d6856;border-radius:14px 14px 4px 14px}.tenantBubble small,.tenantBubble span{font-size:9px;opacity:.7}.tenantBubble p{margin:4px 0;font-size:13px}.tenantMessageForm{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}.tenantMessageForm input{height:45px;border:1px solid #dfe7e3;border-radius:11px;padding:0 14px;font-size:13px}.tenantMessageForm button,.tenantEmpty button{border:0;background:#21836a;color:#fff;border-radius:11px;padding:0 20px;font-weight:800}
-      .tenantDetailGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.tenantDetailGrid div{padding:17px;background:#f7f9f8;border-radius:12px}.tenantDetailGrid small,.tenantDetailGrid b{display:block}.tenantDetailGrid small{color:#7e8d88;font-size:10px;margin-bottom:6px}.tenantFeaturePlaceholder,.tenantEmpty{text-align:center;padding:65px 20px}.tenantFeaturePlaceholder>span,.tenantEmpty>div{font-size:34px;color:#2b8a71}.tenantFeaturePlaceholder p,.tenantEmpty p{color:#778681;max-width:520px;margin:10px auto 18px;line-height:1.6}.tenantEmpty button{height:42px}.tenantSettingsGrid{display:grid;gap:10px}.tenantSettingsGrid article{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:15px;border:1px solid #e8edeb;border-radius:13px}.tenantSettingsGrid article>span{width:36px;height:36px;background:#edf7f3;border-radius:10px;display:grid;place-items:center}.tenantSettingsGrid b{font-size:13px}.tenantSettingsGrid p{margin:3px 0;color:#7c8b86;font-size:11px}.tenantSettingsGrid button,.tenantSettingsGrid select{border:1px solid #dfe7e3;background:#fff;border-radius:9px;padding:8px 10px}
-      .tenantLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#f5f7f6;color:#173e34;font-family:Inter,ui-sans-serif,system-ui}.tenantLoading .tenantBrand{font-size:30px}.tenantLoading p{color:#7a8b85}
-      @media(max-width:1000px){.tenantApp{grid-template-columns:1fr}.tenantSidebar{position:static;height:auto;min-height:auto;padding:18px}.tenantSidebar nav{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr)}.tenantSidebar nav button{grid-template-columns:1fr;text-align:center;justify-items:center;gap:4px}.tenantAccount{margin-top:15px}.tenantMain{padding:24px}.tenantStats{grid-template-columns:repeat(2,1fr)}}
-      @media(max-width:650px){.tenantSidebar nav{grid-template-columns:repeat(3,1fr)}.tenantMain{padding:17px}.tenantTopbar{display:block}.tenantTools{margin-top:15px;flex-wrap:wrap}.tenantTopbar h1{font-size:27px}.tenantHero{display:block;padding:23px}.tenantHeroRent{text-align:left;margin-top:24px}.tenantStats{grid-template-columns:1fr}.tenantDetailGrid{grid-template-columns:1fr}.tenantBubble{max-width:86%}}
+      .utShell{min-height:100vh;background:#f4f7f6;color:#163b32;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;grid-template-columns:238px minmax(0,1fr)}
+      .utSidebar{background:#103f34;color:#fff;padding:27px 16px 18px;min-height:100vh;position:sticky;top:0;height:100vh;box-sizing:border-box;display:flex;flex-direction:column}
+      .utLogo{font-size:27px;font-weight:900;letter-spacing:-1.4px;line-height:1}.utLogo span{color:#61d8b4}.utPortalLabel{font-size:9px;letter-spacing:2px;color:#91bcb0;font-weight:800;margin-top:7px}
+      .utNav{display:flex;flex-direction:column;gap:4px;margin-top:34px;flex:1}.utNav button{height:43px;border:0;border-radius:10px;background:transparent;color:#bcd3cc;padding:0 12px;display:grid;grid-template-columns:25px 1fr auto;align-items:center;text-align:left;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}.utNav button:hover{background:rgba(255,255,255,.06);color:#fff}.utNav button.active{background:#205d4e;color:#fff;box-shadow:inset 3px 0 #63d6b4}.utNavIcon{font-size:13px}.utNav button b{font-size:9px;background:#ef6b63;color:#fff;border-radius:99px;min-width:19px;height:19px;display:grid;place-items:center}
+      .utUser{border-top:1px solid rgba(255,255,255,.12);padding-top:16px;display:grid;grid-template-columns:36px 1fr 28px;gap:9px;align-items:center}.utAvatar{width:36px;height:36px;border-radius:10px;background:#63d6b4;color:#103f34;display:grid;place-items:center;font-weight:900;font-size:13px}.utUserText strong,.utUserText span{display:block}.utUserText strong{font-size:11px;color:#fff}.utUserText span{font-size:9px;color:#92b8ae;margin-top:2px}.utUser>button{border:0;background:transparent;color:#9fc2b8;font-size:16px;cursor:pointer}
+      .utMain{padding:34px 40px 60px;box-sizing:border-box;min-width:0}.utHeader{max-width:1240px;margin:0 auto 25px;display:flex;justify-content:space-between;gap:25px;align-items:flex-start}.utEyebrow{font-size:9px;letter-spacing:1.7px;color:#7c8d88;font-weight:850;text-transform:uppercase}.utEyebrow.light{color:#a8d4c8}.utHeader h1{font-size:30px;letter-spacing:-1px;margin:5px 0 4px;color:#173d34}.utHeader p,.utPageTitle p{margin:0;color:#7a8b86;font-size:13px}.utHeaderActions{display:flex;gap:7px;align-items:center}.utHeaderActions select,.utHeaderActions button,.utSecondary,.utSettings select{height:38px;border:1px solid #dce5e1;background:#fff;border-radius:9px;padding:0 11px;color:#31564d;font-size:11px;font-weight:700}.utIconButton{width:40px;padding:0!important;position:relative;font-size:17px!important}.utIconButton i{position:absolute;right:-5px;top:-6px;background:#e85f58;color:#fff;font-style:normal;font-size:8px;min-width:17px;height:17px;border-radius:99px;display:grid;place-items:center}
+      .utNotice{max-width:1240px;margin:0 auto 16px;background:#fff8e8;border:1px solid #f0dfb8;color:#765c28;padding:11px 13px;border-radius:10px;font-size:12px}.utPage{max-width:1240px;margin:0 auto}.utPageTitle{margin:4px 0 20px}.utPageTitle h2{font-size:24px;letter-spacing:-.5px;margin:5px 0 4px}
+      .utPropertyCard{background:linear-gradient(120deg,#164d40,#246a58);border-radius:18px;color:#fff;padding:25px 27px;box-shadow:0 13px 35px rgba(19,62,52,.13)}.utPropertyTop{display:flex;justify-content:space-between;gap:30px;align-items:center}.utPropertyCard h2{font-size:25px;margin:7px 0 4px;letter-spacing:-.5px}.utPropertyCard p{margin:0;color:#b9d9d0;font-size:12px}.utRentBlock{text-align:right}.utRentBlock span,.utRentBlock small{display:block;color:#b9d9d0;font-size:10px}.utRentBlock strong{display:block;font-size:31px;margin:3px 0}.utPropertyActions{display:flex;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}.utPropertyActions button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.09);color:#fff;border-radius:9px;padding:9px 13px;font-size:11px;font-weight:800;cursor:pointer}
+      .utMetricGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}.utMetricGrid article,.utCard{background:#fff;border:1px solid #e1e8e5;border-radius:14px;box-shadow:0 4px 18px rgba(25,61,52,.035)}.utMetricGrid article{padding:17px}.utMetricIcon{width:31px;height:31px;border-radius:9px;background:#edf6f3;color:#287d68;display:grid;place-items:center;margin-bottom:13px;font-size:12px}.utMetricGrid span,.utPaymentHero>span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#879590;font-weight:800}.utMetricGrid strong{display:block;font-size:16px;margin:5px 0;color:#23473e}.utMetricGrid small{font-size:10px;color:#94a09c}
+      .utTwoCol,.utPaymentGrid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px}.utCard{padding:21px}.utCardHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.utCardHead h2{font-size:18px;margin:4px 0 0}.utCount{background:#edf6f3;color:#287d68;min-width:28px;height:28px;border-radius:99px;display:grid;place-items:center;font-size:10px;font-weight:850}.utEmptyInline{text-align:center;padding:30px 18px;color:#82918c}.utEmptyInline>div{width:38px;height:38px;margin:0 auto 10px;border-radius:11px;background:#edf6f3;color:#2b826d;display:grid;place-items:center}.utEmptyInline strong{display:block;color:#34564d;font-size:13px}.utEmptyInline p{font-size:11px;line-height:1.55;max-width:410px;margin:5px auto 0}.utEmptyInline.large{padding:65px 20px}.utEmptyInline.large>div{width:46px;height:46px}.utFeed article{display:grid;grid-template-columns:8px 1fr;gap:10px;padding:13px 0;border-top:1px solid #edf1ef}.utDot{width:7px;height:7px;background:#4da98d;border-radius:99px;margin-top:5px}.utFeed strong{font-size:12px}.utFeed p{font-size:11px;color:#697b75;margin:3px 0}.utFeed small{font-size:9px;color:#98a39f}
+      .utQuickList{display:grid;gap:6px}.utQuickList button{display:grid;grid-template-columns:34px 1fr 16px;gap:10px;align-items:center;border:0;background:#f7f9f8;border-radius:10px;padding:10px;text-align:left;color:#31554c;cursor:pointer}.utQuickList button>span{width:32px;height:32px;background:#fff;border:1px solid #e4eae7;border-radius:9px;display:grid;place-items:center}.utQuickList b,.utQuickList small{display:block}.utQuickList b{font-size:11px}.utQuickList small{font-size:9px;color:#8b9894;margin-top:2px}.utQuickList i{font-style:normal;font-size:18px;color:#91a09b}
+      .utPaymentHero strong{display:block;font-size:35px;margin:7px 0 0}.utPaymentHero small{color:#83918d}.utPaymentHero .utPrimary{margin-top:25px;width:100%}.utPaymentHero p{font-size:10px;color:#8a9893;line-height:1.5}.utPrimary{border:0;background:#21836a;color:#fff;border-radius:9px;min-height:39px;padding:0 16px;font-weight:800;font-size:11px}.utPrimary:disabled{opacity:.55;cursor:not-allowed}
+      .utLeaseHeader{display:flex;justify-content:space-between;gap:20px;align-items:center;padding-bottom:18px;border-bottom:1px solid #e9eeec}.utLeaseHeader span{font-size:9px;text-transform:uppercase;color:#86958f;font-weight:800}.utLeaseHeader h3{font-size:17px;margin:4px 0 0}.utStatus{display:inline-flex!important;align-items:center;color:#277d68!important;background:#edf7f3;border-radius:99px;padding:6px 9px;font-size:9px!important;font-weight:850!important;white-space:nowrap}.utDetails{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.utDetails div{background:#f7f9f8;border-radius:10px;padding:14px}.utDetails span,.utDetails strong{display:block}.utDetails span{font-size:9px;color:#86958f;text-transform:uppercase;font-weight:800}.utDetails strong{font-size:12px;margin-top:5px}
+      .utChat{padding:0;overflow:hidden}.utChatHead{height:64px;padding:0 18px;border-bottom:1px solid #e5ebe8;display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center}.utAvatar.landlord{background:#eaf5f1;color:#267a66}.utChatHead strong,.utChatHead span{display:block}.utChatHead strong{font-size:12px}.utChatHead span:not(.utStatus){font-size:9px;color:#879590;margin-top:2px}.utMessageHistory{min-height:390px;max-height:540px;overflow:auto;background:#f7f9f8;padding:20px}.chatEmpty{padding-top:100px}.utBubble{max-width:68%;width:max-content;background:#fff;border:1px solid #dfe7e3;border-radius:13px 13px 13px 4px;padding:10px 12px;margin:8px 0;box-shadow:0 2px 7px rgba(20,55,47,.03)}.utBubble.mine{margin-left:auto;background:#1e6655;border-color:#1e6655;color:#fff;border-radius:13px 13px 4px 13px}.utBubble>span,.utBubble small{font-size:8px;opacity:.65}.utBubble p{font-size:12px;margin:4px 0}.utComposer{display:grid;grid-template-columns:1fr auto;gap:8px;padding:13px;border-top:1px solid #e5ebe8;background:#fff}.utComposer input{height:41px;border:1px solid #dce5e1;border-radius:9px;padding:0 12px;font-size:12px;outline:none}.utComposer input:focus{border-color:#6fae9d}.utComposer button{border:0;background:#21836a;color:#fff;border-radius:9px;padding:0 18px;font-size:11px;font-weight:800}
+      .utSettings{padding:0 20px}.utSettingRow{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;padding:17px 0;border-bottom:1px solid #e9eeec}.utSettingRow:last-child{border-bottom:0}.utSettingIcon{width:36px;height:36px;border-radius:9px;background:#edf6f3;color:#267b67;display:grid;place-items:center}.utSettingRow strong{font-size:12px}.utSettingRow p{font-size:10px;color:#82908c;margin:3px 0 0}.utEmptyCard{max-width:800px;margin:80px auto;background:#fff;border:1px solid #e1e8e5;border-radius:16px;text-align:center;padding:60px 25px}.utEmptyIcon{width:48px;height:48px;margin:auto;background:#edf6f3;border-radius:13px;display:grid;place-items:center;color:#267b67}.utEmptyCard h2{font-size:18px}.utEmptyCard p{font-size:12px;color:#80908b}.utLoading{min-height:100vh;display:grid;place-content:center;text-align:center;background:#f4f7f6;color:#163b32;font-family:Inter,ui-sans-serif,system-ui}.utLoading .utLogo{font-size:30px}.utLoading p{font-size:12px;color:#80908b}
+      @media(max-width:1000px){.utShell{grid-template-columns:1fr}.utSidebar{position:static;height:auto;min-height:auto;padding:18px}.utPortalLabel{margin-bottom:12px}.utNav{margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr)}.utNav button{grid-template-columns:1fr;text-align:center;justify-items:center;height:52px;gap:3px}.utNav button b{position:absolute}.utUser{margin-top:14px}.utMain{padding:24px}.utMetricGrid{grid-template-columns:repeat(2,1fr)}}
+      @media(max-width:700px){.utMain{padding:18px 14px 40px}.utHeader{display:block}.utHeaderActions{margin-top:14px;flex-wrap:wrap}.utHeader h1{font-size:25px}.utNav{grid-template-columns:repeat(3,1fr)}.utPropertyTop{display:block}.utRentBlock{text-align:left;margin-top:20px}.utPropertyActions{flex-wrap:wrap}.utMetricGrid,.utTwoCol,.utPaymentGrid,.utDetails{grid-template-columns:1fr}.utBubble{max-width:85%}.utSettingRow{grid-template-columns:36px 1fr}.utSettingRow>:last-child{grid-column:2}.utLeaseHeader{align-items:flex-start}.utHeaderActions select,.utHeaderActions button{flex:1}.utPropertyCard{padding:21px}}
     `}</style>
   );
 }
-
