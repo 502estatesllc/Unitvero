@@ -76,6 +76,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState([]);
+  const [maintenanceAttachments, setMaintenanceAttachments] = useState([]);
   const [maintenanceExpenses, setMaintenanceExpenses] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [documentTemplates, setDocumentTemplates] = useState([]);
@@ -371,6 +372,27 @@ export default function Dashboard() {
 
     if (maintenanceResult.error) console.error("Could not load maintenance:", maintenanceResult.error);
     else setMaintenanceRequests(maintenanceResult.data || []);
+
+    const { data: attachmentData, error: attachmentError } = await s
+      .from("maintenance_request_attachments")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (attachmentError) {
+      console.error("Could not load maintenance photos:", attachmentError);
+      setMaintenanceAttachments([]);
+    } else {
+      const signedAttachments = await Promise.all(
+        (attachmentData || []).map(async (attachment) => {
+          const { data: signedData } = await s.storage
+            .from("unitvero-media")
+            .createSignedUrl(attachment.file_path, 60 * 60);
+          return { ...attachment, signed_url: signedData?.signedUrl || null };
+        })
+      );
+      setMaintenanceAttachments(signedAttachments);
+    }
+
     if (expenseResult.error) console.error("Could not load maintenance expenses:", expenseResult.error);
     else setMaintenanceExpenses(expenseResult.data || []);
     if (documentResult.error) console.error("Could not load documents:", documentResult.error);
@@ -7889,7 +7911,7 @@ export default function Dashboard() {
           <section className="panel">
             <small>PROPERTY OPERATIONS</small>
             <h1>Maintenance</h1>
-            <p>Track repairs, completion dates, vendors, and landlord-only expenses for tax records.</p>
+            <p>Track repairs, completion dates, vendors, landlord-only expenses, and tenant photos.</p>
 
             {maintenanceRequests.length === 0 ? (
               <div className="featureEmpty">
@@ -7903,25 +7925,48 @@ export default function Dashboard() {
                   const prop = props.find(x => x.id === request.property_id);
                   const tenant = tenancies.find(x => x.id === request.tenancy_id) || tenancies.find(x => x.tenant_id === request.tenant_id && x.property_id === request.property_id);
                   const expense = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+                  const photos = maintenanceAttachments.filter(x => x.maintenance_request_id === request.id && x.signed_url);
+
                   return (
                     <article key={request.id} className="commandCard">
                       <div className="commandCardHeader">
-                        <div><span className="commandSectionIcon">◇</span><div>
-                          <h2>{request.issue || request.category || "Maintenance request"}</h2>
-                          <p>{prop?.address || "Property"} · {tenant?.tenant_name || tenant?.tenant_email || "Tenant"}</p>
-                        </div></div>
+                        <div>
+                          <span className="commandSectionIcon">◇</span>
+                          <div>
+                            <h2>{request.issue || request.category || "Maintenance request"}</h2>
+                            <p>{prop?.address || "Property"} · {tenant?.tenant_name || tenant?.tenant_email || "Tenant"}</p>
+                          </div>
+                        </div>
                         <select value={request.status || "open"} onChange={(e)=>updateMaintenanceStatus(request.id,e.target.value)}>
-                          <option value="open">Submitted</option><option value="in_progress">In Progress</option>
-                          <option value="scheduled">Scheduled</option><option value="completed">Completed</option>
+                          <option value="open">Submitted</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="scheduled">Scheduled</option>
+                          <option value="completed">Completed</option>
                         </select>
                       </div>
+
                       <p>{request.description || "No description provided."}</p>
+
+                      {photos.length > 0 && (
+                        <div style={{marginTop:16}}>
+                          <b>Tenant Photos</b>
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:12,marginTop:10}}>
+                            {photos.map((photo) => (
+                              <a key={photo.id} href={photo.signed_url} target="_blank" rel="noreferrer" style={{display:"block",borderRadius:12,overflow:"hidden",border:"1px solid #dbe3ef",background:"#f7f9fc"}}>
+                                <img src={photo.signed_url} alt={photo.file_name || "Maintenance photo"} style={{width:"100%",height:150,objectFit:"cover",display:"block"}} />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="documentStats" style={{marginTop:14}}>
                         <article><span>Priority</span><b style={{fontSize:18}}>{request.priority || "normal"}</b><small>REQUEST</small></article>
                         <article><span>Submitted</span><b style={{fontSize:15}}>{request.created_at ? new Date(request.created_at).toLocaleDateString() : "—"}</b><small>DATE</small></article>
                         <article><span>Completed</span><b style={{fontSize:15}}>{request.completed_at ? new Date(request.completed_at).toLocaleDateString() : "—"}</b><small>DATE</small></article>
                         <article><span>Repair Cost</span><b style={{fontSize:18}}>${Number(expense?.total_cost || 0).toFixed(2)}</b><small>LANDLORD ONLY</small></article>
                       </div>
+
                       {hasFeature("maintenance_accounting") ? (
                         <form onSubmit={(e)=>saveMaintenanceExpense(e,request)} style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:12,marginTop:16}}>
                           <label style={{display:"grid",gap:6}}><b>Vendor / Contractor</b><input name="vendorName" defaultValue={expense?.vendor_name || ""} placeholder="Company or contractor" /></label>
@@ -8329,56 +8374,6 @@ function TenantPortal({
   const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
-    async function uploadUnitveroFile(file, folder) {
-    if (!file) return null;
-
-    const s = supabase();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await s.auth.getUser();
-
-    if (userError || !user) {
-      setNotice("Please sign in again.");
-      return null;
-    }
-
-    const extension = file.name.includes(".")
-      ? file.name.split(".").pop().toLowerCase()
-      : "jpg";
-
-    const safeName = file.name
-      .replace(/[^a-zA-Z0-9._-]/g, "_")
-      .slice(0, 120);
-
-    const path =
-      `${folder}/${user.id}/` +
-      `${Date.now()}-${crypto.randomUUID()}.${extension}`;
-
-    const { error } = await s.storage
-      .from("unitvero-media")
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type || "application/octet-stream",
-      });
-
-    if (error) {
-      setNotice("Could not upload file: " + error.message);
-      return null;
-    }
-
-    const { data } = s.storage
-      .from("unitvero-media")
-      .getPublicUrl(path);
-
-    return {
-      fileName: safeName,
-      filePath: path,
-      fileUrl: data.publicUrl,
-    };
-  }
 
   const words = {
     en: {
@@ -8518,29 +8513,21 @@ function TenantPortal({
     if (!tenancy || !property?.landlord_id) return null;
 
     const s = supabase();
-    const { data, error } = await s.rpc("unitvero_start_conversation", {
-      p_tenancy_id: tenancy.id,
-      p_subject: "Tenant conversation",
-    });
+    const { data, error } = await s.from("conversations").insert({
+      landlord_id: property.landlord_id,
+      property_id: tenancy.property_id,
+      tenancy_id: tenancy.id,
+      subject: "Tenant conversation",
+      updated_at: new Date().toISOString(),
+    }).select("*").single();
 
     if (error) {
       setNotice("Could not start the conversation: " + error.message);
       return null;
     }
-
-    const conversation = Array.isArray(data) ? data[0] : data;
-
-    if (!conversation?.id) {
-      setNotice("Could not start the conversation. Please try again.");
-      return null;
-    }
-
-    setConversations((current) => {
-      const exists = current.some((item) => item.id === conversation.id);
-      return exists ? current : [conversation, ...current];
-    });
-    setSelectedConversation(conversation);
-    return conversation;
+    setConversations([data]);
+    setSelectedConversation(data);
+    return data;
   }
 
   async function sendTenantMessage(e) {
@@ -8573,108 +8560,106 @@ function TenantPortal({
     setView("messages");
   }
 
-async function createMaintenanceRequest(e) {
-  e.preventDefault();
+  async function uploadUnitveroFile(file, folder) {
+    if (!file) return null;
 
-  if (!tenancy || !property) return;
+    const s = supabase();
+    const { data: { user }, error: userError } = await s.auth.getUser();
 
-  const form = e.currentTarget;
-  const issue = form.issue.value.trim();
-  const description = form.description.value.trim();
-
-  const photoFiles = Array.from(
-    form.maintenancePhotos?.files || []
-  ).slice(0, 5);
-
-  if (!issue || !description) {
-    return setNotice("Enter a repair issue and description.");
-  }
-
-  for (const file of photoFiles) {
-    if (!file.type.startsWith("image/")) {
-      return setNotice("Maintenance attachments must be images.");
+    if (userError || !user) {
+      setNotice("Please sign in again.");
+      return null;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      return setNotice("Each photo must be 10 MB or smaller.");
-    }
-  }
+    const extension = file.name.includes(".")
+      ? file.name.split(".").pop().toLowerCase()
+      : "jpg";
 
-  const s = supabase();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+    const path = `${folder}/${user.id}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
-  const {
-    data: { user },
-  } = await s.auth.getUser();
-
-  if (!user) {
-    return setNotice("Please sign in again.");
-  }
-
-  const { data: request, error } = await s
-    .from("maintenance_requests")
-    .insert({
-      property_id: tenancy.property_id,
-      unit_id: tenancy.unit_id || null,
-      tenancy_id: tenancy.id,
-      landlord_id: property.landlord_id,
-      tenant_id: user.id,
-      issue,
-      description,
-      category: form.category.value,
-      priority: form.priority.value,
-      permission_to_enter:
-        form.permissionToEnter.checked,
-      preferred_contact:
-        form.preferredContact.value,
-      status: "open",
-    })
-    .select("*")
-    .single();
-
-  if (error) {
-    return setNotice(
-      "Could not submit maintenance request: " +
-        error.message
-    );
-  }
-
-  for (const file of photoFiles) {
-    const uploaded = await uploadUnitveroFile(
-      file,
-      `maintenance/${request.id}`
-    );
-
-    if (!uploaded) continue;
-
-    const { error: attachmentError } = await s
-      .from("maintenance_request_attachments")
-      .insert({
-        maintenance_request_id: request.id,
-        uploaded_by: user.id,
-        file_name: uploaded.fileName,
-        file_path: uploaded.filePath,
-        file_url: uploaded.fileUrl,
+    const { error } = await s.storage
+      .from("unitvero-media")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || "application/octet-stream",
       });
 
-    if (attachmentError) {
-      console.error(
-        "Could not save maintenance photo:",
-        attachmentError
-      );
+    if (error) {
+      setNotice("Could not upload file: " + error.message);
+      return null;
     }
+
+    return {
+      fileName: safeName,
+      filePath: path,
+    };
   }
 
-  form.reset();
+  async function createMaintenanceRequest(e) {
+    e.preventDefault();
+    if (!tenancy || !property) return;
 
-  setNotice(
-    photoFiles.length
-      ? "Maintenance request and photos submitted."
-      : "Maintenance request submitted."
-  );
+    const form = e.currentTarget;
+    const issue = form.issue.value.trim();
+    const description = form.description.value.trim();
+    const photoFiles = Array.from(form.maintenancePhotos?.files || []).slice(0, 5);
 
-  await loadTenant();
-  setView("maintenance");
-}
+    if (!issue || !description) return setNotice("Enter a repair issue and description.");
+
+    for (const file of photoFiles) {
+      if (!file.type.startsWith("image/")) return setNotice("Maintenance attachments must be images.");
+      if (file.size > 10 * 1024 * 1024) return setNotice("Each photo must be 10 MB or smaller.");
+    }
+
+    const s = supabase();
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return setNotice("Please sign in again.");
+
+    const { data: request, error } = await s
+      .from("maintenance_requests")
+      .insert({
+        property_id: tenancy.property_id,
+        unit_id: tenancy.unit_id || null,
+        tenancy_id: tenancy.id,
+        landlord_id: property.landlord_id,
+        tenant_id: user.id,
+        issue,
+        description,
+        category: form.category.value,
+        priority: form.priority.value,
+        permission_to_enter: form.permissionToEnter.checked,
+        preferred_contact: form.preferredContact.value,
+        status: "open",
+      })
+      .select("*")
+      .single();
+
+    if (error) return setNotice("Could not submit maintenance request: " + error.message);
+
+    for (const file of photoFiles) {
+      const uploaded = await uploadUnitveroFile(file, `maintenance/${request.id}`);
+      if (!uploaded) continue;
+
+      const { error: attachmentError } = await s
+        .from("maintenance_request_attachments")
+        .insert({
+          maintenance_request_id: request.id,
+          uploaded_by: user.id,
+          file_name: uploaded.fileName,
+          file_path: uploaded.filePath,
+          file_url: null,
+        });
+
+      if (attachmentError) console.error("Could not save maintenance photo:", attachmentError);
+    }
+
+    form.reset();
+    setNotice(photoFiles.length ? "Maintenance request and photos submitted." : "Maintenance request submitted.");
+    await loadTenant();
+    setView("maintenance");
+  }
 
   async function openTenantMessages() {
     setView("messages");
@@ -8951,17 +8936,11 @@ async function createMaintenanceRequest(e) {
                       <select name="category" defaultValue="general"><option value="general">General</option><option value="plumbing">Plumbing</option><option value="electrical">Electrical</option><option value="hvac">Heating / Cooling</option><option value="appliance">Appliance</option><option value="pest">Pest</option><option value="other">Other</option></select>
                       <select name="priority" defaultValue="normal"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="emergency">Emergency</option></select>
                       <textarea name="description" rows="5" placeholder="Describe the problem and where it is located." required />
-            
-              <label style={{display:"grid",gap:6}}>
-  <span>Photos</span>
-  <input
-    type="file"
-    name="maintenancePhotos"
-    accept="image/jpeg,image/png,image/webp"
-    multiple
-  />
-  <small>Add up to 5 photos of the problem.</small>
-</label>
+                      <label style={{display:"grid",gap:6}}>
+                        <span>Photos</span>
+                        <input type="file" name="maintenancePhotos" accept="image/jpeg,image/png,image/webp" multiple />
+                        <small>Add up to 5 photos of the problem.</small>
+                      </label>
                       <select name="preferredContact" defaultValue="in_app"><option value="in_app">In-app message</option><option value="phone">Phone</option><option value="email">Email</option></select>
                       <label style={{display:"flex",gap:8,alignItems:"center",fontSize:12}}><input type="checkbox" name="permissionToEnter"/> Landlord/contractor has permission to enter for this repair</label>
                       <button className="utPrimary" type="submit">Submit Maintenance Request</button>
