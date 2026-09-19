@@ -883,6 +883,89 @@ export default function Dashboard() {
 
     alert("Announcement created.");
   }
+  async function deleteMaintenanceRequest(request) {
+    const confirmed = window.confirm(
+      "Delete this maintenance request? This will permanently remove the request, its repair expense record, and its uploaded photos."
+    );
+    if (!confirmed) return;
+
+    const s = supabase();
+
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) {
+      alert("Please sign in again.");
+      return;
+    }
+
+    try {
+      // Remove uploaded files first so deleted requests do not leave orphaned
+      // private storage files behind.
+      const attachments = maintenanceAttachments.filter(
+        (attachment) => attachment.maintenance_request_id === request.id
+      );
+
+      const filePaths = attachments
+        .map((attachment) => attachment.file_path)
+        .filter(Boolean);
+
+      if (filePaths.length) {
+        const { error: storageError } = await s.storage
+          .from("unitvero-media")
+          .remove(filePaths);
+
+        if (storageError) {
+          console.warn("Could not remove some maintenance photos:", storageError);
+        }
+      }
+
+      // Remove attachment records.
+      const { error: attachmentDeleteError } = await s
+        .from("maintenance_request_attachments")
+        .delete()
+        .eq("maintenance_request_id", request.id);
+
+      if (attachmentDeleteError) {
+        throw new Error(
+          "Could not remove maintenance photo records: " +
+          attachmentDeleteError.message
+        );
+      }
+
+      // Remove bookkeeping/repair-expense records tied to this request.
+      const { error: expenseDeleteError } = await s
+        .from("maintenance_expenses")
+        .delete()
+        .eq("maintenance_request_id", request.id);
+
+      if (expenseDeleteError) {
+        throw new Error(
+          "Could not remove the maintenance expense record: " +
+          expenseDeleteError.message
+        );
+      }
+
+      // Finally remove the maintenance request itself.
+      const { error: requestDeleteError } = await s
+        .from("maintenance_requests")
+        .delete()
+        .eq("id", request.id)
+        .eq("landlord_id", user.id);
+
+      if (requestDeleteError) {
+        throw new Error(
+          "Could not delete the maintenance request: " +
+          requestDeleteError.message
+        );
+      }
+
+      alert("Maintenance request deleted.");
+      await load();
+    } catch (error) {
+      console.error("Delete maintenance request failed:", error);
+      alert(error?.message || "Could not delete the maintenance request.");
+    }
+  }
+
   async function updateMaintenanceStatus(requestId, status) {
     const s = supabase();
     const patch = { status };
@@ -8022,12 +8105,31 @@ export default function Dashboard() {
                             <p>{prop?.address || "Property"} · {tenant?.tenant_name || tenant?.tenant_email || "Tenant"}</p>
                           </div>
                         </div>
-                        <select value={request.status || "open"} onChange={(e)=>updateMaintenanceStatus(request.id,e.target.value)}>
-                          <option value="open">Submitted</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="scheduled">Scheduled</option>
-                          <option value="completed">Completed</option>
-                        </select>
+                        <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+                          <select value={request.status || "open"} onChange={(e)=>updateMaintenanceStatus(request.id,e.target.value)}>
+                            <option value="open">Submitted</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="completed">Completed</option>
+                          </select>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteMaintenanceRequest(request)}
+                            style={{
+                              minHeight:40,
+                              padding:"0 13px",
+                              border:"1px solid #efcaca",
+                              borderRadius:10,
+                              background:"#fff5f5",
+                              color:"#b42318",
+                              fontWeight:800,
+                              cursor:"pointer",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
 
                       <p>{request.description || "No description provided."}</p>
