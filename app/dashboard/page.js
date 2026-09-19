@@ -482,63 +482,48 @@ export default function Dashboard() {
     setView("tenants");
   }
 
-  async function openOrCreateConversation(tenancyId) {
-    const tenancy = tenancies.find((item) => item.id === tenancyId);
-
-    if (!tenancy) {
-      alert("Could not find this tenant.");
+    async function deleteTenant(tenancy) {
+    if (!tenancy?.id) {
+      alert("Tenant record could not be found.");
       return;
     }
 
-    const existingConversation = conversations.find(
-      (conversation) => conversation.tenancy_id === tenancyId,
+    const tenantName =
+      tenancy.tenant_name ||
+      tenancy.tenant_email ||
+      "this tenant";
+
+    const confirmed = window.confirm(
+      `Delete ${tenantName}?\n\nThis will remove this tenant from the property. This action cannot be undone.`
     );
 
-    if (existingConversation) {
-      setSelectedConversation(existingConversation);
-      setCommunicationTab("messages");
-      setView("messages");
-      return;
-    }
-
-    const property = props.find((item) => item.id === tenancy.property_id);
+    if (!confirmed) return;
 
     const s = supabase();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await s.auth.getUser();
-
-    if (userError || !user) {
-      alert("Authentication error: " + (userError?.message || "No user found"));
-      return;
-    }
-
-    const { data, error } = await s
-      .from("conversations")
-      .insert({
-        landlord_id: user.id,
-        property_id: tenancy.property_id,
-        tenancy_id: tenancy.id,
-        subject:
-          tenancy.tenant_name ||
-          tenancy.tenant_email ||
-          property?.address ||
-          "Tenant conversation",
-      })
-      .select()
-      .single();
+    const { error } = await s
+      .from("tenancies")
+      .delete()
+      .eq("id", tenancy.id);
 
     if (error) {
-      alert("Could not create conversation: " + error.message);
+      alert("Could not delete tenant: " + error.message);
       return;
     }
 
-    setConversations((current) => [data, ...current]);
-    setSelectedConversation(data);
-    setCommunicationTab("messages");
-    setView("messages");
+    setTenancies((current) =>
+      current.filter((item) => item.id !== tenancy.id)
+    );
+
+    if (selectedTenancy?.id === tenancy.id) {
+      setSelectedTenancy(null);
+    }
+
+    if (editingTenancy?.id === tenancy.id) {
+      setEditingTenancy(null);
+    }
+
+    alert(`${tenantName} was deleted successfully.`);
   }
 
   async function sendMessage(e) {
@@ -4026,6 +4011,17 @@ export default function Dashboard() {
                         >
                           Message
                         </button>
+                            <button
+  type="button"
+  className="viewAllButton"
+  onClick={() => deleteTenant(tenancy)}
+  style={{
+    color: "#b42318",
+    borderColor: "#f1c7c2",
+  }}
+>
+  Delete
+</button>
                       </div>
                     </div>
                   );
