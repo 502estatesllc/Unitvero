@@ -31,6 +31,45 @@ CREATE INDEX IF NOT EXISTS idx_applicant_invitations_landlord_unit
 CREATE INDEX IF NOT EXISTS idx_applicant_invitations_email_status
   ON public.applicant_invitations (applicant_email, status, expires_at);
 
+ALTER TABLE IF EXISTS public.rental_applications
+  ADD COLUMN IF NOT EXISTS desired_move_in_date date,
+  ADD COLUMN IF NOT EXISTS references_details text,
+  ADD COLUMN IF NOT EXISTS additional_notes text,
+  ADD COLUMN IF NOT EXISTS applicant_consent boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS applicant_consent_at timestamptz,
+  ADD COLUMN IF NOT EXISTS applicant_invitation_id uuid;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'rental_applications_applicant_invitation_id_unique'
+  ) THEN
+    ALTER TABLE public.rental_applications
+      ADD CONSTRAINT rental_applications_applicant_invitation_id_unique UNIQUE (applicant_invitation_id);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'rental_applications_applicant_invitation_id_fkey'
+  ) THEN
+    ALTER TABLE public.rental_applications
+      ADD CONSTRAINT rental_applications_applicant_invitation_id_fkey
+      FOREIGN KEY (applicant_invitation_id)
+      REFERENCES public.applicant_invitations(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rental_applications_applicant_invitation_id
+  ON public.rental_applications (applicant_invitation_id)
+  WHERE applicant_invitation_id IS NOT NULL;
+
 ALTER TABLE public.applicant_invitations ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS applicant_invitations_landlord_own_records ON public.applicant_invitations;

@@ -54,6 +54,56 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
+const RATE_LIMIT_BUCKETS = new Map();
+
+function getClientIp(request) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+
+  const cloudflare = request.headers.get("cf-connecting-ip");
+  if (cloudflare) {
+    return cloudflare.trim();
+  }
+
+  return "local-client";
+}
+
+function applyRateLimit(request, bucketKey, limitPerMinute) {
+  const now = Date.now();
+  const ip = getClientIp(request);
+  const key = `${ip}:${bucketKey}`;
+  const bucket = RATE_LIMIT_BUCKETS.get(key) || [];
+  const recent = bucket.filter((timestamp) => now - timestamp < 60_000);
+
+  if (recent.length >= limitPerMinute) {
+    return { allowed: false, retryAfterSeconds: 60 };
+  }
+
+  recent.push(now);
+  RATE_LIMIT_BUCKETS.set(key, recent);
+  return { allowed: true, retryAfterSeconds: 0 };
+}
+
+function parseCurrencyField(value, fieldName) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const numeric = Number(value);
+
+  if (!Number.isFinite(numeric)) {
+    throw new Error(`${fieldName} must be a valid number.`);
+  }
+
+  if (numeric < 0) {
+    throw new Error(`${fieldName} cannot be negative.`);
+  }
+
+  return numeric;
+}
+
 async function getSignedInUser(request) {
   const authHeader = request.headers.get("authorization");
 
@@ -434,6 +484,14 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    const rateLimit = applyRateLimit(request, "applicant-verify", 30);
+    if (!rateLimit.allowed) {
+      return Response.json(
+        { error: "Too many verification requests. Please wait a moment and try again." },
+        { status: 429 },
+      );
+    }
+
     const url = new URL(request.url);
     const token = cleanToken(url.searchParams.get("token"));
     const result = await findInvitationByToken(token);
@@ -595,7 +653,8 @@ export async function PATCH(request) {
             used_at,
             revoked_at,
             expires_at,
-            created_at
+            created_at,
+            token_hash
           `,
         )
         .eq("id", invitationId)
@@ -651,33 +710,6 @@ export async function PATCH(request) {
         );
       }
 
-      const newInviteToken = crypto.randomBytes(32).toString("hex");
-      const newTokenHash = hashToken(newInviteToken);
-      const nextExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const { error: updateError } = await admin
-        .from("applicant_invitations")
-        .update({
-          token_hash: newTokenHash,
-          status: "pending",
-          expires_at: nextExpiresAt,
-          used_at: null,
-          revoked_at: null,
-        })
-        .eq("id", invitation.id)
-        .eq("landlord_id", auth.user.id)
-        .eq("status", "pending")
-        .is("used_at", null)
-        .is("revoked_at", null);
-
-      if (updateError) {
-        console.error("Applicant invitation resend update error:", updateError);
-        return Response.json(
-          { error: updateError.message },
-          { status: 400 },
-        );
-      }
-
       if (!process.env.RESEND_API_KEY) {
         console.error("RESEND_API_KEY is missing.");
         return Response.json(
@@ -686,10 +718,8 @@ export async function PATCH(request) {
         );
       }
 
-      const inviteUrl =
-        `${APP_URL.replace(/\/$/, "")}` +
-        `/applicant-invite?token=${encodeURIComponent(newInviteToken)}`;
-
+      const newInviteToken = crypto.randomBytes(32).toString("hex");
+      const inviteUrl = `${APP_URL.replace(/\/$/, "")}/applicant-invite?token=${encodeURIComponent(newInviteToken)}`;
       const safeApplicantName = escapeHtml(invitation.applicant_name);
       const safeAddress = escapeHtml(property.address || "your rental property");
       const safeEmail = escapeHtml(invitation.applicant_email);
@@ -741,7 +771,6 @@ export async function PATCH(request) {
       });
 
       let emailResult = {};
-
       try {
         emailResult = await emailResponse.json();
       } catch {
@@ -758,6 +787,30 @@ export async function PATCH(request) {
         );
       }
 
+      const nextExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: updateError } = await admin
+        .from("applicant_invitations")
+        .update({
+          token_hash: hashToken(newInviteToken),
+          status: "pending",
+          expires_at: nextExpiresAt,
+          used_at: null,
+          revoked_at: null,
+        })
+        .eq("id", invitation.id)
+        .eq("landlord_id", auth.user.id)
+        .eq("status", "pending")
+        .is("used_at", null)
+        .is("revoked_at", null);
+
+      if (updateError) {
+        console.error("Applicant invitation resend update error:", updateError);
+        return Response.json(
+          { error: updateError.message },
+          { status: 500 },
+        );
+      }
+
       return Response.json({
         success: true,
         message: "Applicant invitation resent.",
@@ -765,6 +818,13 @@ export async function PATCH(request) {
     }
 
     const token = cleanToken(body.token);
+    const rateLimit = applyRateLimit(request, `applicant-submit:${token || "missing"}`, 5);
+    if (!rateLimit.allowed) {
+      return Response.json(
+        { error: "Too many submission attempts. Please wait a moment and try again." },
+        { status: 429 },
+      );
+    }
     const result = await findInvitationByToken(token);
 
     if (result.error) {
@@ -776,34 +836,55 @@ export async function PATCH(request) {
 
     const invitation = result.invitation;
     const applicantName = String(body.applicantName || "").trim();
-    const applicantEmail = String(body.applicantEmail || "")
-      .trim()
-      .toLowerCase();
+    const applicantEmail = String(body.applicantEmail || "").trim().toLowerCase();
+    const consentChecked = body.applicantConsent === true || body.applicantConsent === "true" || body.applicantConsent === 1;
 
-    if (!applicantName || !applicantEmail) {
-      return Response.json(
-        {
-          error: "Applicant name and email are required.",
-        },
-        { status: 400 },
-      );
+    if (!applicantName) {
+      return Response.json({ error: "Applicant name is required." }, { status: 400 });
     }
 
-    if (
-      applicantEmail !== (invitation.applicant_email || "").toLowerCase()
-    ) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicantEmail)) {
+      return Response.json({ error: "A valid applicant email is required." }, { status: 400 });
+    }
+
+    if (applicantEmail !== (invitation.applicant_email || "").toLowerCase()) {
       return Response.json(
         {
-          error:
-            `This invitation was sent to ${invitation.applicant_email}. Please use that email address.`,
+          error: `This invitation was sent to ${invitation.applicant_email}. Please use that email address.`,
         },
         { status: 403 },
       );
     }
 
+    if (!consentChecked) {
+      return Response.json({ error: "Applicant consent is required before submission." }, { status: 400 });
+    }
+
+    let desiredMoveInDate = null;
+    if (body.desiredMoveInDate) {
+      const value = String(body.desiredMoveInDate).trim();
+      if (value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return Response.json({ error: "Desired move-in date is invalid." }, { status: 400 });
+        }
+        desiredMoveInDate = date.toISOString().slice(0, 10);
+      }
+    }
+
+    const monthlyIncome = parseCurrencyField(body.monthlyIncome, "Monthly income");
+    const currentRent = parseCurrencyField(body.currentRent, "Current rent");
+
+    const occupantsCount = Number(body.occupantsCount ?? 1);
+    if (!Number.isFinite(occupantsCount) || occupantsCount < 1) {
+      return Response.json({ error: "Occupants count must be a number greater than zero." }, { status: 400 });
+    }
+
     const applicationRecord = {
       landlord_id: invitation.landlord_id,
       property_id: invitation.property_id,
+      unit_id: invitation.unit_id || null,
+      applicant_invitation_id: invitation.id,
       applicant_name: applicantName,
       applicant_email: applicantEmail,
       applicant_phone: String(body.applicantPhone || "").trim() || null,
@@ -811,72 +892,95 @@ export async function PATCH(request) {
       current_city: String(body.currentCity || "").trim() || null,
       current_state: String(body.currentState || "").trim() || null,
       current_zip: String(body.currentZip || "").trim() || null,
+      desired_move_in_date: desiredMoveInDate,
       employer_name: String(body.employerName || "").trim() || null,
       job_title: String(body.jobTitle || "").trim() || null,
-      monthly_income: body.monthlyIncome
-        ? Number(body.monthlyIncome)
-        : null,
-      current_landlord_name:
-        String(body.currentLandlordName || "").trim() || null,
-      current_landlord_phone:
-        String(body.currentLandlordPhone || "").trim() || null,
-      current_rent: body.currentRent ? Number(body.currentRent) : null,
+      monthly_income: monthlyIncome,
+      current_landlord_name: String(body.currentLandlordName || "").trim() || null,
+      current_landlord_phone: String(body.currentLandlordPhone || "").trim() || null,
+      current_rent: currentRent,
+      references_details: String(body.referencesDetails || "").trim() || null,
       previous_address: String(body.previousAddress || "").trim() || null,
-      occupants_count: Number(body.occupantsCount || 1),
+      additional_notes: String(body.additionalNotes || "").trim() || null,
+      occupants_count: occupantsCount,
       occupants_details: String(body.occupantsDetails || "").trim() || null,
-      has_pets: Boolean(body.hasPets === "yes"),
-      pets_details:
-        body.hasPets === "yes"
-          ? String(body.petsDetails || "").trim() || null
-          : null,
+      has_pets: Boolean(body.hasPets === "yes" || body.hasPets === true),
+      pets_details: body.hasPets === "yes" || body.hasPets === true ? String(body.petsDetails || "").trim() || null : null,
       vehicles_details: String(body.vehiclesDetails || "").trim() || null,
+      applicant_consent: true,
+      applicant_consent_at: new Date().toISOString(),
       application_status: "new",
       screening_status: "not_started",
     };
 
     const admin = adminClient();
-    const { data: application, error: insertError } = await admin
-      .from("rental_applications")
-      .insert(applicationRecord)
-      .select("id")
-      .single();
 
-    if (insertError) {
-      console.error("Applicant application insert error:", insertError);
-      return Response.json(
-        {
-          error: "Could not save your application: " + insertError.message,
-        },
-        { status: 400 },
-      );
+    try {
+      const { data: application, error: insertError } = await admin
+        .from("rental_applications")
+        .insert(applicationRecord)
+        .select("id")
+        .single();
+
+      if (insertError) {
+        if (
+          insertError.code === "23505" ||
+          String(insertError.message).toLowerCase().includes("duplicate") ||
+          String(insertError.message).toLowerCase().includes("applicant_invitation_id")
+        ) {
+          return Response.json(
+            { error: "This invitation has already been used to submit an application." },
+            { status: 409 },
+          );
+        }
+
+        console.error("Applicant application insert error:", insertError);
+        return Response.json(
+          {
+            error: "Could not save your application: " + insertError.message,
+          },
+          { status: 400 },
+        );
+      }
+
+      const { error: updateError } = await admin
+        .from("applicant_invitations")
+        .update({
+          status: "accepted",
+          used_at: new Date().toISOString(),
+        })
+        .eq("id", invitation.id)
+        .eq("status", "pending")
+        .is("used_at", null)
+        .is("revoked_at", null);
+
+      if (updateError) {
+        console.error("Applicant invitation close error:", updateError);
+      }
+
+      return Response.json({
+        success: true,
+        message: "Application submitted successfully.",
+        applicationId: application?.id || null,
+      });
+    } catch (error) {
+      console.error("Applicant application insert error:", error);
+      if (String(error.message).toLowerCase().includes("duplicate") || String(error.message).toLowerCase().includes("applicant_invitation_id")) {
+        return Response.json(
+          { error: "This invitation has already been used to submit an application." },
+          { status: 409 },
+        );
+      }
+      throw error;
     }
-
-    const { error: updateError } = await admin
-      .from("applicant_invitations")
-      .update({
-        status: "accepted",
-        used_at: new Date().toISOString(),
-      })
-      .eq("id", invitation.id)
-      .eq("status", "pending");
-
-    if (updateError) {
-      console.error("Applicant invitation close error:", updateError);
-    }
-
-    return Response.json({
-      success: true,
-      message: "Application submitted successfully.",
-      applicationId: application?.id || null,
-    });
   } catch (error) {
     console.error("Accept applicant invitation error:", error);
 
     return Response.json(
       {
-        error: "Something went wrong submitting your application.",
+        error: error.message || "Something went wrong submitting your application.",
       },
-      { status: 500 },
+      { status: error.message?.includes("valid number") ? 400 : 500 },
     );
   }
 }
