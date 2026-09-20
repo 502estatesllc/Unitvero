@@ -148,6 +148,8 @@ export const TRANSLATIONS = {
     actions: "Actions",
     resendInvitation: "Resend",
     revokeInvitation: "Revoke",
+    deleteInvitation: "Delete",
+    deleteInvitationConfirm: "Delete this applicant invitation?",
   },
   es: {
     language: "Idioma",

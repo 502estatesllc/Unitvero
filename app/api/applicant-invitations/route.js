@@ -7,8 +7,19 @@ const SUPABASE_PUBLIC_KEY =
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://unitveroapp.com";
+const FALLBACK_APP_URL = "https://unitveroapp.com";
+
+function getSafeAppOrigin() {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
+  }
+
+  return FALLBACK_APP_URL;
+}
 
 function userClient(accessToken) {
   return createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, {
@@ -172,10 +183,12 @@ async function findInvitationByToken(token) {
         status,
         expires_at,
         used_at,
-        revoked_at
+        revoked_at,
+        deleted_at
       `,
     )
     .eq("token_hash", tokenHash)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) {
@@ -219,6 +232,14 @@ async function findInvitationByToken(token) {
     return {
       invitation: data,
       error: "This invitation has expired.",
+      status: 410,
+    };
+  }
+
+  if (data.deleted_at) {
+    return {
+      invitation: data,
+      error: "This invitation is no longer available.",
       status: 410,
     };
   }
@@ -364,7 +385,7 @@ export async function POST(request) {
     }
 
     const inviteUrl =
-      `${APP_URL.replace(/\/$/, "")}` +
+      `${getSafeAppOrigin().replace(/\/$/, "")}` +
       `/applicant-invite?token=${encodeURIComponent(inviteToken)}`;
 
     if (!process.env.RESEND_API_KEY) {
@@ -401,30 +422,31 @@ export async function POST(request) {
           from: "Unitvero <invites@unitveroapp.com>",
           to: [applicantEmail],
           subject: `${applicantName}, your rental application invite is ready`,
+          text: `Hello ${applicantName},\n\nYour landlord has invited you to complete a rental application for ${property.address || "your rental property"}.\n\nOpen this secure link to continue without creating a Unitvero account:\n${inviteUrl}\n\nThis invitation expires in 7 days and is tied to ${applicantEmail}.`,
           html: `
 <!doctype html>
 <html>
-  <body style="margin:0;padding:0;background:#f4f8f6;font-family:Arial,Helvetica,sans-serif;color:#183b32;">
+  <body style="margin:0;padding:0;background:#edf4ff;font-family:Arial,Helvetica,sans-serif;color:#172033;">
     <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
       <tr>
         <td align="center">
-          <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e3ebe8;border-radius:18px;overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #dfe9f9;border-radius:18px;overflow:hidden;">
             <tr>
-              <td style="padding:32px 36px 18px;">
-                <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#173f35;">UNITVERO</div>
+              <td style="padding:28px 32px 18px;background:#0f172a;">
+                <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#ffffff;">UNITVERO</div>
               </td>
             </tr>
             <tr>
-              <td style="padding:10px 36px 36px;">
-                <div style="display:inline-block;padding:7px 11px;background:#eaf7f3;color:#27836b;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;">APPLICATION INVITATION</div>
-                <h1 style="margin:18px 0 12px;font-size:30px;line-height:1.2;color:#173f35;">Complete your application, ${safeApplicantName}</h1>
-                <p style="margin:0 0 22px;color:#667a74;line-height:1.7;font-size:15px;">Your landlord has invited you to complete a rental application for ${safeAddress}. Use the secure link below to submit your information without creating a Unitvero account.</p>
-                <div style="background:#f7faf9;border:1px solid #e5ece9;border-radius:12px;padding:18px;margin-bottom:25px;">
-                  <div style="font-size:12px;color:#788a84;margin-bottom:6px;">PROPERTY</div>
-                  <div style="font-size:16px;font-weight:700;color:#173f35;">${safeAddress}</div>
+              <td style="padding:32px 32px 24px;">
+                <div style="display:inline-block;padding:7px 12px;background:#e0edff;color:#1d4ed8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;">APPLICATION INVITATION</div>
+                <h1 style="margin:18px 0 12px;font-size:30px;line-height:1.2;color:#0f172a;">Complete your application, ${safeApplicantName}</h1>
+                <p style="margin:0 0 22px;color:#475569;line-height:1.7;font-size:15px;">Your landlord has invited you to complete a rental application for ${safeAddress}. Use the secure link below to submit your information without creating a Unitvero account.</p>
+                <div style="background:#f8fbff;border:1px solid #dfe9f9;border-radius:12px;padding:18px;margin-bottom:25px;">
+                  <div style="font-size:12px;color:#64748b;margin-bottom:6px;">PROPERTY</div>
+                  <div style="font-size:16px;font-weight:700;color:#0f172a;">${safeAddress}</div>
                 </div>
-                <a href="${inviteUrl}" style="display:inline-block;background:#2a8b72;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:700;">Complete Application</a>
-                <p style="margin:25px 0 0;color:#8a9894;line-height:1.6;font-size:12px;">This secure invitation expires in 7 days and is tied to ${safeEmail}.</p>
+                <a href="${inviteUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:700;">Complete Application</a>
+                <p style="margin:25px 0 0;color:#64748b;line-height:1.6;font-size:12px;">This secure invitation expires in 7 days and is tied to ${safeEmail}. No Unitvero account is required.</p>
               </td>
             </tr>
           </table>
@@ -537,6 +559,92 @@ export async function PATCH(request) {
   try {
     const body = await request.json();
     const action = String(body.action || "submit").toLowerCase();
+
+    if (action === "delete") {
+      const auth = await getSignedInUser(request);
+
+      if (auth.error) {
+        return Response.json(
+          { error: auth.error },
+          { status: auth.status },
+        );
+      }
+
+      const invitationId = cleanToken(body.invitationId);
+
+      if (!invitationId) {
+        return Response.json(
+          { error: "Invitation ID is required." },
+          { status: 400 },
+        );
+      }
+
+      const admin = adminClient();
+      const { data: invitation, error: lookupError } = await admin
+        .from("applicant_invitations")
+        .select("id, landlord_id, status, used_at, revoked_at, deleted_at")
+        .eq("id", invitationId)
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error("Applicant invitation lookup error:", lookupError);
+        return Response.json(
+          { error: lookupError.message },
+          { status: 400 },
+        );
+      }
+
+      if (!invitation) {
+        return Response.json(
+          { error: "This invitation was not found." },
+          { status: 404 },
+        );
+      }
+
+      if (invitation.landlord_id !== auth.user.id) {
+        return Response.json(
+          { error: "You do not have permission to delete this invitation." },
+          { status: 403 },
+        );
+      }
+
+      if (invitation.deleted_at) {
+        return Response.json(
+          { error: "This invitation is already archived." },
+          { status: 409 },
+        );
+      }
+
+      const { data: updatedInvitation, error: deleteError } = await admin
+        .from("applicant_invitations")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", invitation.id)
+        .eq("landlord_id", auth.user.id)
+        .is("deleted_at", null)
+        .select("id, landlord_id, status, deleted_at")
+        .maybeSingle();
+
+      if (deleteError) {
+        console.error("Applicant invitation delete error:", deleteError);
+        return Response.json(
+          { error: deleteError.message },
+          { status: 400 },
+        );
+      }
+
+      if (!updatedInvitation) {
+        return Response.json(
+          { error: "This invitation changed state before it could be deleted." },
+          { status: 409 },
+        );
+      }
+
+      return Response.json({
+        success: true,
+        message: "Applicant invitation deleted.",
+        invitation: updatedInvitation,
+      });
+    }
 
     if (action === "revoke") {
       const auth = await getSignedInUser(request);
@@ -729,7 +837,7 @@ export async function PATCH(request) {
       }
 
       const newInviteToken = crypto.randomBytes(32).toString("hex");
-      const inviteUrl = `${APP_URL.replace(/\/$/, "")}/applicant-invite?token=${encodeURIComponent(newInviteToken)}`;
+      const inviteUrl = `${getSafeAppOrigin().replace(/\/$/, "")}/applicant-invite?token=${encodeURIComponent(newInviteToken)}`;
       const safeApplicantName = escapeHtml(invitation.applicant_name);
       const safeAddress = escapeHtml(property.address || "your rental property");
       const safeEmail = escapeHtml(invitation.applicant_email);
@@ -744,30 +852,31 @@ export async function PATCH(request) {
           from: "Unitvero <invites@unitveroapp.com>",
           to: [invitation.applicant_email],
           subject: `${invitation.applicant_name}, your rental application invite is ready`,
+          text: `Hello ${invitation.applicant_name},\n\nYour landlord has invited you to complete a rental application for ${property.address || "your rental property"}.\n\nOpen this secure link to continue without creating a Unitvero account:\n${inviteUrl}\n\nThis invitation expires in 7 days and is tied to ${invitation.applicant_email}.`,
           html: `
 <!doctype html>
 <html>
-  <body style="margin:0;padding:0;background:#f4f8f6;font-family:Arial,Helvetica,sans-serif;color:#183b32;">
+  <body style="margin:0;padding:0;background:#edf4ff;font-family:Arial,Helvetica,sans-serif;color:#172033;">
     <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
       <tr>
         <td align="center">
-          <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e3ebe8;border-radius:18px;overflow:hidden;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #dfe9f9;border-radius:18px;overflow:hidden;">
             <tr>
-              <td style="padding:32px 36px 18px;">
-                <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#173f35;">UNITVERO</div>
+              <td style="padding:28px 32px 18px;background:#0f172a;">
+                <div style="font-size:18px;font-weight:800;letter-spacing:3px;color:#ffffff;">UNITVERO</div>
               </td>
             </tr>
             <tr>
-              <td style="padding:10px 36px 36px;">
-                <div style="display:inline-block;padding:7px 11px;background:#eaf7f3;color:#27836b;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;">APPLICATION INVITATION</div>
-                <h1 style="margin:18px 0 12px;font-size:30px;line-height:1.2;color:#173f35;">Complete your application, ${safeApplicantName}</h1>
-                <p style="margin:0 0 22px;color:#667a74;line-height:1.7;font-size:15px;">Your landlord has invited you to complete a rental application for ${safeAddress}. Use the secure link below to submit your information without creating a Unitvero account.</p>
-                <div style="background:#f7faf9;border:1px solid #e5ece9;border-radius:12px;padding:18px;margin-bottom:25px;">
-                  <div style="font-size:12px;color:#788a84;margin-bottom:6px;">PROPERTY</div>
-                  <div style="font-size:16px;font-weight:700;color:#173f35;">${safeAddress}</div>
+              <td style="padding:32px 32px 24px;">
+                <div style="display:inline-block;padding:7px 12px;background:#e0edff;color:#1d4ed8;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:1px;">APPLICATION INVITATION</div>
+                <h1 style="margin:18px 0 12px;font-size:30px;line-height:1.2;color:#0f172a;">Complete your application, ${safeApplicantName}</h1>
+                <p style="margin:0 0 22px;color:#475569;line-height:1.7;font-size:15px;">Your landlord has invited you to complete a rental application for ${safeAddress}. Use the secure link below to submit your information without creating a Unitvero account.</p>
+                <div style="background:#f8fbff;border:1px solid #dfe9f9;border-radius:12px;padding:18px;margin-bottom:25px;">
+                  <div style="font-size:12px;color:#64748b;margin-bottom:6px;">PROPERTY</div>
+                  <div style="font-size:16px;font-weight:700;color:#0f172a;">${safeAddress}</div>
                 </div>
-                <a href="${inviteUrl}" style="display:inline-block;background:#2a8b72;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:700;">Complete Application</a>
-                <p style="margin:25px 0 0;color:#8a9894;line-height:1.6;font-size:12px;">This secure invitation expires in 7 days and is tied to ${safeEmail}.</p>
+                <a href="${inviteUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:700;">Complete Application</a>
+                <p style="margin:25px 0 0;color:#64748b;line-height:1.6;font-size:12px;">This secure invitation expires in 7 days and is tied to ${safeEmail}. No Unitvero account is required.</p>
               </td>
             </tr>
           </table>

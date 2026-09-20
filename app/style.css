@@ -9,15 +9,15 @@
 html {
   margin: 0;
   padding: 0;
-  background: #f5f7fb;
+  background: #edf4ff;
 }
 
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background: #f5f7fb;
-  color: #172033;
+  background: #edf4ff;
+  color: #0f172a;
   font-family:
     Inter,
     ui-sans-serif,
@@ -28,8 +28,8 @@ body {
     Helvetica,
     Arial,
     sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -39,6 +39,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-size: 16px;
 }
 
 button,

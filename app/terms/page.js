@@ -2,10 +2,10 @@ import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#f5f4ef', color: '#101212', padding: '40px 18px 80px' }}>
-      <div style={{ maxWidth: 960, margin: '0 auto', background: '#fff', borderRadius: 20, boxShadow: '0 24px 70px rgba(0,0,0,.08)', border: '1px solid #e8e3d7', overflow: 'hidden' }}>
-        <header style={{ background: '#0b0d0e', color: '#f7f5ee', padding: '28px 28px 22px' }}>
-          <Link href="/" style={{ color: '#f4c84f', textDecoration: 'none', fontWeight: 800, letterSpacing: '.08em' }}>UNITVERO</Link>
+    <main style={{ minHeight: '100vh', background: '#edf4ff', color: '#0f172a', padding: '40px 18px 80px' }}>
+      <div style={{ maxWidth: 960, margin: '0 auto', background: '#fff', borderRadius: 20, boxShadow: '0 24px 70px rgba(15, 23, 42, 0.08)', border: '1px solid #dfe8f3', overflow: 'hidden' }}>
+        <header style={{ background: 'linear-gradient(135deg, #0f172a, #17263f)', color: '#fff', padding: '28px 28px 22px' }}>
+          <Link href="/" style={{ color: '#93c5fd', textDecoration: 'none', fontWeight: 800, letterSpacing: '.08em' }}>UNITVERO</Link>
           <h1 style={{ margin: '14px 0 0', fontSize: 'clamp(2rem, 3vw, 3rem)', letterSpacing: '-0.06em' }}>Terms of Service</h1>
         </header>
 
@@ -43,9 +43,9 @@ export default function TermsPage() {
           </section>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', borderTop: '1px solid #ece6d8', paddingTop: 18, color: '#5d6878' }}>
-            <Link href="/privacy" style={{ color: '#0f9f8f', textDecoration: 'none', fontWeight: 700 }}>Privacy</Link>
-            <Link href="/support" style={{ color: '#0f9f8f', textDecoration: 'none', fontWeight: 700 }}>Support</Link>
-            <Link href="/" style={{ color: '#0f9f8f', textDecoration: 'none', fontWeight: 700 }}>Home</Link>
+            <Link href="/privacy" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 700 }}>Privacy</Link>
+            <Link href="/support" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 700 }}>Support</Link>
+            <Link href="/" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 700 }}>Home</Link>
           </div>
         </div>
       </div>

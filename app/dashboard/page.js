@@ -112,6 +112,7 @@ export default function Dashboard() {
       text: "Hi! I’m Unitvero Help. Ask me about properties, tenants, rent, payments, or applications.",
     },
   ]);
+  const [supportBusy, setSupportBusy] = useState(false);
 
   const r = useRouter();
 
@@ -1427,6 +1428,23 @@ export default function Dashboard() {
         role: user.user_metadata?.role || "landlord",
       };
 
+    const { data: userSettingsData } = await s
+      .from("user_settings")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (userSettingsData) {
+      const savedLanguage = normalizeLanguage(userSettingsData.preferred_language || "en");
+      const savedPrivacy = Boolean(userSettingsData.privacy_mode);
+      setLanguage(savedLanguage);
+      setPrivacyMode(savedPrivacy);
+      window.localStorage.setItem("unitvero-language", savedLanguage);
+      window.localStorage.setItem("unitvero-privacy", String(savedPrivacy));
+      document.documentElement.lang = savedLanguage;
+      document.documentElement.dir = getLanguageDirection(savedLanguage);
+    }
+
     setProfile(resolvedProfile);
     setAccountReady(true);
 
@@ -1479,6 +1497,7 @@ export default function Dashboard() {
       .from("applicant_invitations")
       .select("*")
       .eq("landlord_id", user.id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (applicantInvitationError) {
@@ -1716,18 +1735,38 @@ export default function Dashboard() {
     }
   }, []);
 
+  async function saveUserPreferences(nextLanguage, nextPrivacyMode) {
+    const s = supabase();
+    const { data: { user }, error: userError } = await s.auth.getUser();
+    if (userError || !user) return;
+
+    const nextLanguageValue = normalizeLanguage(nextLanguage || language);
+    const nextPrivacyValue = Boolean(nextPrivacyMode ?? privacyMode);
+
+    await s.from("user_settings").upsert(
+      {
+        user_id: user.id,
+        preferred_language: nextLanguageValue,
+        privacy_mode: nextPrivacyValue,
+      },
+      { onConflict: "user_id" }
+    );
+  }
+
   function changeLanguage(nextLanguage) {
     const resolved = normalizeLanguage(nextLanguage);
     setLanguage(resolved);
     window.localStorage.setItem("unitvero-language", resolved);
     document.documentElement.lang = resolved;
     document.documentElement.dir = getLanguageDirection(resolved);
+    saveUserPreferences(resolved, privacyMode);
   }
 
   function togglePrivacy() {
     setPrivacyMode((current) => {
       const next = !current;
       window.localStorage.setItem("unitvero-privacy", String(next));
+      saveUserPreferences(language, next);
       return next;
     });
   }
@@ -2353,37 +2392,59 @@ export default function Dashboard() {
     }
   }
 
-  function sendHelpMessage(e) {
+  async function sendHelpMessage(e) {
     e.preventDefault();
 
     const text = helpDraft.trim();
-    if (!text) return;
+    if (!text || supportBusy) return;
 
-    const lower = text.toLowerCase();
-    let reply =
-      "Thanks — your question is noted. For account-specific help, include the page you are on and what you expected to happen.";
-
-    if (lower.includes("property")) {
-      reply =
-        "Open Properties to add a property or select one to manage its tenants, rent, units, and market insights.";
-    } else if (lower.includes("tenant")) {
-      reply =
-        "Open Tenants to review renters. You can also open a property first and choose Add Tenant.";
-    } else if (lower.includes("rent") || lower.includes("payment")) {
-      reply =
-        "Use Rent for charges and payment records. Use Payments & Payouts for online transactions and bank deposits.";
-    } else if (lower.includes("application")) {
-      reply =
-        "Open Applications to create, review, approve, or reject a rental application.";
-    }
-
+    const { data: { user } } = await supabase().auth.getUser();
     const sentAt = Date.now();
+    setSupportBusy(true);
     setHelpMessages((current) => [
       ...current,
       { id: `user-${sentAt}`, sender: "user", text },
-      { id: `support-${sentAt}`, sender: "support", text: reply },
+      { id: `support-${sentAt}`, sender: "support", text: "Thinking…" },
     ]);
     setHelpDraft("");
+
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          email: user?.email || "",
+          page: "dashboard",
+          userRole: profile?.role || "landlord",
+          userId: user?.id || null,
+          source: "dashboard",
+        }),
+      });
+
+      const payload = await response.json();
+      const reply = payload?.reply || `Please email ${payload?.supportEmail || "support@unitvero.app"} for a human response.`;
+
+      setHelpMessages((current) =>
+        current.map((message) =>
+          message.id === `support-${sentAt}` ? { ...message, text: reply } : message
+        )
+      );
+
+      if (!payload?.success && payload?.supportEmail) {
+        setNotice(`Support follow-up: ${payload.supportEmail}`);
+      }
+    } catch (error) {
+      setHelpMessages((current) =>
+        current.map((message) =>
+          message.id === `support-${sentAt}`
+            ? { ...message, text: "I’m having trouble reaching support right now. Please email support@unitvero.app for immediate assistance." }
+            : message
+        )
+      );
+    } finally {
+      setSupportBusy(false);
+    }
   }
 
   async function out() {
@@ -5859,8 +5920,10 @@ export default function Dashboard() {
               {applicantInvitations.map((invitation) => {
                 const property = props.find((item) => item.id === invitation.property_id);
                 const unit = units.find((item) => item.id === invitation.unit_id);
-                const canResend = invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
-                const canRevoke = invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const isDeleted = Boolean(invitation.deleted_at);
+                const canResend = !isDeleted && invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const canRevoke = !isDeleted && invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const canDelete = !isDeleted;
                 const inviteStatus = invitation.status || "pending";
 
                 return (
@@ -6009,6 +6072,56 @@ export default function Dashboard() {
                           }}
                         >
                           {uiLabel("revokeInvitation")}
+                        </button>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Delete this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "delete",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not delete the invitation.");
+                            }
+
+                            setApplicantInvitations((current) =>
+                              current.filter((item) => item.id !== invitation.id),
+                            );
+
+                            alert("Applicant invitation removed.");
+                          }}
+                        >
+                          {uiLabel("deleteInvitation")}
                         </button>
                       )}
                     </div>
@@ -7029,97 +7142,112 @@ export default function Dashboard() {
                   <p>Update the application after completing your review.</p>
 
                   <div className="applicationDecisionActions">
-                    <button
-                      type="button"
-                      className="approveApplicationButton"
-                      onClick={async () => {
-                        const s = supabase();
-                        const now = new Date().toISOString();
+                    {selectedApplication.application_status === "approved" || selectedApplication.application_status === "denied" ? (
+                      <div className="decisionLockedState">
+                        <strong>
+                          Decision: {selectedApplication.application_status === "approved" ? "Approved" : "Denied"}
+                        </strong>
+                        {selectedApplication.updated_at && (
+                          <small>
+                            {new Date(selectedApplication.updated_at).toLocaleString()}
+                          </small>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="approveApplicationButton"
+                          onClick={async () => {
+                            const s = supabase();
+                            const now = new Date().toISOString();
 
-                        const { error } = await s
-                          .from("rental_applications")
-                          .update({
-                            application_status: "approved",
-                            updated_at: now,
-                          })
-                          .eq("id", selectedApplication.id);
+                            const { error } = await s
+                              .from("rental_applications")
+                              .update({
+                                application_status: "approved",
+                                updated_at: now,
+                              })
+                              .eq("id", selectedApplication.id);
 
-                        if (error) {
-                          alert(
-                            "Could not approve application: " + error.message,
-                          );
-                          return;
-                        }
+                            if (error) {
+                              alert(
+                                "Could not approve application: " + error.message,
+                              );
+                              return;
+                            }
 
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: "approved",
-                          updated_at: now,
-                        };
+                            const updatedApplication = {
+                              ...selectedApplication,
+                              application_status: "approved",
+                              updated_at: now,
+                            };
 
-                        setSelectedApplication(updatedApplication);
+                            setSelectedApplication(updatedApplication);
 
-                        setApplications(
-                          applications.map((application) =>
-                            application.id === selectedApplication.id
-                              ? updatedApplication
-                              : application,
-                          ),
-                        );
+                            setApplications(
+                              applications.map((application) =>
+                                application.id === selectedApplication.id
+                                  ? updatedApplication
+                                  : application,
+                              ),
+                            );
 
-                        alert("Application approved successfully.");
-                      }}
-                    >
-                      ✓ Approve
-                    </button>
+                            alert("Application approved successfully.");
+                          }}
+                        >
+                          ✓ Approve
+                        </button>
 
-                    <button
-                      type="button"
-                      className="denyApplicationButton"
-                      onClick={async () => {
-                        const confirmed = window.confirm(
-                          "Mark this application as denied?",
-                        );
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm(
+                              "Mark this application as denied?",
+                            );
 
-                        if (!confirmed) return;
+                            if (!confirmed) return;
 
-                        const s = supabase();
-                        const now = new Date().toISOString();
+                            const s = supabase();
+                            const now = new Date().toISOString();
 
-                        const { error } = await s
-                          .from("rental_applications")
-                          .update({
-                            application_status: "denied",
-                            updated_at: now,
-                          })
-                          .eq("id", selectedApplication.id);
+                            const { error } = await s
+                              .from("rental_applications")
+                              .update({
+                                application_status: "denied",
+                                updated_at: now,
+                              })
+                              .eq("id", selectedApplication.id);
 
-                        if (error) {
-                          alert("Could not deny application: " + error.message);
-                          return;
-                        }
+                            if (error) {
+                              alert("Could not deny application: " + error.message);
+                              return;
+                            }
 
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: "denied",
-                          updated_at: now,
-                        };
+                            const updatedApplication = {
+                              ...selectedApplication,
+                              application_status: "denied",
+                              updated_at: now,
+                            };
 
-                        setSelectedApplication(updatedApplication);
+                            setSelectedApplication(updatedApplication);
 
-                        setApplications(
-                          applications.map((application) =>
-                            application.id === selectedApplication.id
-                              ? updatedApplication
-                              : application,
-                          ),
-                        );
+                            setApplications(
+                              applications.map((application) =>
+                                application.id === selectedApplication.id
+                                  ? updatedApplication
+                                  : application,
+                              ),
+                            );
 
-                        alert("Application status updated to denied.");
-                      }}
-                    >
-                      × Deny
-                    </button>
+                            alert("Application status updated to denied.");
+                          }}
+                        >
+                          × Deny
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <small className="applicationDecisionNote">
@@ -11463,9 +11591,15 @@ export default function Dashboard() {
               onChange={(event) => setHelpDraft(event.target.value)}
               placeholder="Type your question…"
               aria-label="Help question"
+              disabled={supportBusy}
             />
-            <button type="submit">Send</button>
+            <button type="submit" disabled={supportBusy}>{supportBusy ? "…" : "Send"}</button>
           </form>
+          <div className="helpFooterActions">
+            <button type="button" className="utSecondary" onClick={() => window.location.href = "mailto:support@unitvero.app?subject=Unitvero%20Support%20Request"}>
+              Talk to a Representative
+            </button>
+          </div>
         </aside>
       )}
 
@@ -11771,490 +11905,6 @@ export default function Dashboard() {
             bottom: 82px;
           }
         }
-
-/* =========================================================
-   UNITVERO REFERENCE DESIGN — PREMIUM BLACK / GOLD
-   Matches the supplied mockup's visual system.
-   ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-.unitveroModern{
-  --uv-bg:#080909 !important;
-  --uv-surface:#0d0f10 !important;
-  --uv-surface2:#121516 !important;
-  --uv-gold:#f4c84f !important;
-  --uv-gold2:#dcae36 !important;
-  --uv-white:#f7f6f1 !important;
-  --uv-muted:#9b9d99 !important;
-  --uv-border:rgba(244,200,79,.28) !important;
-  background:#080909 !important;
-  color:#f7f6f1 !important;
-  font-family:Inter,Arial,sans-serif !important;
-}
-.unitveroModern *{font-family:Inter,Arial,sans-serif !important}
-.unitveroModern .sidebar{
-  width:242px !important;
-  background:#070808 !important;
-  border-right:1px solid rgba(244,200,79,.18) !important;
-  box-shadow:12px 0 36px rgba(0,0,0,.28) !important;
-}
-.unitveroModern .sidebarBrand{
-  padding:22px 20px 18px !important;
-}
-.unitveroModern .sidebarBrand .logo{
-  font-size:22px !important;
-  color:#fff !important;
-  letter-spacing:-.045em !important;
-}
-.unitveroModern .sidebarBrand .logo::before{
-  content:"⌂";
-  display:inline-grid;
-  place-items:center;
-  width:27px;
-  height:27px;
-  margin-right:8px;
-  border:1px solid #f4c84f;
-  border-radius:8px;
-  color:#f4c84f;
-  font-size:16px;
-  vertical-align:-4px;
-}
-.unitveroModern .sidebarBrand .logo span{color:#f4c84f !important}
-.unitveroModern .brandLabel{
-  display:block !important;
-  margin-top:7px !important;
-  color:#777b78 !important;
-  font-size:8px !important;
-  letter-spacing:.16em !important;
-}
-.unitveroModern .sidebarNav{
-  padding:8px 9px !important;
-}
-.unitveroModern .navSection{
-  color:#666a67 !important;
-  font-size:9px !important;
-  letter-spacing:.14em !important;
-  padding:11px 10px 7px !important;
-}
-.unitveroModern .sidebarNav a{
-  min-height:37px !important;
-  margin:2px 0 !important;
-  padding:0 12px !important;
-  border-radius:8px !important;
-  color:#aeb2ae !important;
-  font-size:12px !important;
-}
-.unitveroModern .sidebarNav a:hover{
-  background:rgba(244,200,79,.06) !important;
-  color:#fff !important;
-}
-.unitveroModern .sidebarNav a.active{
-  background:linear-gradient(90deg,rgba(244,200,79,.20),rgba(244,200,79,.07)) !important;
-  color:#fff !important;
-  box-shadow:inset 3px 0 0 #f4c84f !important;
-}
-.unitveroModern .navIcon{color:#f4c84f !important}
-.unitveroModern .main,
-.unitveroModern .dash,
-.unitveroModern .content,
-.unitveroModern .dashboardMain{
-  background:#080909 !important;
-}
-.unitveroModern .dash{
-  padding:28px 34px 50px !important;
-}
-.unitveroModern .dashboardHeader{
-  margin-bottom:24px !important;
-}
-.unitveroModern .dashboardHeader small{
-  color:#8c908c !important;
-  letter-spacing:.12em !important;
-  font-size:9px !important;
-  font-weight:800 !important;
-}
-.unitveroModern .dashboardHeader h1{
-  margin:7px 0 5px !important;
-  color:#f7f6f1 !important;
-  font-size:30px !important;
-  letter-spacing:-.045em !important;
-}
-.unitveroModern .dashboardSubtitle{color:#8e938f !important}
-.unitveroModern .dashboardHeaderTools{gap:8px !important}
-.unitveroModern .languageSelect,
-.unitveroModern .privacyButton{
-  min-height:36px !important;
-  border:1px solid rgba(244,200,79,.22) !important;
-  background:#0d0f10 !important;
-  color:#e9e6dc !important;
-  border-radius:9px !important;
-}
-.unitveroModern button.primary,
-.unitveroModern .primary{
-  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
-  color:#111 !important;
-  border:1px solid #f8dc88 !important;
-  border-radius:9px !important;
-  font-weight:900 !important;
-  box-shadow:0 8px 20px rgba(220,174,54,.14) !important;
-}
-.unitveroModern .overviewStats{
-  gap:10px !important;
-}
-.unitveroModern .overviewStatCard,
-.unitveroModern .UnitveroChartCard,
-.unitveroModern .dashboardPropertyCard,
-.unitveroModern .activityShowcase,
-.unitveroModern .marketInsightsCard,
-.unitveroModern .commandCard,
-.unitveroModern .panel,
-.unitveroModern .portfolioPropertyCard{
-  background:linear-gradient(145deg,#0c0f10,#111415) !important;
-  border:1px solid rgba(244,200,79,.23) !important;
-  border-radius:12px !important;
-  color:#f7f6f1 !important;
-  box-shadow:0 14px 36px rgba(0,0,0,.20) !important;
-}
-.unitveroModern .overviewStatCard{
-  min-height:116px !important;
-  padding:18px !important;
-}
-.unitveroModern .overviewStatCard span,
-.unitveroModern .overviewStatCard small,
-.unitveroModern .UnitveroChartCard small,
-.unitveroModern .dashboardPropertyCard small{
-  color:#929691 !important;
-}
-.unitveroModern .overviewStatCard b{
-  color:#f7f6f1 !important;
-  font-size:27px !important;
-}
-.unitveroModern .overviewStatCard.statBlue,
-.unitveroModern .overviewStatCard.statGreen,
-.unitveroModern .overviewStatCard.statOrange,
-.unitveroModern .overviewStatCard.statPurple{
-  border-color:rgba(244,200,79,.23) !important;
-}
-.unitveroModern .UnitveroChartsGrid{
-  gap:12px !important;
-}
-.unitveroModern .UnitveroChartCard{
-  padding:18px !important;
-  border-color:rgba(244,200,79,.30) !important;
-  background:#0a0c0d !important;
-}
-.unitveroModern .UnitveroChartHeader{
-  border-bottom:1px solid rgba(244,200,79,.12) !important;
-}
-.unitveroModern .UnitveroChartHeader h2,
-.unitveroModern .commandCard h2,
-.unitveroModern .dashboardPropertyCard h3,
-.unitveroModern .activityShowcase h2{
-  color:#f7f6f1 !important;
-}
-.unitveroModern .UnitveroChartHeader strong{
-  color:#f4c84f !important;
-}
-.unitveroModern .collectionDonut{
-  box-shadow:0 0 0 7px #0a0c0d,0 0 0 8px rgba(244,200,79,.30) !important;
-}
-.unitveroModern .legendCollected,
-.unitveroModern .legendOutstanding,
-.unitveroModern .legendCharges{
-  background:#f4c84f !important;
-}
-.unitveroModern .rentBarTrack{
-  background:#191c1d !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .rentBarTrack span{
-  background:linear-gradient(180deg,#f7d46b,#dcae36) !important;
-  border-radius:4px 4px 0 0 !important;
-}
-.unitveroModern .rentBarColumn b,
-.unitveroModern .rentBarValue{color:#a9aaa6 !important}
-.unitveroModern .occupancyTrack{
-  background:#191c1d !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .occupancyTrack span{
-  background:linear-gradient(90deg,#dcae36,#f7d46b) !important;
-}
-.unitveroModern .dashboardPropertyCard{
-  overflow:hidden !important;
-}
-.unitveroModern .propertyIdentityPanel{
-  background:linear-gradient(135deg,#19150a,#0d1011) !important;
-  border-bottom:1px solid rgba(244,200,79,.15) !important;
-}
-.unitveroModern .propertyBuildingIcon,
-.unitveroModern .propertyHouseIcon,
-.unitveroModern .portfolioHouseIcon{
-  color:#f4c84f !important;
-}
-.unitveroModern .portfolioOccupancy.occupied{
-  color:#c9df91 !important;
-  background:rgba(170,211,91,.08) !important;
-}
-.unitveroModern .portfolioOccupancy.vacant{
-  color:#f4c84f !important;
-  background:rgba(244,200,79,.08) !important;
-}
-.unitveroModern .propertyCardDetails span,
-.unitveroModern .propertyCardFooter,
-.unitveroModern .activityRow span,
-.unitveroModern .activityRow small{
-  color:#8e938f !important;
-}
-.unitveroModern .propertyCardFooter{
-  border-top-color:rgba(244,200,79,.12) !important;
-}
-.unitveroModern .propertyCardFooter b,
-.unitveroModern .propertyArrow,
-.unitveroModern .commandTextButton{
-  color:#f4c84f !important;
-}
-.unitveroModern .activityTypeIcon,
-.unitveroModern .commandSectionIcon,
-.unitveroModern .featureEmptyIcon{
-  background:rgba(244,200,79,.08) !important;
-  border:1px solid rgba(244,200,79,.16) !important;
-  color:#f4c84f !important;
-}
-.unitveroModern .helpLauncher{
-  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
-  color:#111 !important;
-  border:1px solid #f8dc88 !important;
-}
-.unitveroModern .helpPanel{
-  background:#0b0d0e !important;
-  border:1px solid rgba(244,200,79,.28) !important;
-  color:#f7f6f1 !important;
-}
-.unitveroModern .helpPanelHeader{
-  border-bottom-color:rgba(244,200,79,.13) !important;
-}
-.unitveroModern .helpMessage{
-  background:#151819 !important;
-  color:#eee9df !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .helpMessage.user{
-  background:#8b671c !important;
-  color:#fff !important;
-}
-.unitveroModern .helpComposer{border-top-color:rgba(244,200,79,.13) !important}
-.unitveroModern .helpComposer input{
-  background:#0b0d0e !important;
-  color:#f7f6f1 !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern .helpComposer button{
-  background:#f4c84f !important;
-  color:#111 !important;
-}
-.unitveroModern input,
-.unitveroModern select,
-.unitveroModern textarea{
-  background:#0b0d0e !important;
-  color:#f7f6f1 !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern input:focus,
-.unitveroModern select:focus,
-.unitveroModern textarea:focus{
-  border-color:#f4c84f !important;
-  box-shadow:0 0 0 3px rgba(244,200,79,.10) !important;
-}
-.unitveroModern table,
-.unitveroModern th,
-.unitveroModern td{
-  border-color:rgba(244,200,79,.14) !important;
-}
-.unitveroModern th{color:#f4c84f !important}
-@media(max-width:900px){
-  .unitveroModern .sidebar{width:215px !important}
-  .unitveroModern .dash{padding:22px 18px 40px !important}
-}
-@media(max-width:680px){
-  .unitveroModern .sidebar{width:100% !important}
-  .unitveroModern .dash{padding:18px 14px 35px !important}
-}
-
-
-/* FINAL PALETTE LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
-.unitveroModern,
-.unitveroModern *{
-  --blue:#f4c84f !important;
-  --green:#f4c84f !important;
-  --orange:#f4c84f !important;
-  --purple:#f4c84f !important;
-  --teal:#f4c84f !important;
-  --cyan:#f4c84f !important;
-}
-.unitveroModern .green,
-.unitveroModern .blue,
-.unitveroModern .orange,
-.unitveroModern .purple,
-.unitveroModern .teal,
-.unitveroModern .cyan{
-  color:#f4c84f !important;
-  background-color:rgba(244,200,79,.08) !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern [class*="blue"],
-.unitveroModern [class*="green"],
-.unitveroModern [class*="orange"],
-.unitveroModern [class*="purple"],
-.unitveroModern [class*="teal"],
-.unitveroModern [class*="cyan"]{
-  color:#f4c84f !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern svg [fill],
-.unitveroModern svg [stroke]{
-  stroke:#f4c84f !important;
-  fill:currentColor !important;
-}
-
-
-/* FONT LOCK — INTER, matching the generated reference */
-html, body,
-.unitveroModern,
-.unitveroModern *,
-.homePage,
-.homePage *{
-  font-family:Inter,Arial,sans-serif !important;
-  font-synthesis:none !important;
-}
-
-
-/* =========================================================
-   REFERENCE MOCKUP LAYOUT — DO NOT MIX WITH OLD DASHBOARD
-   Black / gold / warm white / gray only.
-   ========================================================= */
-.refTopbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 18px;border-bottom:1px solid rgba(244,200,79,.10);gap:18px}
-.refBreadcrumb{font-size:9px;font-weight:800;letter-spacing:.13em;color:#777a76}
-.refBreadcrumb span{color:#f4c84f;margin:0 7px}
-.refTopActions{display:flex;gap:7px;flex-wrap:wrap}
-.refTopActions button{background:#0c0e0f!important;color:#b9bab5!important;border:1px solid rgba(244,200,79,.18)!important;border-radius:8px!important;padding:8px 11px!important;font-size:10px!important;font-weight:800!important;cursor:pointer}
-.refTopActions button:last-child{background:#f4c84f!important;color:#111!important;border-color:#f4c84f!important}
-
-.refHero{margin-top:16px}
-.refHeroPhoto{position:relative;min-height:355px;overflow:hidden;border:1px solid rgba(244,200,79,.26);border-radius:14px;background:
-  linear-gradient(125deg,#19140a 0%,#0d0f10 45%,#16120a 100%);box-shadow:0 24px 55px rgba(0,0,0,.28)}
-.refHeroPhoto:before{content:"";position:absolute;inset:0;background:
-  radial-gradient(circle at 75% 35%,rgba(244,200,79,.15),transparent 26%),
-  linear-gradient(90deg,rgba(0,0,0,.84) 0%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.12) 74%,rgba(0,0,0,.62) 100%);z-index:1}
-.refHeroShade{position:absolute;inset:0;background:
-  linear-gradient(135deg,rgba(244,200,79,.07),transparent 35%),
-  repeating-linear-gradient(0deg,transparent 0 34px,rgba(244,200,79,.025) 35px 36px);z-index:2}
-.refHeroCopy{position:absolute;left:28px;top:30px;width:42%;z-index:4}
-.refHeroCopy>span{font-size:9px;letter-spacing:.14em;font-weight:900;color:#f4c84f}
-.refHeroCopy h1{font-size:40px;line-height:.98;letter-spacing:-.055em;margin:10px 0 13px;color:#fff}
-.refHeroCopy p{max-width:440px;color:#a6a7a2;font-size:12px;line-height:1.65;margin:0 0 17px}
-.refHeroActions{display:flex;gap:8px}
-.refHeroActions button{padding:9px 13px;border-radius:8px;border:1px solid rgba(244,200,79,.26);background:#0c0e0f;color:#eee9dd;font-size:10px;font-weight:900;cursor:pointer}
-.refHeroActions button:first-child{background:#f4c84f;color:#111;border-color:#f4c84f}
-
-.refHeroProperty{position:absolute;z-index:3;left:43%;top:35px;width:37%;height:278px;border:1px solid rgba(244,200,79,.30);border-radius:11px;overflow:hidden;background:#111415;box-shadow:0 18px 38px rgba(0,0,0,.35);transform:perspective(900px) rotateY(-3deg)}
-.refPropertyImage{height:198px;background:linear-gradient(145deg,#17130a,#282019 50%,#0d0f10);overflow:hidden}
-.refPropertyImage img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.72) contrast(1.03)}
-.refBuildingPlaceholder{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;background:
-  linear-gradient(145deg,transparent 25%,rgba(244,200,79,.09)),
-  linear-gradient(135deg,#2a261c 0%,#141617 55%,#090a0b 100%)}
-.refBuildingPlaceholder span{font-size:8px;color:#f4c84f;letter-spacing:.14em;font-weight:900}
-.refBuildingPlaceholder b{font-size:16px;color:#fff;margin-top:5px}
-.refPropertyInfo{padding:10px 12px;display:grid;gap:3px}
-.refPropertyInfo small{font-size:7px;color:#777b77;letter-spacing:.12em}
-.refPropertyInfo b{font-size:12px;color:#f5f3ec}
-.refPropertyInfo span{font-size:9px;color:#8d918c}
-
-.refCollectionCard{position:absolute;right:22px;top:23px;width:180px;padding:14px;border:1px solid rgba(244,200,79,.28);border-radius:10px;background:rgba(10,12,13,.94);z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.35)}
-.refCollectionCard small{display:block;font-size:7px;letter-spacing:.13em;color:#8b8e8a;font-weight:900}
-.refCollectionCard>strong{display:block;color:#f4c84f;font-size:25px;margin:4px 0 7px}
-.refMiniTrack{height:5px;background:#1d1f1f;border-radius:99px;overflow:hidden;margin-bottom:10px}
-.refMiniTrack span{display:block;height:100%;background:#f4c84f;border-radius:99px}
-.refCollectionCard>div:not(.refMiniTrack){display:flex;justify-content:space-between;margin-top:6px;font-size:8px}
-.refCollectionCard>div span{color:#838782}.refCollectionCard>div b{color:#eee9dd}
-
-.refStats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:11px}
-.refStats article{padding:15px 16px;border:1px solid rgba(244,200,79,.20);border-radius:10px;background:#0d1011;min-height:94px}
-.refStats small{display:block;color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
-.refStats strong{display:block;color:#f7f5ee;font-size:24px;letter-spacing:-.04em;margin:7px 0 2px}
-.refStats article:nth-child(2) strong{color:#f4c84f}
-.refStats span{font-size:8px;color:#888c87}
-
-.refDashboardGrid{display:grid;grid-template-columns:1.6fr .75fr;gap:10px;margin-top:10px}
-.refPanel{padding:17px;border:1px solid rgba(244,200,79,.22);border-radius:11px;background:#0d1011;min-height:250px}
-.refWide{min-width:0}
-.refPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-.refPanelHead small{display:block;font-size:7px;letter-spacing:.13em;color:#777b77;font-weight:900}
-.refPanelHead h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
-.refPanelHead strong{color:#f4c84f;font-size:17px}
-.refPanelHead button{background:transparent;border:0;color:#f4c84f;font-size:9px;font-weight:900;cursor:pointer}
-.refChart{height:175px;border:1px solid rgba(244,200,79,.14);border-radius:8px;padding:14px 10px 8px;background:#0a0c0d}
-.refChartBars{height:100%;display:flex;align-items:flex-end;gap:10px}
-.refChartBars>div{height:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
-.refChartBars>div span{width:100%;max-width:22px;background:#242626;border-radius:4px 4px 1px 1px;display:block;border:1px solid rgba(244,200,79,.06)}
-.refChartBars>div.active span{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 16px rgba(244,200,79,.12)}
-.refChartBars small{font-size:7px;color:#6f736f}
-
-.refHealthRing{width:130px;height:130px;margin:8px auto 13px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#f4c84f 0deg calc(var(--occ, .88)*360deg),#232626 calc(var(--occ, .88)*360deg) 360deg);position:relative}
-.refHealthRing{--occ:0.88}
-.refHealthRing:after{content:"";position:absolute;inset:10px;background:#0d1011;border-radius:50%;border:1px solid rgba(244,200,79,.12)}
-.refHealthRing>div{position:relative;z-index:2;text-align:center;display:grid}
-.refHealthRing b{font-size:24px;color:#fff}.refHealthRing span{font-size:8px;color:#858984}
-.refHealthStats{display:flex;justify-content:center;gap:20px;color:#858984;font-size:8px}
-.refHealthStats b{color:#f4c84f;font-size:14px;margin-right:3px}
-
-.refQuickActions{margin-top:10px;padding:17px;border:1px solid rgba(244,200,79,.20);border-radius:11px;background:#0d1011;display:flex;align-items:center;justify-content:space-between;gap:18px}
-.refQuickActions small{color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
-.refQuickActions h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
-.refActionGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;flex:1}
-.refActionGrid button{min-height:70px;border:1px solid rgba(244,200,79,.17);border-radius:9px;background:#101314;color:#c9c8c0;display:grid;place-items:center;gap:5px;cursor:pointer}
-.refActionGrid button:hover{border-color:rgba(244,200,79,.45);background:#151718}
-.refActionGrid b{color:#f4c84f;font-size:16px}.refActionGrid span{font-size:8px;font-weight:800}
-
-@media(max-width:1050px){
-  .refHeroCopy{width:50%}.refHeroProperty{left:48%;width:40%}.refCollectionCard{right:14px}
-  .refDashboardGrid{grid-template-columns:1fr}.refQuickActions{display:grid}.refActionGrid{grid-template-columns:repeat(3,1fr)}
-}
-@media(max-width:720px){
-  .refTopbar{align-items:flex-start;flex-direction:column}.refTopActions{width:100%}
-  .refHeroPhoto{min-height:620px}.refHeroCopy{position:relative;left:0;top:0;width:auto;padding:25px 20px}.refHeroCopy h1{font-size:34px}
-  .refHeroProperty{left:20px;right:20px;top:245px;width:auto;height:230px;transform:none}
-  .refPropertyImage{height:155px}.refCollectionCard{right:14px;top:465px;width:170px}
-  .refStats{grid-template-columns:repeat(2,1fr)}.refActionGrid{grid-template-columns:repeat(2,1fr)}
-}
-
-
-/* =========================================================
-   FINAL GENERATED-IMAGE LAYOUT — STRUCTURE + SPACING + PALETTE
-   ========================================================= */
-.unitveroModern .dash{margin-left:200px!important;padding:112px 26px 0!important;background:#070808!important;min-height:100vh!important}
-.unitveroModern .referenceHeader{left:200px!important;height:83px!important;background:#070808!important;border-bottom:1px solid rgba(244,200,79,.42)!important;padding:0 28px!important}
-.unitveroModern .sidebar{width:200px!important;background:#050606!important;border-right:1px solid rgba(244,200,79,.40)!important}
-.generatedDashboard{max-width:1110px;margin:0 auto;padding-bottom:0}
-.generatedWelcome{display:flex;justify-content:space-between;align-items:flex-end;gap:25px;margin-bottom:25px}
-.generatedEyebrow{font-size:10px;letter-spacing:.12em;font-weight:900;color:#f4c84f}
-.generatedWelcome h1{margin:7px 0 2px;color:#f8f7f1;font-size:38px;line-height:1.05;letter-spacing:-.055em;font-weight:800}
-.generatedWelcome p{margin:0;color:#969993;font-size:14px}
-.generatedWelcomeActions{display:grid;gap:9px;justify-items:end}
-.generatedWelcomeActions select{width:190px;height:40px;background:#0d0f10!important;border:1px solid rgba(244,200,79,.32)!important;border-radius:8px!important;color:#eeeae0!important;padding:0 12px!important;font-weight:700!important}
-.generatedWelcomeActions>div{display:flex;gap:9px}
-.generatedSecondary,.generatedPrimary{height:42px;border-radius:8px!important;padding:0 15px!important;font-size:11px!important;font-weight:900!important;cursor:pointer!important}
-.generatedSecondary{background:#080909!important;border:1px solid rgba(244,200,79,.34)!important;color:#f3f0e7!important}.generatedPrimary{background:#f4c84f!important;border:1px solid #f4c84f!important;color:#111!important}
-.generatedStats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
-.generatedStats article{height:117px;padding:17px 19px;border:1px solid rgba(244,200,79,.44);border-radius:10px;background:linear-gradient(145deg,#0d0f10,#101212);display:flex;flex-direction:column}
-.generatedStats article span{font-size:11px;color:#d0cec4;font-weight:600}.generatedStats article strong{margin-top:7px;font-size:30px;line-height:1;color:#f7f5ee;letter-spacing:-.04em}.generatedStats article small{margin-top:auto;color:#8c908b;font-size:8px;font-weight:800;letter-spacing:.07em}
-.generatedPanel{background:#0b0d0e;border:1px solid rgba(244,200,79,.44);border-radius:10px;padding:18px 19px;margin-bottom:12px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-.generatedPanelTitle span{display:block;color:#a9a79f;font-size:9px;font-weight:900;letter-spacing:.09em}.generatedPanelTitle h2{margin:5px 0 0;color:#f7f5ee;font-size:20px;letter-spacing:-.035em}
-.generatedCollection{height:255px}.generatedCollectionBody{display:grid;grid-template-columns:170px 1fr;align-items:center;height:180px;gap:22px}.generatedDonut{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:auto;background:conic-gradient(#f4c84f 0 var(--rate),#262828 var(--rate) 100%);position:relative}.generatedDonut:after{content:"";position:absolute;inset:13px;background:#0b0d0e;border-radius:50%;border:1px solid rgba(255,255,255,.04)}.generatedDonut>div{position:relative;z-index:1;text-align:center;display:grid}.generatedDonut strong{font-size:22px;color:#f7f5ee}.generatedDonut small{font-size:9px;color:#8f938e}.generatedLegend{display:grid;gap:0}.generatedLegend div{height:47px;border-bottom:1px solid rgba(244,200,79,.25);display:flex;align-items:center;justify-content:space-between}.generatedLegend span{display:flex;align-items:center;gap:10px;color:#b0b1ac;font-size:11px}.generatedLegend i{width:12px;height:12px;border-radius:50%;background:#f4c84f;display:inline-block}.generatedLegend b{font-size:11px;color:#f4c84f}
-.generatedOccupancy{height:230px}.generatedPercent{display:block;margin:10px 0 6px;color:#f4c84f;font-size:16px}.generatedOccupancyTrack{height:14px;background:#191b1b;border:1px solid rgba(244,200,79,.11);border-radius:99px;overflow:hidden}.generatedOccupancyTrack span{display:block;height:100%;background:linear-gradient(90deg,#f4c84f,#f7df86);border-radius:99px}.generatedOccupancyBoxes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:15px}.generatedOccupancyBoxes div{height:72px;background:#f4f2e9;border-radius:8px;display:grid;place-items:center;color:#111}.generatedOccupancyBoxes strong{font-size:18px;line-height:1}.generatedOccupancyBoxes span{font-size:10px;color:#64645e}
-.generatedSixMonths{height:345px}.generatedAmount{display:block;color:#f4c84f;font-size:17px;margin-top:12px}.generatedMonths{height:235px;display:flex;align-items:flex-end;gap:26px;padding:20px 10px 0;border-top:1px solid rgba(244,200,79,.12);margin-top:9px}.generatedMonths>div{position:relative;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.generatedMonths b{display:block;width:45px;max-height:185px;min-height:7px;background:#1b1e1e;border:1px solid rgba(244,200,79,.08);border-radius:7px 7px 3px 3px}.generatedMonths b.active{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 20px rgba(244,200,79,.12)}.generatedMonths span{margin-top:8px;color:#858983;font-size:10px}.generatedMonths small{position:absolute;bottom:29px;color:#f4c84f;font-size:9px;font-weight:800}
-.generatedFooter{height:70px;border-top:1px solid rgba(244,200,79,.12);display:flex;align-items:center;justify-content:space-between;color:#858983;font-size:10px;margin-top:25px}.generatedFooter div{display:flex;gap:25px}.generatedFooter button{background:none;border:0;color:#9c9d98;font-size:10px;cursor:pointer}
-@media(max-width:850px){.generatedWelcome{align-items:flex-start;flex-direction:column}.generatedWelcomeActions{justify-items:start;width:100%}.generatedStats{grid-template-columns:repeat(2,1fr)}.generatedCollectionBody{grid-template-columns:145px 1fr}.generatedMonths{gap:12px}}
-@media(max-width:650px){.unitveroModern .sidebar{width:70px!important}.unitveroModern .referenceHeader{left:70px!important}.unitveroModern .dash{margin-left:70px!important;padding-left:14px!important;padding-right:14px!important}.generatedStats{grid-template-columns:1fr}.generatedCollection{height:auto}.generatedCollectionBody{grid-template-columns:1fr;height:auto;padding-top:15px}.generatedLegend{margin-top:10px}.generatedOccupancyBoxes{grid-template-columns:1fr}.generatedSixMonths{overflow:hidden}.generatedMonths{gap:5px}.generatedMonths b{width:30px}.generatedFooter{height:auto;padding:20px 0;gap:10px;align-items:flex-start;flex-direction:column}}
 
       `}</style>
     </div>
