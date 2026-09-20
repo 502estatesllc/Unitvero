@@ -4,43 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import StripeOnboarding from "./StripeOnboarding";
-
-const COPY = {
-  en: {
-    overview: "Overview",
-    properties: "Properties",
-    tenants: "Tenants",
-    rent: "Rent",
-    payments: "Payments & Payouts",
-    leases: "Leases",
-    applications: "Applications",
-    messages: "Messages",
-    documents: "Documents",
-    maintenance: "Maintenance",
-    greeting: "Good to see you",
-    portfolioUpdate: "Here's what’s happening with your portfolio.",
-    addProperty: "+ Add Property",
-    help: "Help",
-    privacy: "Privacy",
-  },
-  es: {
-    overview: "Resumen",
-    properties: "Propiedades",
-    tenants: "Inquilinos",
-    rent: "Alquiler",
-    payments: "Pagos y depósitos",
-    leases: "Contratos",
-    applications: "Solicitudes",
-    messages: "Mensajes",
-    documents: "Documentos",
-    maintenance: "Mantenimiento",
-    greeting: "Qué bueno verte",
-    portfolioUpdate: "Esto es lo que está pasando con tu portafolio.",
-    addProperty: "+ Agregar propiedad",
-    help: "Ayuda",
-    privacy: "Privacidad",
-  },
-};
+import {
+  LANGUAGE_OPTIONS,
+  getLanguageDirection,
+  getTranslation,
+  normalizeLanguage,
+} from "../lib/translations";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -55,7 +24,9 @@ export default function Dashboard() {
   const [tenancies, setTenancies] = useState([]);
   const [editingTenancy, setEditingTenancy] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [applicantInvitations, setApplicantInvitations] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
 
   const [propertySearch, setPropertySearch] = useState("");
   const [propertyFilter, setPropertyFilter] = useState("all");
@@ -97,7 +68,6 @@ export default function Dashboard() {
   const [signatureConsent, setSignatureConsent] = useState(false);
   const [signatureMode, setSignatureMode] = useState("draw");
   const [signatureSubmitting, setSignatureSubmitting] = useState(false);
-  const [appLanguage, setAppLanguage] = useState("en");
   const [proScreenOpen, setProScreenOpen] = useState(false);
   const [rentalValueOpen, setRentalValueOpen] = useState(false);
   const [rentalPropertyId, setRentalPropertyId] = useState("");
@@ -142,6 +112,7 @@ export default function Dashboard() {
       text: "Hi! I’m Unitvero Help. Ask me about properties, tenants, rent, payments, or applications.",
     },
   ]);
+  const [supportBusy, setSupportBusy] = useState(false);
 
   const r = useRouter();
 
@@ -1189,19 +1160,6 @@ export default function Dashboard() {
   }
 
 
-  const unitveroLanguages = [
-    ["en", "English"],
-    ["es", "Español"],
-    ["fr", "Français"],
-    ["de", "Deutsch"],
-    ["pt", "Português"],
-    ["zh", "中文"],
-    ["ko", "한국어"],
-    ["vi", "Tiếng Việt"],
-    ["ar", "العربية"],
-    ["ru", "Русский"],
-  ];
-
   const unitveroProductionChecklist = [
     { id:"auth", label:"Authentication & profile setup", area:"Account", status:"built" },
     { id:"properties", label:"Properties & units", area:"Landlord", status:"built" },
@@ -1233,35 +1191,97 @@ export default function Dashboard() {
     })[status] || status;
   }
 
-  const languageLabels = {
-    en: {
-      help: "Help",
-      home: "Home",
-      payments: "Payments",
-      maintenance: "Maintenance",
-      documents: "Documents",
-      messages: "Messages",
-      bookkeeping: "Bookkeeping",
-      upgrade: "Upgrade to Pro",
-      propertyValue: "Rent Value",
-    },
-    es: {
-      help: "Ayuda",
-      home: "Inicio",
-      payments: "Pagos",
-      maintenance: "Mantenimiento",
-      documents: "Documentos",
-      messages: "Mensajes",
-      bookkeeping: "Contabilidad",
-      upgrade: "Actualizar a Pro",
-      propertyValue: "Valor de renta",
-    },
-  };
-
   function uiLabel(key) {
-    return languageLabels[appLanguage]?.[key] ||
-      languageLabels.en[key] ||
-      key;
+    return getTranslation(language, key);
+  }
+
+  function escapeInlineText(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
+  }
+
+  function renderInlineMarkdown(value) {
+    const text = String(value ?? "");
+    const matches = [...text.matchAll(/\[(.+?)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*/g)];
+
+    if (!matches.length) {
+      return <>{escapeInlineText(text)}</>;
+    }
+
+    const nodes = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const full = match[0];
+      const linkLabel = match[1];
+      const linkHref = match[2];
+      const inlineCode = match[3];
+      const boldText = match[4];
+      const italicText = match[5];
+      const start = match.index ?? 0;
+
+      if (start > lastIndex) {
+        nodes.push(<React.Fragment key={`plain-${index}`}>{escapeInlineText(text.slice(lastIndex, start))}</React.Fragment>);
+      }
+
+      if (linkHref) {
+        const safeHref = /^https?:\/\/|^mailto:|^tel:/.test(linkHref) ? linkHref : "#";
+        nodes.push(
+          <a key={`link-${index}`} href={safeHref} target="_blank" rel="noreferrer noopener">
+            {linkLabel}
+          </a>,
+        );
+      } else if (inlineCode) {
+        nodes.push(<code key={`code-${index}`}>{inlineCode}</code>);
+      } else if (boldText) {
+        nodes.push(<strong key={`bold-${index}`}>{renderInlineMarkdown(boldText)}</strong>);
+      } else if (italicText) {
+        nodes.push(<em key={`italic-${index}`}>{renderInlineMarkdown(italicText)}</em>);
+      }
+
+      lastIndex = start + full.length;
+    });
+
+    if (lastIndex < text.length) {
+      nodes.push(<React.Fragment key="tail">{escapeInlineText(text.slice(lastIndex))}</React.Fragment>);
+    }
+
+    return <>{nodes}</>;
+  }
+
+  function renderSafeMarkdown(text) {
+    const source = String(text ?? "").replace(/\r\n/g, "\n").trim();
+    if (!source) return null;
+
+    const blocks = source.split(/\n{2,}/).filter(Boolean);
+
+    return (
+      <>
+        {blocks.map((block, blockIndex) => {
+          const lines = block.split("\n");
+          const isList = lines.every((line) => /^([-*]|\d+\.)\s+/.test(line.trim()));
+
+          if (isList) {
+            const ordered = lines.every((line) => /^\d+\.\s+/.test(line.trim()));
+            const ListTag = ordered ? "ol" : "ul";
+
+            return (
+              <ListTag key={`block-${blockIndex}`} className="helpMarkdownList">
+                {lines.map((line, lineIndex) => {
+                  const content = line.trim().replace(/^([-*]|\d+\.)\s+/, "");
+                  return <li key={`${blockIndex}-${lineIndex}`}>{renderInlineMarkdown(content)}</li>;
+                })}
+              </ListTag>
+            );
+          }
+
+          return <p key={`block-${blockIndex}`}>{renderInlineMarkdown(block)}</p>;
+        })}
+      </>
+    );
   }
 
   function calculateRentalSuggestion(rows) {
@@ -1497,6 +1517,23 @@ export default function Dashboard() {
         role: user.user_metadata?.role || "landlord",
       };
 
+    const { data: userSettingsData } = await s
+      .from("user_settings")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (userSettingsData) {
+      const savedLanguage = normalizeLanguage(userSettingsData.preferred_language || "en");
+      const savedPrivacy = Boolean(userSettingsData.privacy_mode);
+      setLanguage(savedLanguage);
+      setPrivacyMode(savedPrivacy);
+      window.localStorage.setItem("unitvero-language", savedLanguage);
+      window.localStorage.setItem("unitvero-privacy", String(savedPrivacy));
+      document.documentElement.lang = savedLanguage;
+      document.documentElement.dir = getLanguageDirection(savedLanguage);
+    }
+
     setProfile(resolvedProfile);
     setAccountReady(true);
 
@@ -1543,6 +1580,19 @@ export default function Dashboard() {
       alert("Could not load applications: " + applicationError.message);
     } else {
       setApplications(applicationData || []);
+    }
+
+    const { data: applicantInvitationData, error: applicantInvitationError } = await s
+      .from("applicant_invitations")
+      .select("*")
+      .eq("landlord_id", user.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (applicantInvitationError) {
+      console.error("Could not load applicant invitations:", applicantInvitationError);
+    } else {
+      setApplicantInvitations(applicantInvitationData || []);
     }
 
     const propertyIds = (properties || []).map((property) => property.id);
@@ -1733,7 +1783,22 @@ export default function Dashboard() {
     }
 
     if (expenseResult.error) console.error("Could not load maintenance expenses:", expenseResult.error);
-    else setMaintenanceExpenses(expenseResult.data || []);
+    else {
+      const expenseRows = expenseResult.data || [];
+      const withReceipts = await Promise.all(
+        expenseRows.map(async (expense) => {
+          if (!expense.receipt_path) return expense;
+          const { data: signedData } = await s.storage
+            .from("unitvero-media")
+            .createSignedUrl(expense.receipt_path, 60 * 60);
+          return {
+            ...expense,
+            receipt_signed_url: signedData?.signedUrl || null,
+          };
+        }),
+      );
+      setMaintenanceExpenses(withReceipts);
+    }
     if (documentResult.error) console.error("Could not load documents:", documentResult.error);
     else setDocuments(documentResult.data || []);
     if (templateResult.error) console.error("Could not load templates:", templateResult.error);
@@ -1745,11 +1810,13 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const savedLanguage = window.localStorage.getItem("unitvero-language");
+    const savedLanguage = normalizeLanguage(window.localStorage.getItem("unitvero-language"));
     const savedPrivacy = window.localStorage.getItem("unitvero-privacy");
 
-    if (savedLanguage === "en" || savedLanguage === "es") {
+    if (savedLanguage) {
       setLanguage(savedLanguage);
+      document.documentElement.lang = savedLanguage;
+      document.documentElement.dir = getLanguageDirection(savedLanguage);
     }
 
     if (savedPrivacy === "true") {
@@ -1757,15 +1824,38 @@ export default function Dashboard() {
     }
   }, []);
 
+  async function saveUserPreferences(nextLanguage, nextPrivacyMode) {
+    const s = supabase();
+    const { data: { user }, error: userError } = await s.auth.getUser();
+    if (userError || !user) return;
+
+    const nextLanguageValue = normalizeLanguage(nextLanguage || language);
+    const nextPrivacyValue = Boolean(nextPrivacyMode ?? privacyMode);
+
+    await s.from("user_settings").upsert(
+      {
+        user_id: user.id,
+        preferred_language: nextLanguageValue,
+        privacy_mode: nextPrivacyValue,
+      },
+      { onConflict: "user_id" }
+    );
+  }
+
   function changeLanguage(nextLanguage) {
-    setLanguage(nextLanguage);
-    window.localStorage.setItem("unitvero-language", nextLanguage);
+    const resolved = normalizeLanguage(nextLanguage);
+    setLanguage(resolved);
+    window.localStorage.setItem("unitvero-language", resolved);
+    document.documentElement.lang = resolved;
+    document.documentElement.dir = getLanguageDirection(resolved);
+    saveUserPreferences(resolved, privacyMode);
   }
 
   function togglePrivacy() {
     setPrivacyMode((current) => {
       const next = !current;
       window.localStorage.setItem("unitvero-privacy", String(next));
+      saveUserPreferences(language, next);
       return next;
     });
   }
@@ -2244,6 +2334,57 @@ export default function Dashboard() {
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
     if (!user) return alert("Please sign in again.");
+
+    const existing = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+    const fileInput = form.receiptFile;
+    const receiptFile = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+    let receiptMetadata = {};
+
+    if (receiptFile) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "application/pdf",
+      ];
+
+      if (!allowedTypes.includes(receiptFile.type) && !/\.(png|jpe?g|webp|gif|pdf)$/i.test(receiptFile.name)) {
+        return alert("Receipts must be an image or PDF file up to 10 MB.");
+      }
+
+      if (receiptFile.size > 10 * 1024 * 1024) {
+        return alert("Receipt file is too large. Please upload a file up to 10 MB.");
+      }
+
+      const safeName = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storagePath = `maintenance-receipts/${request.id}/${user.id}/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await s.storage
+        .from("unitvero-media")
+        .upload(storagePath, receiptFile, {
+          upsert: true,
+          contentType: receiptFile.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        return alert("Could not upload receipt: " + uploadError.message);
+      }
+
+      if (existing?.receipt_path && existing.receipt_path !== storagePath) {
+        await s.storage.from("unitvero-media").remove([existing.receipt_path]);
+      }
+
+      receiptMetadata = {
+        receipt_name: receiptFile.name,
+        receipt_path: storagePath,
+        receipt_content_type: receiptFile.type || "application/pdf",
+        receipt_size_bytes: receiptFile.size,
+        receipt_uploaded_at: new Date().toISOString(),
+      };
+    }
+
     const payload = {
       maintenance_request_id: request.id,
       landlord_id: user.id,
@@ -2256,8 +2397,9 @@ export default function Dashboard() {
       other_cost: Number(form.otherCost.value || 0),
       category: "Repairs and maintenance",
       include_in_tax_report: form.includeTax.checked,
+      ...receiptMetadata,
     };
-    const existing = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+
     const query = existing
       ? s.from("maintenance_expenses").update(payload).eq("id", existing.id)
       : s.from("maintenance_expenses").insert(payload);
@@ -2339,37 +2481,59 @@ export default function Dashboard() {
     }
   }
 
-  function sendHelpMessage(e) {
+  async function sendHelpMessage(e) {
     e.preventDefault();
 
     const text = helpDraft.trim();
-    if (!text) return;
+    if (!text || supportBusy) return;
 
-    const lower = text.toLowerCase();
-    let reply =
-      "Thanks — your question is noted. For account-specific help, include the page you are on and what you expected to happen.";
-
-    if (lower.includes("property")) {
-      reply =
-        "Open Properties to add a property or select one to manage its tenants, rent, units, and market insights.";
-    } else if (lower.includes("tenant")) {
-      reply =
-        "Open Tenants to review renters. You can also open a property first and choose Add Tenant.";
-    } else if (lower.includes("rent") || lower.includes("payment")) {
-      reply =
-        "Use Rent for charges and payment records. Use Payments & Payouts for online transactions and bank deposits.";
-    } else if (lower.includes("application")) {
-      reply =
-        "Open Applications to create, review, approve, or reject a rental application.";
-    }
-
+    const { data: { user } } = await supabase().auth.getUser();
     const sentAt = Date.now();
+    setSupportBusy(true);
     setHelpMessages((current) => [
       ...current,
       { id: `user-${sentAt}`, sender: "user", text },
-      { id: `support-${sentAt}`, sender: "support", text: reply },
+      { id: `support-${sentAt}`, sender: "support", text: "Thinking…" },
     ]);
     setHelpDraft("");
+
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          email: user?.email || "",
+          page: "dashboard",
+          userRole: profile?.role || "landlord",
+          userId: user?.id || null,
+          source: "dashboard",
+        }),
+      });
+
+      const payload = await response.json();
+      const reply = payload?.reply || "Please use the representative ticket flow for a human response.";
+
+      setHelpMessages((current) =>
+        current.map((message) =>
+          message.id === `support-${sentAt}` ? { ...message, text: reply } : message
+        )
+      );
+
+      if (!payload?.success && payload?.supportEmail) {
+        setNotice(`Support follow-up: ${payload.supportEmail}`);
+      }
+    } catch (error) {
+      setHelpMessages((current) =>
+        current.map((message) =>
+          message.id === `support-${sentAt}`
+            ? { ...message, text: "I’m having trouble reaching support right now. Please use the representative ticket flow for immediate assistance." }
+            : message
+        )
+      );
+    } finally {
+      setSupportBusy(false);
+    }
   }
 
   async function out() {
@@ -2582,7 +2746,7 @@ export default function Dashboard() {
     0,
   );
 
-  const t = (key) => COPY[language]?.[key] || COPY.en[key] || key;
+  const t = (key) => getTranslation(language, key);
 
   function propertyInsights(property) {
     if (!property) return { value: null, marketRent: null, source: null };
@@ -2642,13 +2806,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={`app unitveroModern ${privacyMode ? "privacyOn" : ""}`}>
+    <div className={`app unitveroModern utShell ${privacyMode ? "privacyOn" : ""}`}>
       <aside className="sidebar">
         <div className="sidebarBrand">
           <b className="logo">
             unit<span>vero</span>
           </b>
-          <span className="brandLabel">PROPERTY MANAGEMENT</span>
+          <span className="brandLabel">{getTranslation(language, "propertyManagement")}</span>
         </div>
 
         <div style={{
@@ -2658,11 +2822,11 @@ export default function Dashboard() {
           gap:8,
         }}>
           <label style={{fontSize:11,fontWeight:800,color:"#687386"}}>
-            LANGUAGE
+            {getTranslation(language, "language")}
           </label>
           <select
-            value={appLanguage}
-            onChange={(e) => setAppLanguage(e.target.value)}
+            value={language}
+            onChange={(e) => changeLanguage(e.target.value)}
             style={{
               minHeight:38,
               border:"1px solid #dbe3ef",
@@ -2671,8 +2835,8 @@ export default function Dashboard() {
               background:"#fff",
             }}
           >
-            {unitveroLanguages.map(([code, name]) => (
-              <option key={code} value={code}>{name}</option>
+            {LANGUAGE_OPTIONS.map(({ code, label }) => (
+              <option key={code} value={code}>{label}</option>
             ))}
           </select>
         </div>
@@ -2695,7 +2859,7 @@ export default function Dashboard() {
         </button>
 
         <nav className="sidebarNav">
-          <span className="navSection">WORKSPACE</span>
+          <span className="navSection">{getTranslation(language, "workspace")}</span>
 
           <a
             className={view === "overview" ? "active" : ""}
@@ -2744,7 +2908,7 @@ export default function Dashboard() {
             <span>{t("payments")}</span>
           </a>
 
-          <span className="navSection navSectionSecond">MANAGEMENT</span>
+          <span className="navSection navSectionSecond">{getTranslation(language, "management")}</span>
 
           <a
             className={view === "leases" ? "active" : ""}
@@ -2794,7 +2958,7 @@ export default function Dashboard() {
             onClick={() => setView("qa")}
           >
             <span className="navIcon">✓</span>
-            <span>Setup & QA</span>
+            <span>{getTranslation(language, "setupAndQa")}</span>
           </a>
 
           <a
@@ -2826,7 +2990,7 @@ export default function Dashboard() {
             onClick={() => setView("bookkeeping")}
           >
             <span className="navIcon">▤</span>
-            <span>Bookkeeping</span>
+            <span>{getTranslation(language, "bookkeeping")}</span>
           </a>
         </nav>
         <div style={{
@@ -2849,7 +3013,7 @@ export default function Dashboard() {
               fontWeight:700,
             }}
           >
-            Privacy Policy
+            {getTranslation(language, "privacyPolicy")}
           </button>
           <span style={{color:"#8a95a5"}}>
             Unitvero privacy & data choices
@@ -2868,7 +3032,7 @@ export default function Dashboard() {
             <span>{profile?.role || "Landlord"}</span>
           </div>
 
-          <button type="button" onClick={out} title="Sign out">
+          <button type="button" onClick={out} title={getTranslation(language, "signOut")}>
             ↗
           </button>
         </div>
@@ -2879,13 +3043,13 @@ export default function Dashboard() {
           <div className="generatedDashboard">
             <section className="generatedWelcome">
               <div>
-                <span className="generatedEyebrow">LANDLORD DASHBOARD</span>
+                <span className="generatedEyebrow">{getTranslation(language, "landlordDashboard")}</span>
                 <h1>Hello, {profile?.full_name?.split(" ")[0] || "Ladon"}!</h1>
                 <p>Here’s what’s happening with your properties today.</p>
               </div>
               <div className="generatedWelcomeActions">
                 <select value={bookkeepingMonth} onChange={(e)=>setBookkeepingMonth(e.target.value)} aria-label="Period">
-                  <option value="all">This Month</option>
+                  <option value="all">{getTranslation(language, "thisMonth")}</option>
                   <option value="0">January</option><option value="1">February</option><option value="2">March</option>
                   <option value="3">April</option><option value="4">May</option><option value="5">June</option>
                   <option value="6">July</option><option value="7">August</option><option value="8">September</option>
@@ -2893,7 +3057,7 @@ export default function Dashboard() {
                 </select>
                 <div>
                   <button type="button" className="generatedSecondary" onClick={togglePrivacy}>◉ {privacyMode ? "Show" : "Hide"}</button>
-                  <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>+ Add Property</button>
+                  <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>{getTranslation(language, "addProperty")}</button>
                 </div>
               </div>
             </section>
@@ -2923,9 +3087,9 @@ export default function Dashboard() {
             </section>
 
             <section className="generatedPanel generatedRecentPayments">
-              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>ACTIVITY</span><h2>Recent Payments</h2></div><button type="button" onClick={()=>setView("rent")}>View All ›</button></div>
+              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>ACTIVITY</span><h2>{getTranslation(language, "recentPayments")}</h2></div><button type="button" onClick={()=>setView("rent")}>{getTranslation(language, "viewAll")} ›</button></div>
               <div className="generatedPaymentList">
-                {rentPayments.length === 0 ? <div className="generatedEmptyPayment">No payments recorded yet.</div> : rentPayments.slice(0,5).map((payment)=>{
+                {rentPayments.length === 0 ? <div className="generatedEmptyPayment">{getTranslation(language, "noPaymentsRecorded")}</div> : rentPayments.slice(0,5).map((payment)=>{
                   const paymentProperty=props.find((item)=>item.id===payment.property_id);
                   return <article key={payment.id}><span className="generatedPaymentThumb">⌂</span><div><b>{paymentProperty?.address || "Rental payment"}</b><small>{payment.payment_date ? new Date(`${payment.payment_date}T00:00:00`).toLocaleDateString() : "Recent"}</small></div><strong className="privacyValue">${Number(payment.amount||0).toLocaleString()}</strong></article>;
                 })}
@@ -2933,11 +3097,11 @@ export default function Dashboard() {
             </section>
 
             <section className="generatedQuickActions">
-              <h2>Quick Actions</h2>
+              <h2>{getTranslation(language, "quickActions")}</h2>
               <div>
                 {[
-                  ["⌂","Add Property","properties"],["♙","Add Tenant","tenants"],["▤","Create Lease","leases"],
-                  ["◎","Record Payment","rent"],["⚒","Maintenance","maintenance"],["▥","Generate Report","bookkeeping"],
+                  ["⌂",getTranslation(language, "addProperty"),"properties"],["♙",getTranslation(language, "addTenant"),"tenants"],["▤",getTranslation(language, "createLease"),"leases"],
+                  ["◎",getTranslation(language, "recordPayment"),"rent"],["⚒",getTranslation(language, "maintenance"),"maintenance"],["▥",getTranslation(language, "generateReport"),"bookkeeping"],
                 ].map(([icon,label,target])=><button type="button" key={label} onClick={()=>setView(target)}><span>{icon}</span><b>{label}</b></button>)}
               </div>
             </section>
@@ -2947,7 +3111,7 @@ export default function Dashboard() {
               <article><span>Portfolio</span><strong>{props.length} properties</strong><small>{dashboardTotalUnits} total units</small></article>
             </section>
 
-            <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>Privacy Policy</button><button type="button">Terms of Service</button></div></footer>
+            <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>{getTranslation(language, "privacyPolicy")}</button><button type="button">{getTranslation(language, "termsOfService")}</button></div></footer>
           </div>
         )}
 
@@ -2955,8 +3119,8 @@ export default function Dashboard() {
           <section className="portfolioPage">
             <div className="portfolioPageHeader">
               <div>
-                <small>PROPERTY PORTFOLIO</small>
-                <h1>Properties</h1>
+                <small>{getTranslation(language, "propertyPortfolio")}</small>
+                <h1>{getTranslation(language, "properties")}</h1>
 
                 <p>Manage your rental portfolio, occupancy and monthly rent.</p>
               </div>
@@ -2973,7 +3137,7 @@ export default function Dashboard() {
                     });
                 }}
               >
-                + Add Property
+                {getTranslation(language, "addProperty")}
               </button>
             </div>
 
@@ -5603,15 +5767,25 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  setView("newApplication");
-                }}
-              >
-                + New Application
-              </button>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => {
+                    setView("newApplication");
+                  }}
+                >
+                  + New Application
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("inviteApplicant");
+                  }}
+                >
+                  + Invite Applicant
+                </button>
+              </div>
             </div>
 
             <div className="applicationStats">
@@ -5707,15 +5881,25 @@ export default function Dashboard() {
                     Create an application to begin reviewing future tenants.
                   </p>
 
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={() => {
-                      setView("newApplication");
-                    }}
-                  >
-                    + Create Application
-                  </button>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => {
+                        setView("newApplication");
+                      }}
+                    >
+                      + Create Application
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView("inviteApplicant");
+                      }}
+                    >
+                      + Invite Applicant
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="applicationTable">
@@ -5800,6 +5984,439 @@ export default function Dashboard() {
                 </div>
               )}
             </section>
+          </section>
+        )}
+
+        {view === "applications" && applicantInvitations.length > 0 && (
+          <section className="panel" style={{ marginTop: 20 }}>
+            <div className="dashboardHeader">
+              <div>
+                <small>{uiLabel("inviteApplicant")}</small>
+                <h1>{uiLabel("sendApplicationInvite")}</h1>
+              </div>
+            </div>
+
+            <div className="applicationTable">
+              <div className="applicationTableHeader">
+                <span>{uiLabel("applicant")}</span>
+                <span>{uiLabel("property")}</span>
+                <span>{uiLabel("status")}</span>
+                <span>{uiLabel("sent")}</span>
+                <span>{uiLabel("expires")}</span>
+                <span>{uiLabel("actions")}</span>
+              </div>
+
+              {applicantInvitations.map((invitation) => {
+                const property = props.find((item) => item.id === invitation.property_id);
+                const unit = units.find((item) => item.id === invitation.unit_id);
+                const isDeleted = Boolean(invitation.deleted_at);
+                const canResend = !isDeleted && invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const canRevoke = !isDeleted && invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const canDelete = !isDeleted;
+                const inviteStatus = invitation.status || "pending";
+
+                return (
+                  <div className="applicationTableRow" key={invitation.id}>
+                    <div className="applicationPerson">
+                      <div className="applicationAvatar">
+                        {invitation.applicant_name?.charAt(0)?.toUpperCase() || "A"}
+                      </div>
+
+                      <div>
+                        <b>{invitation.applicant_name}</b>
+                        <span>{invitation.applicant_email}</span>
+                      </div>
+                    </div>
+
+                    <div className="applicationProperty">
+                      <b>{property?.address || "No property"}</b>
+                      <span>{unit ? unit.unit_name : "No unit"}</span>
+                    </div>
+
+                    <span className={`applicationStatusBadge status-${inviteStatus}`}>
+                      {inviteStatus.replaceAll("_", " ")}
+                    </span>
+
+                    <span className="applicationSubmitted">
+                      {invitation.created_at
+                        ? new Date(invitation.created_at).toLocaleDateString()
+                        : "—"}
+                    </span>
+
+                    <span className="applicationSubmitted">
+                      {invitation.expires_at
+                        ? new Date(invitation.expires_at).toLocaleDateString()
+                        : "—"}
+                    </span>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {canResend && (
+                        <button
+                          type="button"
+                          className="viewAllButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Resend this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "resend",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not resend the invitation.");
+                            }
+
+                            const updated = await s
+                              .from("applicant_invitations")
+                              .select("*")
+                              .eq("id", invitation.id)
+                              .maybeSingle();
+
+                            if (!updated.error && updated.data) {
+                              setApplicantInvitations((current) =>
+                                current.map((item) =>
+                                  item.id === invitation.id ? updated.data : item,
+                                ),
+                              );
+                            }
+
+                            alert("Applicant invitation resent successfully.");
+                          }}
+                        >
+                          {uiLabel("resendInvitation")}
+                        </button>
+                      )}
+
+                      {canRevoke && (
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Revoke this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "revoke",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not revoke the invitation.");
+                            }
+
+                            setApplicantInvitations((current) =>
+                              current.map((item) =>
+                                item.id === invitation.id
+                                  ? { ...item, status: "revoked", revoked_at: new Date().toISOString() }
+                                  : item,
+                              ),
+                            );
+
+                            alert("Applicant invitation revoked.");
+                          }}
+                        >
+                          {uiLabel("revokeInvitation")}
+                        </button>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Delete this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "delete",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not delete the invitation.");
+                            }
+
+                            setApplicantInvitations((current) =>
+                              current.filter((item) => item.id !== invitation.id),
+                            );
+
+                            alert("Applicant invitation removed.");
+                          }}
+                        >
+                          {uiLabel("deleteInvitation")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {view === "inviteApplicant" && (
+          <section className="applicationFormPage">
+            <button
+              type="button"
+              className="propertyBackButton"
+              onClick={() => {
+                setView("applications");
+              }}
+            >
+              ← Back to Applications
+            </button>
+
+            <div className="applicationFormHeader">
+              <small>INVITE APPLICANT</small>
+              <h1>Send Application Invite</h1>
+
+              <p>
+                Invite an applicant to complete a rental application without creating a Unitvero account.
+              </p>
+            </div>
+
+            <form
+              className="rentalApplicationForm"
+              onSubmit={async (e) => {
+                e.preventDefault();
+
+                if (isSubmittingInvite) return;
+
+                const form = e.currentTarget;
+                const s = supabase();
+
+                const {
+                  data: { user },
+                  error: userError,
+                } = await s.auth.getUser();
+
+                if (userError || !user) {
+                  alert("Authentication error: " + (userError?.message || "No user found"));
+                  return;
+                }
+
+                const propertyId = form.propertyId?.value || "";
+                const unitId = form.unitId?.value || null;
+                const applicantName = form.applicantName?.value?.trim() || "";
+                const applicantEmail = form.applicantEmail?.value?.trim().toLowerCase() || "";
+
+                if (!propertyId || !applicantName || !applicantEmail) {
+                  alert("Select a property, enter the applicant name, and provide an email address.");
+                  return;
+                }
+
+                setIsSubmittingInvite(true);
+
+                try {
+                  const {
+                    data: { session },
+                    error: sessionError,
+                  } = await s.auth.getSession();
+
+                  if (sessionError || !session?.access_token) {
+                    throw new Error("Your session expired. Please sign in again.");
+                  }
+
+                  const inviteResponse = await fetch("/api/applicant-invitations", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      propertyId,
+                      unitId,
+                      applicantName,
+                      applicantEmail,
+                    }),
+                  });
+
+                  let inviteResult = {};
+
+                  try {
+                    inviteResult = await inviteResponse.json();
+                  } catch {
+                    inviteResult = {};
+                  }
+
+                  if (!inviteResponse.ok) {
+                    throw new Error(inviteResult?.error || "Could not create the applicant invitation.");
+                  }
+
+                  const createdInvitation = inviteResult?.invitation;
+
+                  if (createdInvitation?.id) {
+                    setApplicantInvitations((current) => {
+                      const existing = current.filter((item) => item.id !== createdInvitation.id);
+                      return [createdInvitation, ...existing];
+                    });
+                  }
+
+                  alert(`${applicantName} was invited to apply by email.`);
+                  form.reset();
+                  setSelectedProperty(null);
+                  setView("applications");
+                } catch (error) {
+                  console.error("Applicant invite error:", error);
+                  alert(error?.message || "Something went wrong while inviting the applicant.");
+                } finally {
+                  setIsSubmittingInvite(false);
+                }
+              }}
+            >
+              <section className="applicationFormCard">
+                <div className="applicationFormSectionHeader">
+                  <span>01</span>
+
+                  <div>
+                    <h2>Invitation Details</h2>
+                    <p>Select the property and the applicant email for the secure application link.</p>
+                  </div>
+                </div>
+
+                <div className="applicationFormGrid">
+                  <label>
+                    Rental Property
+                    <select
+                      name="propertyId"
+                      required
+                      onChange={(e) => {
+                        const property = props.find((item) => item.id === e.target.value) || null;
+                        const unitSelect = document.querySelector('[name="unitId"]');
+                        if (unitSelect) {
+                          unitSelect.value = "";
+                        }
+                        setSelectedProperty(property);
+                      }}
+                    >
+                      <option value="">Select property</option>
+
+                      {props.map((property) => (
+                        <option value={property.id} key={property.id}>
+                          {property.address}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {selectedProperty && unitsForProperty(selectedProperty.id).length > 0 && (
+                    <label>
+                      Unit (optional)
+                      <select name="unitId">
+                        <option value="">No specific unit</option>
+                        {unitsForProperty(selectedProperty.id).map((unit) => (
+                          <option value={unit.id} key={unit.id}>
+                            {unit.unit_name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  <label>
+                    Full Name
+                    <input
+                      name="applicantName"
+                      type="text"
+                      placeholder="Applicant full name"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Email Address
+                    <input
+                      name="applicantEmail"
+                      type="email"
+                      placeholder="applicant@email.com"
+                      required
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <div className="applicationFormActions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("applications");
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="primary" disabled={isSubmittingInvite}>
+                  {isSubmittingInvite ? "Sending..." : "Send Invite"}
+                </button>
+              </div>
+            </form>
           </section>
         )}
 
@@ -6614,97 +7231,112 @@ export default function Dashboard() {
                   <p>Update the application after completing your review.</p>
 
                   <div className="applicationDecisionActions">
-                    <button
-                      type="button"
-                      className="approveApplicationButton"
-                      onClick={async () => {
-                        const s = supabase();
-                        const now = new Date().toISOString();
+                    {selectedApplication.application_status === "approved" || selectedApplication.application_status === "denied" ? (
+                      <div className="decisionLockedState">
+                        <strong>
+                          Decision: {selectedApplication.application_status === "approved" ? "Approved" : "Denied"}
+                        </strong>
+                        {selectedApplication.updated_at && (
+                          <small>
+                            {new Date(selectedApplication.updated_at).toLocaleString()}
+                          </small>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="approveApplicationButton"
+                          onClick={async () => {
+                            const s = supabase();
+                            const now = new Date().toISOString();
 
-                        const { error } = await s
-                          .from("rental_applications")
-                          .update({
-                            application_status: "approved",
-                            updated_at: now,
-                          })
-                          .eq("id", selectedApplication.id);
+                            const { error } = await s
+                              .from("rental_applications")
+                              .update({
+                                application_status: "approved",
+                                updated_at: now,
+                              })
+                              .eq("id", selectedApplication.id);
 
-                        if (error) {
-                          alert(
-                            "Could not approve application: " + error.message,
-                          );
-                          return;
-                        }
+                            if (error) {
+                              alert(
+                                "Could not approve application: " + error.message,
+                              );
+                              return;
+                            }
 
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: "approved",
-                          updated_at: now,
-                        };
+                            const updatedApplication = {
+                              ...selectedApplication,
+                              application_status: "approved",
+                              updated_at: now,
+                            };
 
-                        setSelectedApplication(updatedApplication);
+                            setSelectedApplication(updatedApplication);
 
-                        setApplications(
-                          applications.map((application) =>
-                            application.id === selectedApplication.id
-                              ? updatedApplication
-                              : application,
-                          ),
-                        );
+                            setApplications(
+                              applications.map((application) =>
+                                application.id === selectedApplication.id
+                                  ? updatedApplication
+                                  : application,
+                              ),
+                            );
 
-                        alert("Application approved successfully.");
-                      }}
-                    >
-                      ✓ Approve
-                    </button>
+                            alert("Application approved successfully.");
+                          }}
+                        >
+                          ✓ Approve
+                        </button>
 
-                    <button
-                      type="button"
-                      className="denyApplicationButton"
-                      onClick={async () => {
-                        const confirmed = window.confirm(
-                          "Mark this application as denied?",
-                        );
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm(
+                              "Mark this application as denied?",
+                            );
 
-                        if (!confirmed) return;
+                            if (!confirmed) return;
 
-                        const s = supabase();
-                        const now = new Date().toISOString();
+                            const s = supabase();
+                            const now = new Date().toISOString();
 
-                        const { error } = await s
-                          .from("rental_applications")
-                          .update({
-                            application_status: "denied",
-                            updated_at: now,
-                          })
-                          .eq("id", selectedApplication.id);
+                            const { error } = await s
+                              .from("rental_applications")
+                              .update({
+                                application_status: "denied",
+                                updated_at: now,
+                              })
+                              .eq("id", selectedApplication.id);
 
-                        if (error) {
-                          alert("Could not deny application: " + error.message);
-                          return;
-                        }
+                            if (error) {
+                              alert("Could not deny application: " + error.message);
+                              return;
+                            }
 
-                        const updatedApplication = {
-                          ...selectedApplication,
-                          application_status: "denied",
-                          updated_at: now,
-                        };
+                            const updatedApplication = {
+                              ...selectedApplication,
+                              application_status: "denied",
+                              updated_at: now,
+                            };
 
-                        setSelectedApplication(updatedApplication);
+                            setSelectedApplication(updatedApplication);
 
-                        setApplications(
-                          applications.map((application) =>
-                            application.id === selectedApplication.id
-                              ? updatedApplication
-                              : application,
-                          ),
-                        );
+                            setApplications(
+                              applications.map((application) =>
+                                application.id === selectedApplication.id
+                                  ? updatedApplication
+                                  : application,
+                              ),
+                            );
 
-                        alert("Application status updated to denied.");
-                      }}
-                    >
-                      × Deny
-                    </button>
+                            alert("Application status updated to denied.");
+                          }}
+                        >
+                          × Deny
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <small className="applicationDecisionNote">
@@ -7260,39 +7892,45 @@ export default function Dashboard() {
               </article>
             </div>
 
-            <section className="commandCard" style={{marginTop:22}}>
+            <section className="commandCard documentJurisdictionCard" style={{marginTop:22}}>
               <div className="commandCardHeader">
                 <div>
                   <span className="commandSectionIcon">◎</span>
                   <div>
-                    <h2>50-State Template Framework</h2>
+                    <h2>State / Jurisdiction</h2>
                     <p>
-                      Unitvero ties each document to the property's jurisdiction
-                      so the correct state template version can be selected.
+                      Select the document jurisdiction. Unitvero uses this for the
+                      matching state template framework whenever a property state is not explicitly set.
                     </p>
                   </div>
                 </div>
-                <span>{unitveroStates.length} jurisdictions</span>
+                <span>{documentBuilderState ? unitveroStates.find(([code]) => code === documentBuilderState)?.[1] || documentBuilderState : "Select state"}</span>
               </div>
-              <div style={{
-                display:"grid",
-                gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",
-                gap:8,
-                marginTop:14,
-              }}>
-                {unitveroStates.map(([code, name]) => (
-                  <div key={code} style={{
-                    padding:"9px 10px",
-                    border:"1px solid #e1e7ef",
-                    borderRadius:10,
-                    background:"#fff",
-                  }}>
-                    <b style={{fontSize:12}}>{code}</b>
-                    <span style={{display:"block",fontSize:11,color:"#6b778c"}}>
-                      {name}
-                    </span>
-                  </div>
-                ))}
+
+              <div className="documentJurisdictionPicker">
+                <label className="documentJurisdictionField">
+                  <span>State / Jurisdiction</span>
+                  <select
+                    value={documentBuilderState || getPropertyState(selectedProperty) || ""}
+                    onChange={(e) => setDocumentBuilderState(e.target.value)}
+                  >
+                    <option value="">Select a state...</option>
+                    {unitveroStates.map(([code, name]) => (
+                      <option key={code} value={code}>{name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="documentJurisdictionBadge">
+                  <span>Current selection</span>
+                  <strong>
+                    {documentBuilderState
+                      ? unitveroStates.find(([code]) => code === documentBuilderState)?.[1] || documentBuilderState
+                      : getPropertyState(selectedProperty)
+                        ? (unitveroStates.find(([code]) => code === getPropertyState(selectedProperty))?.[1] || getPropertyState(selectedProperty))
+                        : "No jurisdiction selected"}
+                  </strong>
+                </div>
               </div>
             </section>
 
@@ -7328,25 +7966,17 @@ export default function Dashboard() {
                   <button
                     key={type}
                     type="button"
+                    className="documentTemplateCardButton"
                     onClick={() => {
                       if (!requirePro("document_center", "Document Center")) return;
                       setDocumentBuilderType(type);
                       setDocumentBuilderOpen(true);
                     }}
-                    style={{
-                      textAlign:"left",
-                      padding:18,
-                      border:"1px solid #dbe3ef",
-                      borderRadius:16,
-                      background:"#fff",
-                      cursor:"pointer",
-                    }}
+                    aria-label={`Create ${title}`}
                   >
-                    <div style={{fontSize:26,fontWeight:900}}>{icon}</div>
-                    <b style={{display:"block",marginTop:8}}>{title}</b>
-                    <span style={{display:"block",marginTop:5,color:"#6b778c",fontSize:13}}>
-                      Auto-fill property and tenant details
-                    </span>
+                    <div className="documentTemplateCardIcon">{icon}</div>
+                    <b>{title}</b>
+                    <span>Auto-fill property and tenant details</span>
                   </button>
                 ))}
               </div>
@@ -10575,6 +11205,24 @@ export default function Dashboard() {
                           <label style={{display:"grid",gap:6}}><b>Labor Cost ($)</b><input name="laborCost" type="number" min="0" step="0.01" defaultValue={expense?.labor_cost || 0} /></label>
                           <label style={{display:"grid",gap:6}}><b>Materials Cost ($)</b><input name="materialCost" type="number" min="0" step="0.01" defaultValue={expense?.material_cost || 0} /></label>
                           <label style={{display:"grid",gap:6}}><b>Other Cost ($)</b><input name="otherCost" type="number" min="0" step="0.01" defaultValue={expense?.other_cost || 0} /></label>
+                          <label style={{display:"grid",gap:6,gridColumn:"1 / -1"}}>
+                            <b>Receipt Upload</b>
+                            <input name="receiptFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" />
+                            {expense?.receipt_path && (
+                              <div style={{marginTop:8,padding:12,border:"1px solid #dbe3ef",borderRadius:10,background:"#f7f9fc",display:"grid",gap:8}}>
+                                {expense.receipt_content_type?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(expense.receipt_name || "") ? (
+                                  <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{display:"block",borderRadius:8,overflow:"hidden",border:"1px solid #dbe3ef",background:"#fff",maxWidth:220}}>
+                                    <img src={expense.receipt_signed_url || ""} alt={expense.receipt_name || "Receipt"} style={{display:"block",width:"100%",maxHeight:180,objectFit:"cover"}} />
+                                  </a>
+                                ) : (
+                                  <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{color:"#0f9f8f",fontWeight:700}}>
+                                    Open current PDF receipt
+                                  </a>
+                                )}
+                                <small style={{color:"#5d6878"}}>{expense.receipt_name || "Current receipt"}</small>
+                              </div>
+                            )}
+                          </label>
                           <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",padding:"12px 14px",border:"1px solid #dbe3ef",borderRadius:12}}>
                             <label style={{display:"flex",gap:8,alignItems:"center"}}><input name="includeTax" type="checkbox" defaultChecked={expense ? expense.include_in_tax_report : true}/> Include in tax report</label>
                             <b>Total Repair Cost: ${Number(expense?.total_cost || 0).toFixed(2)}</b>
@@ -11019,7 +11667,7 @@ export default function Dashboard() {
                   message.sender === "user" ? "helpMessage user" : "helpMessage"
                 }
               >
-                {message.text}
+                {renderSafeMarkdown(message.text)}
               </div>
             ))}
           </div>
@@ -11030,9 +11678,15 @@ export default function Dashboard() {
               onChange={(event) => setHelpDraft(event.target.value)}
               placeholder="Type your question…"
               aria-label="Help question"
+              disabled={supportBusy}
             />
-            <button type="submit">Send</button>
+            <button type="submit" disabled={supportBusy}>{supportBusy ? "…" : "Send"}</button>
           </form>
+          <div className="helpFooterActions">
+            <button type="button" className="utSecondary" onClick={() => setHelpOpen(false)}>
+              Close support
+            </button>
+          </div>
         </aside>
       )}
 
@@ -11282,7 +11936,7 @@ export default function Dashboard() {
           color: #34445c;
           padding: 11px 13px;
           font-size: 14px;
-          line-height: 1.45;
+          line-height: 1.6;
           box-shadow: 0 4px 14px rgba(31, 50, 81, 0.06);
         }
         .helpMessage.user {
@@ -11290,6 +11944,45 @@ export default function Dashboard() {
           border-radius: 15px 15px 4px 15px;
           background: #2859c5;
           color: #fff;
+        }
+        .helpMessage p,
+        .helpMessage li,
+        .helpMessage a,
+        .helpMessage code {
+          font-size: inherit;
+          line-height: inherit;
+        }
+        .helpMessage p {
+          margin: 0 0 0.6rem;
+        }
+        .helpMessage p:last-child {
+          margin-bottom: 0;
+        }
+        .helpMessage ul,
+        .helpMessage ol {
+          margin: 0.55rem 0 0.7rem 1.1rem;
+          padding: 0;
+        }
+        .helpMessage li + li {
+          margin-top: 0.25rem;
+        }
+        .helpMessage a {
+          color: #1d4ed8;
+          text-decoration: underline;
+          text-underline-offset: 0.12em;
+        }
+        .helpMessage.user a {
+          color: #dbeafe;
+        }
+        .helpMessage code {
+          padding: 0.12rem 0.38rem;
+          border-radius: 6px;
+          background: rgba(148, 163, 184, 0.18);
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .helpMarkdownList {
+          margin: 0.7rem 0;
+          padding-left: 1.1rem;
         }
         .helpComposer {
           display: grid;
@@ -11339,490 +12032,6 @@ export default function Dashboard() {
           }
         }
 
-/* =========================================================
-   UNITVERO REFERENCE DESIGN — PREMIUM BLACK / GOLD
-   Matches the supplied mockup's visual system.
-   ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-.unitveroModern{
-  --uv-bg:#080909 !important;
-  --uv-surface:#0d0f10 !important;
-  --uv-surface2:#121516 !important;
-  --uv-gold:#f4c84f !important;
-  --uv-gold2:#dcae36 !important;
-  --uv-white:#f7f6f1 !important;
-  --uv-muted:#9b9d99 !important;
-  --uv-border:rgba(244,200,79,.28) !important;
-  background:#080909 !important;
-  color:#f7f6f1 !important;
-  font-family:Inter,Arial,sans-serif !important;
-}
-.unitveroModern *{font-family:Inter,Arial,sans-serif !important}
-.unitveroModern .sidebar{
-  width:242px !important;
-  background:#070808 !important;
-  border-right:1px solid rgba(244,200,79,.18) !important;
-  box-shadow:12px 0 36px rgba(0,0,0,.28) !important;
-}
-.unitveroModern .sidebarBrand{
-  padding:22px 20px 18px !important;
-}
-.unitveroModern .sidebarBrand .logo{
-  font-size:22px !important;
-  color:#fff !important;
-  letter-spacing:-.045em !important;
-}
-.unitveroModern .sidebarBrand .logo::before{
-  content:"⌂";
-  display:inline-grid;
-  place-items:center;
-  width:27px;
-  height:27px;
-  margin-right:8px;
-  border:1px solid #f4c84f;
-  border-radius:8px;
-  color:#f4c84f;
-  font-size:16px;
-  vertical-align:-4px;
-}
-.unitveroModern .sidebarBrand .logo span{color:#f4c84f !important}
-.unitveroModern .brandLabel{
-  display:block !important;
-  margin-top:7px !important;
-  color:#777b78 !important;
-  font-size:8px !important;
-  letter-spacing:.16em !important;
-}
-.unitveroModern .sidebarNav{
-  padding:8px 9px !important;
-}
-.unitveroModern .navSection{
-  color:#666a67 !important;
-  font-size:9px !important;
-  letter-spacing:.14em !important;
-  padding:11px 10px 7px !important;
-}
-.unitveroModern .sidebarNav a{
-  min-height:37px !important;
-  margin:2px 0 !important;
-  padding:0 12px !important;
-  border-radius:8px !important;
-  color:#aeb2ae !important;
-  font-size:12px !important;
-}
-.unitveroModern .sidebarNav a:hover{
-  background:rgba(244,200,79,.06) !important;
-  color:#fff !important;
-}
-.unitveroModern .sidebarNav a.active{
-  background:linear-gradient(90deg,rgba(244,200,79,.20),rgba(244,200,79,.07)) !important;
-  color:#fff !important;
-  box-shadow:inset 3px 0 0 #f4c84f !important;
-}
-.unitveroModern .navIcon{color:#f4c84f !important}
-.unitveroModern .main,
-.unitveroModern .dash,
-.unitveroModern .content,
-.unitveroModern .dashboardMain{
-  background:#080909 !important;
-}
-.unitveroModern .dash{
-  padding:28px 34px 50px !important;
-}
-.unitveroModern .dashboardHeader{
-  margin-bottom:24px !important;
-}
-.unitveroModern .dashboardHeader small{
-  color:#8c908c !important;
-  letter-spacing:.12em !important;
-  font-size:9px !important;
-  font-weight:800 !important;
-}
-.unitveroModern .dashboardHeader h1{
-  margin:7px 0 5px !important;
-  color:#f7f6f1 !important;
-  font-size:30px !important;
-  letter-spacing:-.045em !important;
-}
-.unitveroModern .dashboardSubtitle{color:#8e938f !important}
-.unitveroModern .dashboardHeaderTools{gap:8px !important}
-.unitveroModern .languageSelect,
-.unitveroModern .privacyButton{
-  min-height:36px !important;
-  border:1px solid rgba(244,200,79,.22) !important;
-  background:#0d0f10 !important;
-  color:#e9e6dc !important;
-  border-radius:9px !important;
-}
-.unitveroModern button.primary,
-.unitveroModern .primary{
-  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
-  color:#111 !important;
-  border:1px solid #f8dc88 !important;
-  border-radius:9px !important;
-  font-weight:900 !important;
-  box-shadow:0 8px 20px rgba(220,174,54,.14) !important;
-}
-.unitveroModern .overviewStats{
-  gap:10px !important;
-}
-.unitveroModern .overviewStatCard,
-.unitveroModern .UnitveroChartCard,
-.unitveroModern .dashboardPropertyCard,
-.unitveroModern .activityShowcase,
-.unitveroModern .marketInsightsCard,
-.unitveroModern .commandCard,
-.unitveroModern .panel,
-.unitveroModern .portfolioPropertyCard{
-  background:linear-gradient(145deg,#0c0f10,#111415) !important;
-  border:1px solid rgba(244,200,79,.23) !important;
-  border-radius:12px !important;
-  color:#f7f6f1 !important;
-  box-shadow:0 14px 36px rgba(0,0,0,.20) !important;
-}
-.unitveroModern .overviewStatCard{
-  min-height:116px !important;
-  padding:18px !important;
-}
-.unitveroModern .overviewStatCard span,
-.unitveroModern .overviewStatCard small,
-.unitveroModern .UnitveroChartCard small,
-.unitveroModern .dashboardPropertyCard small{
-  color:#929691 !important;
-}
-.unitveroModern .overviewStatCard b{
-  color:#f7f6f1 !important;
-  font-size:27px !important;
-}
-.unitveroModern .overviewStatCard.statBlue,
-.unitveroModern .overviewStatCard.statGreen,
-.unitveroModern .overviewStatCard.statOrange,
-.unitveroModern .overviewStatCard.statPurple{
-  border-color:rgba(244,200,79,.23) !important;
-}
-.unitveroModern .UnitveroChartsGrid{
-  gap:12px !important;
-}
-.unitveroModern .UnitveroChartCard{
-  padding:18px !important;
-  border-color:rgba(244,200,79,.30) !important;
-  background:#0a0c0d !important;
-}
-.unitveroModern .UnitveroChartHeader{
-  border-bottom:1px solid rgba(244,200,79,.12) !important;
-}
-.unitveroModern .UnitveroChartHeader h2,
-.unitveroModern .commandCard h2,
-.unitveroModern .dashboardPropertyCard h3,
-.unitveroModern .activityShowcase h2{
-  color:#f7f6f1 !important;
-}
-.unitveroModern .UnitveroChartHeader strong{
-  color:#f4c84f !important;
-}
-.unitveroModern .collectionDonut{
-  box-shadow:0 0 0 7px #0a0c0d,0 0 0 8px rgba(244,200,79,.30) !important;
-}
-.unitveroModern .legendCollected,
-.unitveroModern .legendOutstanding,
-.unitveroModern .legendCharges{
-  background:#f4c84f !important;
-}
-.unitveroModern .rentBarTrack{
-  background:#191c1d !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .rentBarTrack span{
-  background:linear-gradient(180deg,#f7d46b,#dcae36) !important;
-  border-radius:4px 4px 0 0 !important;
-}
-.unitveroModern .rentBarColumn b,
-.unitveroModern .rentBarValue{color:#a9aaa6 !important}
-.unitveroModern .occupancyTrack{
-  background:#191c1d !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .occupancyTrack span{
-  background:linear-gradient(90deg,#dcae36,#f7d46b) !important;
-}
-.unitveroModern .dashboardPropertyCard{
-  overflow:hidden !important;
-}
-.unitveroModern .propertyIdentityPanel{
-  background:linear-gradient(135deg,#19150a,#0d1011) !important;
-  border-bottom:1px solid rgba(244,200,79,.15) !important;
-}
-.unitveroModern .propertyBuildingIcon,
-.unitveroModern .propertyHouseIcon,
-.unitveroModern .portfolioHouseIcon{
-  color:#f4c84f !important;
-}
-.unitveroModern .portfolioOccupancy.occupied{
-  color:#c9df91 !important;
-  background:rgba(170,211,91,.08) !important;
-}
-.unitveroModern .portfolioOccupancy.vacant{
-  color:#f4c84f !important;
-  background:rgba(244,200,79,.08) !important;
-}
-.unitveroModern .propertyCardDetails span,
-.unitveroModern .propertyCardFooter,
-.unitveroModern .activityRow span,
-.unitveroModern .activityRow small{
-  color:#8e938f !important;
-}
-.unitveroModern .propertyCardFooter{
-  border-top-color:rgba(244,200,79,.12) !important;
-}
-.unitveroModern .propertyCardFooter b,
-.unitveroModern .propertyArrow,
-.unitveroModern .commandTextButton{
-  color:#f4c84f !important;
-}
-.unitveroModern .activityTypeIcon,
-.unitveroModern .commandSectionIcon,
-.unitveroModern .featureEmptyIcon{
-  background:rgba(244,200,79,.08) !important;
-  border:1px solid rgba(244,200,79,.16) !important;
-  color:#f4c84f !important;
-}
-.unitveroModern .helpLauncher{
-  background:linear-gradient(135deg,#f7d46b,#dcae36) !important;
-  color:#111 !important;
-  border:1px solid #f8dc88 !important;
-}
-.unitveroModern .helpPanel{
-  background:#0b0d0e !important;
-  border:1px solid rgba(244,200,79,.28) !important;
-  color:#f7f6f1 !important;
-}
-.unitveroModern .helpPanelHeader{
-  border-bottom-color:rgba(244,200,79,.13) !important;
-}
-.unitveroModern .helpMessage{
-  background:#151819 !important;
-  color:#eee9df !important;
-  border:1px solid rgba(244,200,79,.10) !important;
-}
-.unitveroModern .helpMessage.user{
-  background:#8b671c !important;
-  color:#fff !important;
-}
-.unitveroModern .helpComposer{border-top-color:rgba(244,200,79,.13) !important}
-.unitveroModern .helpComposer input{
-  background:#0b0d0e !important;
-  color:#f7f6f1 !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern .helpComposer button{
-  background:#f4c84f !important;
-  color:#111 !important;
-}
-.unitveroModern input,
-.unitveroModern select,
-.unitveroModern textarea{
-  background:#0b0d0e !important;
-  color:#f7f6f1 !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern input:focus,
-.unitveroModern select:focus,
-.unitveroModern textarea:focus{
-  border-color:#f4c84f !important;
-  box-shadow:0 0 0 3px rgba(244,200,79,.10) !important;
-}
-.unitveroModern table,
-.unitveroModern th,
-.unitveroModern td{
-  border-color:rgba(244,200,79,.14) !important;
-}
-.unitveroModern th{color:#f4c84f !important}
-@media(max-width:900px){
-  .unitveroModern .sidebar{width:215px !important}
-  .unitveroModern .dash{padding:22px 18px 40px !important}
-}
-@media(max-width:680px){
-  .unitveroModern .sidebar{width:100% !important}
-  .unitveroModern .dash{padding:18px 14px 35px !important}
-}
-
-
-/* FINAL PALETTE LOCK — NO BLUE / GREEN / ORANGE / PURPLE / TEAL */
-.unitveroModern,
-.unitveroModern *{
-  --blue:#f4c84f !important;
-  --green:#f4c84f !important;
-  --orange:#f4c84f !important;
-  --purple:#f4c84f !important;
-  --teal:#f4c84f !important;
-  --cyan:#f4c84f !important;
-}
-.unitveroModern .green,
-.unitveroModern .blue,
-.unitveroModern .orange,
-.unitveroModern .purple,
-.unitveroModern .teal,
-.unitveroModern .cyan{
-  color:#f4c84f !important;
-  background-color:rgba(244,200,79,.08) !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern [class*="blue"],
-.unitveroModern [class*="green"],
-.unitveroModern [class*="orange"],
-.unitveroModern [class*="purple"],
-.unitveroModern [class*="teal"],
-.unitveroModern [class*="cyan"]{
-  color:#f4c84f !important;
-  border-color:rgba(244,200,79,.20) !important;
-}
-.unitveroModern svg [fill],
-.unitveroModern svg [stroke]{
-  stroke:#f4c84f !important;
-  fill:currentColor !important;
-}
-
-
-/* FONT LOCK — INTER, matching the generated reference */
-html, body,
-.unitveroModern,
-.unitveroModern *,
-.homePage,
-.homePage *{
-  font-family:Inter,Arial,sans-serif !important;
-  font-synthesis:none !important;
-}
-
-
-/* =========================================================
-   REFERENCE MOCKUP LAYOUT — DO NOT MIX WITH OLD DASHBOARD
-   Black / gold / warm white / gray only.
-   ========================================================= */
-.refTopbar{display:flex;align-items:center;justify-content:space-between;padding:2px 0 18px;border-bottom:1px solid rgba(244,200,79,.10);gap:18px}
-.refBreadcrumb{font-size:9px;font-weight:800;letter-spacing:.13em;color:#777a76}
-.refBreadcrumb span{color:#f4c84f;margin:0 7px}
-.refTopActions{display:flex;gap:7px;flex-wrap:wrap}
-.refTopActions button{background:#0c0e0f!important;color:#b9bab5!important;border:1px solid rgba(244,200,79,.18)!important;border-radius:8px!important;padding:8px 11px!important;font-size:10px!important;font-weight:800!important;cursor:pointer}
-.refTopActions button:last-child{background:#f4c84f!important;color:#111!important;border-color:#f4c84f!important}
-
-.refHero{margin-top:16px}
-.refHeroPhoto{position:relative;min-height:355px;overflow:hidden;border:1px solid rgba(244,200,79,.26);border-radius:14px;background:
-  linear-gradient(125deg,#19140a 0%,#0d0f10 45%,#16120a 100%);box-shadow:0 24px 55px rgba(0,0,0,.28)}
-.refHeroPhoto:before{content:"";position:absolute;inset:0;background:
-  radial-gradient(circle at 75% 35%,rgba(244,200,79,.15),transparent 26%),
-  linear-gradient(90deg,rgba(0,0,0,.84) 0%,rgba(0,0,0,.62) 38%,rgba(0,0,0,.12) 74%,rgba(0,0,0,.62) 100%);z-index:1}
-.refHeroShade{position:absolute;inset:0;background:
-  linear-gradient(135deg,rgba(244,200,79,.07),transparent 35%),
-  repeating-linear-gradient(0deg,transparent 0 34px,rgba(244,200,79,.025) 35px 36px);z-index:2}
-.refHeroCopy{position:absolute;left:28px;top:30px;width:42%;z-index:4}
-.refHeroCopy>span{font-size:9px;letter-spacing:.14em;font-weight:900;color:#f4c84f}
-.refHeroCopy h1{font-size:40px;line-height:.98;letter-spacing:-.055em;margin:10px 0 13px;color:#fff}
-.refHeroCopy p{max-width:440px;color:#a6a7a2;font-size:12px;line-height:1.65;margin:0 0 17px}
-.refHeroActions{display:flex;gap:8px}
-.refHeroActions button{padding:9px 13px;border-radius:8px;border:1px solid rgba(244,200,79,.26);background:#0c0e0f;color:#eee9dd;font-size:10px;font-weight:900;cursor:pointer}
-.refHeroActions button:first-child{background:#f4c84f;color:#111;border-color:#f4c84f}
-
-.refHeroProperty{position:absolute;z-index:3;left:43%;top:35px;width:37%;height:278px;border:1px solid rgba(244,200,79,.30);border-radius:11px;overflow:hidden;background:#111415;box-shadow:0 18px 38px rgba(0,0,0,.35);transform:perspective(900px) rotateY(-3deg)}
-.refPropertyImage{height:198px;background:linear-gradient(145deg,#17130a,#282019 50%,#0d0f10);overflow:hidden}
-.refPropertyImage img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.72) contrast(1.03)}
-.refBuildingPlaceholder{height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;background:
-  linear-gradient(145deg,transparent 25%,rgba(244,200,79,.09)),
-  linear-gradient(135deg,#2a261c 0%,#141617 55%,#090a0b 100%)}
-.refBuildingPlaceholder span{font-size:8px;color:#f4c84f;letter-spacing:.14em;font-weight:900}
-.refBuildingPlaceholder b{font-size:16px;color:#fff;margin-top:5px}
-.refPropertyInfo{padding:10px 12px;display:grid;gap:3px}
-.refPropertyInfo small{font-size:7px;color:#777b77;letter-spacing:.12em}
-.refPropertyInfo b{font-size:12px;color:#f5f3ec}
-.refPropertyInfo span{font-size:9px;color:#8d918c}
-
-.refCollectionCard{position:absolute;right:22px;top:23px;width:180px;padding:14px;border:1px solid rgba(244,200,79,.28);border-radius:10px;background:rgba(10,12,13,.94);z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.35)}
-.refCollectionCard small{display:block;font-size:7px;letter-spacing:.13em;color:#8b8e8a;font-weight:900}
-.refCollectionCard>strong{display:block;color:#f4c84f;font-size:25px;margin:4px 0 7px}
-.refMiniTrack{height:5px;background:#1d1f1f;border-radius:99px;overflow:hidden;margin-bottom:10px}
-.refMiniTrack span{display:block;height:100%;background:#f4c84f;border-radius:99px}
-.refCollectionCard>div:not(.refMiniTrack){display:flex;justify-content:space-between;margin-top:6px;font-size:8px}
-.refCollectionCard>div span{color:#838782}.refCollectionCard>div b{color:#eee9dd}
-
-.refStats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:11px}
-.refStats article{padding:15px 16px;border:1px solid rgba(244,200,79,.20);border-radius:10px;background:#0d1011;min-height:94px}
-.refStats small{display:block;color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
-.refStats strong{display:block;color:#f7f5ee;font-size:24px;letter-spacing:-.04em;margin:7px 0 2px}
-.refStats article:nth-child(2) strong{color:#f4c84f}
-.refStats span{font-size:8px;color:#888c87}
-
-.refDashboardGrid{display:grid;grid-template-columns:1.6fr .75fr;gap:10px;margin-top:10px}
-.refPanel{padding:17px;border:1px solid rgba(244,200,79,.22);border-radius:11px;background:#0d1011;min-height:250px}
-.refWide{min-width:0}
-.refPanelHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-.refPanelHead small{display:block;font-size:7px;letter-spacing:.13em;color:#777b77;font-weight:900}
-.refPanelHead h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
-.refPanelHead strong{color:#f4c84f;font-size:17px}
-.refPanelHead button{background:transparent;border:0;color:#f4c84f;font-size:9px;font-weight:900;cursor:pointer}
-.refChart{height:175px;border:1px solid rgba(244,200,79,.14);border-radius:8px;padding:14px 10px 8px;background:#0a0c0d}
-.refChartBars{height:100%;display:flex;align-items:flex-end;gap:10px}
-.refChartBars>div{height:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
-.refChartBars>div span{width:100%;max-width:22px;background:#242626;border-radius:4px 4px 1px 1px;display:block;border:1px solid rgba(244,200,79,.06)}
-.refChartBars>div.active span{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 16px rgba(244,200,79,.12)}
-.refChartBars small{font-size:7px;color:#6f736f}
-
-.refHealthRing{width:130px;height:130px;margin:8px auto 13px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#f4c84f 0deg calc(var(--occ, .88)*360deg),#232626 calc(var(--occ, .88)*360deg) 360deg);position:relative}
-.refHealthRing{--occ:0.88}
-.refHealthRing:after{content:"";position:absolute;inset:10px;background:#0d1011;border-radius:50%;border:1px solid rgba(244,200,79,.12)}
-.refHealthRing>div{position:relative;z-index:2;text-align:center;display:grid}
-.refHealthRing b{font-size:24px;color:#fff}.refHealthRing span{font-size:8px;color:#858984}
-.refHealthStats{display:flex;justify-content:center;gap:20px;color:#858984;font-size:8px}
-.refHealthStats b{color:#f4c84f;font-size:14px;margin-right:3px}
-
-.refQuickActions{margin-top:10px;padding:17px;border:1px solid rgba(244,200,79,.20);border-radius:11px;background:#0d1011;display:flex;align-items:center;justify-content:space-between;gap:18px}
-.refQuickActions small{color:#777b77;font-size:7px;letter-spacing:.13em;font-weight:900}
-.refQuickActions h2{margin:5px 0 0;color:#f5f3ec;font-size:16px;letter-spacing:-.03em}
-.refActionGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;flex:1}
-.refActionGrid button{min-height:70px;border:1px solid rgba(244,200,79,.17);border-radius:9px;background:#101314;color:#c9c8c0;display:grid;place-items:center;gap:5px;cursor:pointer}
-.refActionGrid button:hover{border-color:rgba(244,200,79,.45);background:#151718}
-.refActionGrid b{color:#f4c84f;font-size:16px}.refActionGrid span{font-size:8px;font-weight:800}
-
-@media(max-width:1050px){
-  .refHeroCopy{width:50%}.refHeroProperty{left:48%;width:40%}.refCollectionCard{right:14px}
-  .refDashboardGrid{grid-template-columns:1fr}.refQuickActions{display:grid}.refActionGrid{grid-template-columns:repeat(3,1fr)}
-}
-@media(max-width:720px){
-  .refTopbar{align-items:flex-start;flex-direction:column}.refTopActions{width:100%}
-  .refHeroPhoto{min-height:620px}.refHeroCopy{position:relative;left:0;top:0;width:auto;padding:25px 20px}.refHeroCopy h1{font-size:34px}
-  .refHeroProperty{left:20px;right:20px;top:245px;width:auto;height:230px;transform:none}
-  .refPropertyImage{height:155px}.refCollectionCard{right:14px;top:465px;width:170px}
-  .refStats{grid-template-columns:repeat(2,1fr)}.refActionGrid{grid-template-columns:repeat(2,1fr)}
-}
-
-
-/* =========================================================
-   FINAL GENERATED-IMAGE LAYOUT — STRUCTURE + SPACING + PALETTE
-   ========================================================= */
-.unitveroModern .dash{margin-left:200px!important;padding:112px 26px 0!important;background:#070808!important;min-height:100vh!important}
-.unitveroModern .referenceHeader{left:200px!important;height:83px!important;background:#070808!important;border-bottom:1px solid rgba(244,200,79,.42)!important;padding:0 28px!important}
-.unitveroModern .sidebar{width:200px!important;background:#050606!important;border-right:1px solid rgba(244,200,79,.40)!important}
-.generatedDashboard{max-width:1110px;margin:0 auto;padding-bottom:0}
-.generatedWelcome{display:flex;justify-content:space-between;align-items:flex-end;gap:25px;margin-bottom:25px}
-.generatedEyebrow{font-size:10px;letter-spacing:.12em;font-weight:900;color:#f4c84f}
-.generatedWelcome h1{margin:7px 0 2px;color:#f8f7f1;font-size:38px;line-height:1.05;letter-spacing:-.055em;font-weight:800}
-.generatedWelcome p{margin:0;color:#969993;font-size:14px}
-.generatedWelcomeActions{display:grid;gap:9px;justify-items:end}
-.generatedWelcomeActions select{width:190px;height:40px;background:#0d0f10!important;border:1px solid rgba(244,200,79,.32)!important;border-radius:8px!important;color:#eeeae0!important;padding:0 12px!important;font-weight:700!important}
-.generatedWelcomeActions>div{display:flex;gap:9px}
-.generatedSecondary,.generatedPrimary{height:42px;border-radius:8px!important;padding:0 15px!important;font-size:11px!important;font-weight:900!important;cursor:pointer!important}
-.generatedSecondary{background:#080909!important;border:1px solid rgba(244,200,79,.34)!important;color:#f3f0e7!important}.generatedPrimary{background:#f4c84f!important;border:1px solid #f4c84f!important;color:#111!important}
-.generatedStats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
-.generatedStats article{height:117px;padding:17px 19px;border:1px solid rgba(244,200,79,.44);border-radius:10px;background:linear-gradient(145deg,#0d0f10,#101212);display:flex;flex-direction:column}
-.generatedStats article span{font-size:11px;color:#d0cec4;font-weight:600}.generatedStats article strong{margin-top:7px;font-size:30px;line-height:1;color:#f7f5ee;letter-spacing:-.04em}.generatedStats article small{margin-top:auto;color:#8c908b;font-size:8px;font-weight:800;letter-spacing:.07em}
-.generatedPanel{background:#0b0d0e;border:1px solid rgba(244,200,79,.44);border-radius:10px;padding:18px 19px;margin-bottom:12px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-.generatedPanelTitle span{display:block;color:#a9a79f;font-size:9px;font-weight:900;letter-spacing:.09em}.generatedPanelTitle h2{margin:5px 0 0;color:#f7f5ee;font-size:20px;letter-spacing:-.035em}
-.generatedCollection{height:255px}.generatedCollectionBody{display:grid;grid-template-columns:170px 1fr;align-items:center;height:180px;gap:22px}.generatedDonut{width:150px;height:150px;border-radius:50%;display:grid;place-items:center;margin:auto;background:conic-gradient(#f4c84f 0 var(--rate),#262828 var(--rate) 100%);position:relative}.generatedDonut:after{content:"";position:absolute;inset:13px;background:#0b0d0e;border-radius:50%;border:1px solid rgba(255,255,255,.04)}.generatedDonut>div{position:relative;z-index:1;text-align:center;display:grid}.generatedDonut strong{font-size:22px;color:#f7f5ee}.generatedDonut small{font-size:9px;color:#8f938e}.generatedLegend{display:grid;gap:0}.generatedLegend div{height:47px;border-bottom:1px solid rgba(244,200,79,.25);display:flex;align-items:center;justify-content:space-between}.generatedLegend span{display:flex;align-items:center;gap:10px;color:#b0b1ac;font-size:11px}.generatedLegend i{width:12px;height:12px;border-radius:50%;background:#f4c84f;display:inline-block}.generatedLegend b{font-size:11px;color:#f4c84f}
-.generatedOccupancy{height:230px}.generatedPercent{display:block;margin:10px 0 6px;color:#f4c84f;font-size:16px}.generatedOccupancyTrack{height:14px;background:#191b1b;border:1px solid rgba(244,200,79,.11);border-radius:99px;overflow:hidden}.generatedOccupancyTrack span{display:block;height:100%;background:linear-gradient(90deg,#f4c84f,#f7df86);border-radius:99px}.generatedOccupancyBoxes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:15px}.generatedOccupancyBoxes div{height:72px;background:#f4f2e9;border-radius:8px;display:grid;place-items:center;color:#111}.generatedOccupancyBoxes strong{font-size:18px;line-height:1}.generatedOccupancyBoxes span{font-size:10px;color:#64645e}
-.generatedSixMonths{height:345px}.generatedAmount{display:block;color:#f4c84f;font-size:17px;margin-top:12px}.generatedMonths{height:235px;display:flex;align-items:flex-end;gap:26px;padding:20px 10px 0;border-top:1px solid rgba(244,200,79,.12);margin-top:9px}.generatedMonths>div{position:relative;flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.generatedMonths b{display:block;width:45px;max-height:185px;min-height:7px;background:#1b1e1e;border:1px solid rgba(244,200,79,.08);border-radius:7px 7px 3px 3px}.generatedMonths b.active{background:linear-gradient(180deg,#f7d46b,#dcae36);box-shadow:0 0 20px rgba(244,200,79,.12)}.generatedMonths span{margin-top:8px;color:#858983;font-size:10px}.generatedMonths small{position:absolute;bottom:29px;color:#f4c84f;font-size:9px;font-weight:800}
-.generatedFooter{height:70px;border-top:1px solid rgba(244,200,79,.12);display:flex;align-items:center;justify-content:space-between;color:#858983;font-size:10px;margin-top:25px}.generatedFooter div{display:flex;gap:25px}.generatedFooter button{background:none;border:0;color:#9c9d98;font-size:10px;cursor:pointer}
-@media(max-width:850px){.generatedWelcome{align-items:flex-start;flex-direction:column}.generatedWelcomeActions{justify-items:start;width:100%}.generatedStats{grid-template-columns:repeat(2,1fr)}.generatedCollectionBody{grid-template-columns:145px 1fr}.generatedMonths{gap:12px}}
-@media(max-width:650px){.unitveroModern .sidebar{width:70px!important}.unitveroModern .referenceHeader{left:70px!important}.unitveroModern .dash{margin-left:70px!important;padding-left:14px!important;padding-right:14px!important}.generatedStats{grid-template-columns:1fr}.generatedCollection{height:auto}.generatedCollectionBody{grid-template-columns:1fr;height:auto;padding-top:15px}.generatedLegend{margin-top:10px}.generatedOccupancyBoxes{grid-template-columns:1fr}.generatedSixMonths{overflow:hidden}.generatedMonths{gap:5px}.generatedMonths b{width:30px}.generatedFooter{height:auto;padding:20px 0;gap:10px;align-items:flex-start;flex-direction:column}}
-
       `}</style>
     </div>
   );
@@ -11849,50 +12058,9 @@ function TenantPortal({
   const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
-  const [appLanguage, setAppLanguage] = useState(language);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const unitveroLanguages = [["en", "English"], ["es", "Español"]];
 
-  const words = {
-    en: {
-      home: "Home", payments: "Payments", lease: "Lease", messages: "Messages",
-      maintenance: "Maintenance", documents: "Documents", settings: "Settings",
-      welcome: "Welcome back", subtitle: "Manage your rental, payments, messages, and documents.",
-      monthlyRent: "Monthly rent", leaseStatus: "Lease status", leaseTerm: "Lease term",
-      active: "Active", property: "Property", payRent: "Pay rent", messageLandlord: "Message landlord",
-      recentActivity: "Recent activity", propertyUpdates: "Property updates", noUpdates: "You're all caught up. No new property updates.",
-      paymentCenter: "Payment center", paymentHistory: "Payment history", paymentSoon: "Online rent payments will be available here once checkout is connected.",
-      leaseDetails: "Lease details", startDate: "Start date", endDate: "End date", unit: "Unit",
-      inbox: "Messages", noMessages: "No messages yet. Start a conversation with your landlord below.",
-      typeMessage: "Write a message…", send: "Send",
-      maintenanceTitle: "Maintenance requests", maintenanceText: "Submit and track repair requests from this page.",
-      documentsTitle: "Documents", documentsText: "Your lease and shared rental documents will appear here.",
-      account: "Account settings", privacy: "Privacy mode", privacyText: "Hide financial amounts while using Unitvero in public.",
-      language: "Language", notifications: "Notifications", notificationText: "In-app alerts are active. Phone push notifications are being connected next.",
-      signOut: "Sign out", noRental: "No active rental is connected to this account yet.", refresh: "Refresh",
-      connected: "Connected", unread: "unread", month: "month"
-    },
-    es: {
-      home: "Inicio", payments: "Pagos", lease: "Contrato", messages: "Mensajes",
-      maintenance: "Mantenimiento", documents: "Documentos", settings: "Ajustes",
-      welcome: "Bienvenido", subtitle: "Administra tu alquiler, pagos, mensajes y documentos.",
-      monthlyRent: "Renta mensual", leaseStatus: "Estado del contrato", leaseTerm: "Duración del contrato",
-      active: "Activo", property: "Propiedad", payRent: "Pagar renta", messageLandlord: "Enviar mensaje",
-      recentActivity: "Actividad reciente", propertyUpdates: "Actualizaciones", noUpdates: "Todo está al día. No hay nuevas actualizaciones.",
-      paymentCenter: "Centro de pagos", paymentHistory: "Historial de pagos", paymentSoon: "Los pagos de renta en línea aparecerán aquí cuando se conecte el pago.",
-      leaseDetails: "Detalles del contrato", startDate: "Fecha de inicio", endDate: "Fecha final", unit: "Unidad",
-      inbox: "Mensajes", noMessages: "Aún no hay mensajes. Inicia una conversación con tu propietario abajo.",
-      typeMessage: "Escribe un mensaje…", send: "Enviar",
-      maintenanceTitle: "Solicitudes de mantenimiento", maintenanceText: "Envía y revisa solicitudes de reparación desde esta página.",
-      documentsTitle: "Documentos", documentsText: "Tu contrato y documentos compartidos aparecerán aquí.",
-      account: "Ajustes de cuenta", privacy: "Modo privado", privacyText: "Oculta cantidades financieras mientras usas Unitvero en público.",
-      language: "Idioma", notifications: "Notificaciones", notificationText: "Las alertas dentro de la app están activas. Las notificaciones del teléfono se conectarán después.",
-      signOut: "Cerrar sesión", noRental: "Aún no hay un alquiler activo conectado a esta cuenta.", refresh: "Actualizar",
-      connected: "Conectado", unread: "sin leer", month: "mes"
-    }
-  };
-
-  const t = (key) => words[language]?.[key] || words.en[key] || key;
+  const t = (key) => getTranslation(language, key);
 
   async function loadTenant() {
     setLoading(true);
@@ -12189,7 +12357,7 @@ function TenantPortal({
 
       <aside className="utSidebar">
         <div className="utLogo">unit<span>vero</span></div>
-        <div className="utPortalLabel">TENANT PORTAL</div>
+        <div className="utPortalLabel">{getTranslation(language, "tenantPortal")}</div>
 
         <nav className="utNav">
           {nav.map(([key, icon, label]) => (
@@ -12214,14 +12382,15 @@ function TenantPortal({
       <main className="utMain">
         <header className="utHeader">
           <div>
-            <div className="utEyebrow">TENANT DASHBOARD</div>
+            <div className="utEyebrow">{getTranslation(language, "tenantDashboard")}</div>
             <h1>{t("welcome")}, {firstName}.</h1>
             <p>{t("subtitle")}</p>
           </div>
           <div className="utHeaderActions">
             <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
-              <option value="en">English</option>
-              <option value="es">Español</option>
+              {LANGUAGE_OPTIONS.map(({ code, label }) => (
+                <option key={code} value={code}>{label}</option>
+              ))}
             </select>
             <button type="button" onClick={togglePrivacy}>{privacyMode ? "Show amounts" : "Hide amounts"}</button>
             <button type="button" className="utIconButton" onClick={() => setView("messages")} aria-label="Notifications">
@@ -12237,7 +12406,7 @@ function TenantPortal({
           <section className="utEmptyCard">
             <div className="utEmptyIcon">⌂</div>
             <h2>{t("noRental")}</h2>
-            <p>If you recently accepted an invitation, refresh your account.</p>
+            <p>{getTranslation(language, "refreshInvite") || "If you recently accepted an invitation, refresh your account."}</p>
             <button type="button" className="utPrimary" onClick={loadTenant}>{t("refresh")}</button>
           </section>
         ) : (
@@ -12384,7 +12553,7 @@ function TenantPortal({
                 <section className="utCard utChat">
                   <div className="utChatHead">
                     <div className="utAvatar landlord">L</div>
-                    <div><strong>Property management</strong><span>{property?.address || "Your rental"}</span></div>
+                    <div><strong>{getTranslation(language, "propertyManagement")}</strong><span>{property?.address || "Your rental"}</span></div>
                     <span className="utStatus">● Active</span>
                   </div>
                   <div className="utMessageHistory">
@@ -12457,8 +12626,12 @@ function TenantPortal({
                   </div>
                   <div className="utSettingRow">
                     <div className="utSettingIcon">文</div>
-                    <div><strong>{t("language")}</strong><p>Choose the language used throughout your tenant portal.</p></div>
-                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}><option value="en">English</option><option value="es">Español</option></select>
+                    <div><strong>{t("language")}</strong><p>{getTranslation(language, "choosePortalLanguage")}</p></div>
+                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+                      {LANGUAGE_OPTIONS.map(({ code, label }) => (
+                        <option key={code} value={code}>{label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="utSettingRow">
                     <div className="utSettingIcon">♢</div>
@@ -12489,11 +12662,8 @@ function TenantPortal({
       }}>
         <select
           aria-label="Choose language"
-          value={appLanguage}
-          onChange={(e) => {
-            setAppLanguage(e.target.value);
-            changeLanguage(e.target.value);
-          }}
+          value={language}
+          onChange={(e) => changeLanguage(e.target.value)}
           style={{
             border:0,
             outline:"none",
@@ -12502,8 +12672,8 @@ function TenantPortal({
             color:"#263247",
           }}
         >
-          {unitveroLanguages.map(([code, name]) => (
-            <option key={code} value={code}>{name}</option>
+          {LANGUAGE_OPTIONS.map(({ code, label }) => (
+            <option key={code} value={code}>{label}</option>
           ))}
         </select>
       </div>
@@ -12539,7 +12709,7 @@ function TenantPortal({
             }}>
               <div>
                 <small>UNITVERO</small>
-                <h2 style={{margin:"4px 0 6px"}}>Privacy Policy</h2>
+                <h2 style={{margin:"4px 0 6px"}}>{getTranslation(language, "privacyPolicy")}</h2>
                 <p style={{margin:0,color:"#667386"}}>
                   Privacy information and data choices.
                 </p>
