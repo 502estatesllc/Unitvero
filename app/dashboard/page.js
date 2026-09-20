@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [tenancies, setTenancies] = useState([]);
   const [editingTenancy, setEditingTenancy] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [applicantInvitations, setApplicantInvitations] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
 
   const [propertySearch, setPropertySearch] = useState("");
@@ -1471,6 +1472,18 @@ export default function Dashboard() {
       alert("Could not load applications: " + applicationError.message);
     } else {
       setApplications(applicationData || []);
+    }
+
+    const { data: applicantInvitationData, error: applicantInvitationError } = await s
+      .from("applicant_invitations")
+      .select("*")
+      .eq("landlord_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (applicantInvitationError) {
+      console.error("Could not load applicant invitations:", applicantInvitationError);
+    } else {
+      setApplicantInvitations(applicantInvitationData || []);
     }
 
     const propertyIds = (properties || []).map((property) => property.id);
@@ -5603,15 +5616,25 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  setView("newApplication");
-                }}
-              >
-                + New Application
-              </button>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => {
+                    setView("newApplication");
+                  }}
+                >
+                  + New Application
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("inviteApplicant");
+                  }}
+                >
+                  + Invite Applicant
+                </button>
+              </div>
             </div>
 
             <div className="applicationStats">
@@ -5707,15 +5730,25 @@ export default function Dashboard() {
                     Create an application to begin reviewing future tenants.
                   </p>
 
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={() => {
-                      setView("newApplication");
-                    }}
-                  >
-                    + Create Application
-                  </button>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="primary"
+                      onClick={() => {
+                        setView("newApplication");
+                      }}
+                    >
+                      + Create Application
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView("inviteApplicant");
+                      }}
+                    >
+                      + Invite Applicant
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="applicationTable">
@@ -5800,6 +5833,371 @@ export default function Dashboard() {
                 </div>
               )}
             </section>
+          </section>
+        )}
+
+        {applicantInvitations.length > 0 && (
+          <section className="panel" style={{ marginTop: 20 }}>
+            <div className="dashboardHeader">
+              <div>
+                <small>{uiLabel("inviteApplicant")}</small>
+                <h1>{uiLabel("sendApplicationInvite")}</h1>
+              </div>
+            </div>
+
+            <div className="applicationTable">
+              <div className="applicationTableHeader">
+                <span>{uiLabel("applicant")}</span>
+                <span>{uiLabel("property")}</span>
+                <span>{uiLabel("status")}</span>
+                <span>{uiLabel("sent")}</span>
+                <span>{uiLabel("expires")}</span>
+                <span>{uiLabel("actions")}</span>
+              </div>
+
+              {applicantInvitations.map((invitation) => {
+                const property = props.find((item) => item.id === invitation.property_id);
+                const unit = units.find((item) => item.id === invitation.unit_id);
+                const canResend = invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const canRevoke = invitation.status === "pending" && !invitation.used_at && !invitation.revoked_at;
+                const inviteStatus = invitation.status || "pending";
+
+                return (
+                  <div className="applicationTableRow" key={invitation.id}>
+                    <div className="applicationPerson">
+                      <div className="applicationAvatar">
+                        {invitation.applicant_name?.charAt(0)?.toUpperCase() || "A"}
+                      </div>
+
+                      <div>
+                        <b>{invitation.applicant_name}</b>
+                        <span>{invitation.applicant_email}</span>
+                      </div>
+                    </div>
+
+                    <div className="applicationProperty">
+                      <b>{property?.address || "No property"}</b>
+                      <span>{unit ? unit.unit_name : "No unit"}</span>
+                    </div>
+
+                    <span className={`applicationStatusBadge status-${inviteStatus}`}>
+                      {inviteStatus.replaceAll("_", " ")}
+                    </span>
+
+                    <span className="applicationSubmitted">
+                      {invitation.created_at
+                        ? new Date(invitation.created_at).toLocaleDateString()
+                        : "—"}
+                    </span>
+
+                    <span className="applicationSubmitted">
+                      {invitation.expires_at
+                        ? new Date(invitation.expires_at).toLocaleDateString()
+                        : "—"}
+                    </span>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {canResend && (
+                        <button
+                          type="button"
+                          className="viewAllButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Resend this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "resend",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not resend the invitation.");
+                            }
+
+                            const updated = await s
+                              .from("applicant_invitations")
+                              .select("*")
+                              .eq("id", invitation.id)
+                              .maybeSingle();
+
+                            if (!updated.error && updated.data) {
+                              setApplicantInvitations((current) =>
+                                current.map((item) =>
+                                  item.id === invitation.id ? updated.data : item,
+                                ),
+                              );
+                            }
+
+                            alert("Applicant invitation resent successfully.");
+                          }}
+                        >
+                          {uiLabel("resendInvitation")}
+                        </button>
+                      )}
+
+                      {canRevoke && (
+                        <button
+                          type="button"
+                          className="denyApplicationButton"
+                          onClick={async () => {
+                            const confirmed = window.confirm("Revoke this applicant invitation?");
+                            if (!confirmed) return;
+
+                            const s = supabase();
+                            const { data: { session }, error: sessionError } = await s.auth.getSession();
+
+                            if (sessionError || !session?.access_token) {
+                              alert("Your session expired. Please sign in again.");
+                              return;
+                            }
+
+                            const response = await fetch("/api/applicant-invitations", {
+                              method: "PATCH",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${session.access_token}`,
+                              },
+                              body: JSON.stringify({
+                                action: "revoke",
+                                invitationId: invitation.id,
+                              }),
+                            });
+
+                            let result = {};
+                            try {
+                              result = await response.json();
+                            } catch {
+                              result = {};
+                            }
+
+                            if (!response.ok) {
+                              throw new Error(result?.error || "Could not revoke the invitation.");
+                            }
+
+                            setApplicantInvitations((current) =>
+                              current.map((item) =>
+                                item.id === invitation.id
+                                  ? { ...item, status: "revoked", revoked_at: new Date().toISOString() }
+                                  : item,
+                              ),
+                            );
+
+                            alert("Applicant invitation revoked.");
+                          }}
+                        >
+                          {uiLabel("revokeInvitation")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {view === "inviteApplicant" && (
+          <section className="applicationFormPage">
+            <button
+              type="button"
+              className="propertyBackButton"
+              onClick={() => {
+                setView("applications");
+              }}
+            >
+              ← Back to Applications
+            </button>
+
+            <div className="applicationFormHeader">
+              <small>INVITE APPLICANT</small>
+              <h1>Send Application Invite</h1>
+
+              <p>
+                Invite an applicant to complete a rental application without creating a Unitvero account.
+              </p>
+            </div>
+
+            <form
+              className="rentalApplicationForm"
+              onSubmit={async (e) => {
+                e.preventDefault();
+
+                const form = e.currentTarget;
+                const s = supabase();
+
+                const {
+                  data: { user },
+                  error: userError,
+                } = await s.auth.getUser();
+
+                if (userError || !user) {
+                  alert("Authentication error: " + (userError?.message || "No user found"));
+                  return;
+                }
+
+                const propertyId = form.propertyId.value;
+                const unitId = form.unitId.value || null;
+                const applicantName = form.applicantName.value.trim();
+                const applicantEmail = form.applicantEmail.value.trim().toLowerCase();
+
+                if (!propertyId || !applicantName || !applicantEmail) {
+                  alert("Select a property, enter the applicant name, and provide an email address.");
+                  return;
+                }
+
+                try {
+                  const {
+                    data: { session },
+                    error: sessionError,
+                  } = await s.auth.getSession();
+
+                  if (sessionError || !session?.access_token) {
+                    throw new Error("Your session expired. Please sign in again.");
+                  }
+
+                  const inviteResponse = await fetch("/api/applicant-invitations", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                      propertyId,
+                      unitId,
+                      applicantName,
+                      applicantEmail,
+                    }),
+                  });
+
+                  let inviteResult = {};
+
+                  try {
+                    inviteResult = await inviteResponse.json();
+                  } catch {
+                    inviteResult = {};
+                  }
+
+                  if (!inviteResponse.ok) {
+                    throw new Error(inviteResult?.error || "Could not create the applicant invitation.");
+                  }
+
+                  alert(`${applicantName} was invited to apply by email.`);
+                  form.reset();
+                  setView("applications");
+                } catch (error) {
+                  console.error("Applicant invite error:", error);
+                  alert(error?.message || "Something went wrong while inviting the applicant.");
+                }
+              }}
+            >
+              <section className="applicationFormCard">
+                <div className="applicationFormSectionHeader">
+                  <span>01</span>
+
+                  <div>
+                    <h2>Invitation Details</h2>
+                    <p>Select the property and the applicant email for the secure application link.</p>
+                  </div>
+                </div>
+
+                <div className="applicationFormGrid">
+                  <label>
+                    Rental Property
+                    <select
+                      name="propertyId"
+                      required
+                      onChange={(e) => {
+                        const property = props.find((item) => item.id === e.target.value);
+                        const unitSelect = document.querySelector('[name="unitId"]');
+                        if (unitSelect) {
+                          unitSelect.value = "";
+                        }
+                        if (!property) return;
+                      }}
+                    >
+                      <option value="">Select property</option>
+
+                      {props.map((property) => (
+                        <option value={property.id} key={property.id}>
+                          {property.address}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {selectedProperty && unitsForProperty(selectedProperty.id).length > 0 && (
+                    <label>
+                      Unit (optional)
+                      <select name="unitId">
+                        <option value="">No specific unit</option>
+                        {unitsForProperty(selectedProperty.id).map((unit) => (
+                          <option value={unit.id} key={unit.id}>
+                            {unit.unit_name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  <label>
+                    Full Name
+                    <input
+                      name="applicantName"
+                      type="text"
+                      placeholder="Applicant full name"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Email Address
+                    <input
+                      name="applicantEmail"
+                      type="email"
+                      placeholder="applicant@email.com"
+                      required
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <div className="applicationFormActions">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("applications");
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button type="submit" className="primary">
+                  Send Invite
+                </button>
+              </div>
+            </form>
           </section>
         )}
 
