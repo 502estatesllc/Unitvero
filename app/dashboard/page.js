@@ -1733,7 +1733,22 @@ export default function Dashboard() {
     }
 
     if (expenseResult.error) console.error("Could not load maintenance expenses:", expenseResult.error);
-    else setMaintenanceExpenses(expenseResult.data || []);
+    else {
+      const expenseRows = expenseResult.data || [];
+      const withReceipts = await Promise.all(
+        expenseRows.map(async (expense) => {
+          if (!expense.receipt_file_path) return expense;
+          const { data: signedData } = await s.storage
+            .from("unitvero-media")
+            .createSignedUrl(expense.receipt_file_path, 60 * 60);
+          return {
+            ...expense,
+            receipt_signed_url: signedData?.signedUrl || null,
+          };
+        }),
+      );
+      setMaintenanceExpenses(withReceipts);
+    }
     if (documentResult.error) console.error("Could not load documents:", documentResult.error);
     else setDocuments(documentResult.data || []);
     if (templateResult.error) console.error("Could not load templates:", templateResult.error);
@@ -2244,6 +2259,57 @@ export default function Dashboard() {
     const s = supabase();
     const { data: { user } } = await s.auth.getUser();
     if (!user) return alert("Please sign in again.");
+
+    const existing = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+    const fileInput = form.receiptFile;
+    const receiptFile = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+    let receiptMetadata = {};
+
+    if (receiptFile) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "application/pdf",
+      ];
+
+      if (!allowedTypes.includes(receiptFile.type) && !/\.(png|jpe?g|webp|gif|pdf)$/i.test(receiptFile.name)) {
+        return alert("Receipts must be an image or PDF file up to 10 MB.");
+      }
+
+      if (receiptFile.size > 10 * 1024 * 1024) {
+        return alert("Receipt file is too large. Please upload a file up to 10 MB.");
+      }
+
+      const safeName = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storagePath = `maintenance-receipts/${user.id}/${request.id}/${Date.now()}-${safeName}`;
+
+      const { error: uploadError } = await s.storage
+        .from("unitvero-media")
+        .upload(storagePath, receiptFile, {
+          upsert: true,
+          contentType: receiptFile.type || "application/octet-stream",
+        });
+
+      if (uploadError) {
+        return alert("Could not upload receipt: " + uploadError.message);
+      }
+
+      if (existing?.receipt_file_path && existing.receipt_file_path !== storagePath) {
+        await s.storage.from("unitvero-media").remove([existing.receipt_file_path]);
+      }
+
+      receiptMetadata = {
+        receipt_file_name: receiptFile.name,
+        receipt_file_path: storagePath,
+        receipt_content_type: receiptFile.type || "application/pdf",
+        receipt_size_bytes: receiptFile.size,
+        receipt_uploaded_at: new Date().toISOString(),
+      };
+    }
+
     const payload = {
       maintenance_request_id: request.id,
       landlord_id: user.id,
@@ -2256,8 +2322,9 @@ export default function Dashboard() {
       other_cost: Number(form.otherCost.value || 0),
       category: "Repairs and maintenance",
       include_in_tax_report: form.includeTax.checked,
+      ...receiptMetadata,
     };
-    const existing = maintenanceExpenses.find(x => x.maintenance_request_id === request.id);
+
     const query = existing
       ? s.from("maintenance_expenses").update(payload).eq("id", existing.id)
       : s.from("maintenance_expenses").insert(payload);
@@ -10575,6 +10642,24 @@ export default function Dashboard() {
                           <label style={{display:"grid",gap:6}}><b>Labor Cost ($)</b><input name="laborCost" type="number" min="0" step="0.01" defaultValue={expense?.labor_cost || 0} /></label>
                           <label style={{display:"grid",gap:6}}><b>Materials Cost ($)</b><input name="materialCost" type="number" min="0" step="0.01" defaultValue={expense?.material_cost || 0} /></label>
                           <label style={{display:"grid",gap:6}}><b>Other Cost ($)</b><input name="otherCost" type="number" min="0" step="0.01" defaultValue={expense?.other_cost || 0} /></label>
+                          <label style={{display:"grid",gap:6,gridColumn:"1 / -1"}}>
+                            <b>Receipt Upload</b>
+                            <input name="receiptFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" />
+                            {expense?.receipt_file_path && (
+                              <div style={{marginTop:8,padding:12,border:"1px solid #dbe3ef",borderRadius:10,background:"#f7f9fc",display:"grid",gap:8}}>
+                                {expense.receipt_content_type?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(expense.receipt_file_name || "") ? (
+                                  <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{display:"block",borderRadius:8,overflow:"hidden",border:"1px solid #dbe3ef",background:"#fff",maxWidth:220}}>
+                                    <img src={expense.receipt_signed_url || ""} alt={expense.receipt_file_name || "Receipt"} style={{display:"block",width:"100%",maxHeight:180,objectFit:"cover"}} />
+                                  </a>
+                                ) : (
+                                  <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{color:"#0f9f8f",fontWeight:700}}>
+                                    Open current PDF receipt
+                                  </a>
+                                )}
+                                <small style={{color:"#5d6878"}}>{expense.receipt_file_name || "Current receipt"}</small>
+                              </div>
+                            )}
+                          </label>
                           <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",padding:"12px 14px",border:"1px solid #dbe3ef",borderRadius:12}}>
                             <label style={{display:"flex",gap:8,alignItems:"center"}}><input name="includeTax" type="checkbox" defaultChecked={expense ? expense.include_in_tax_report : true}/> Include in tax report</label>
                             <b>Total Repair Cost: ${Number(expense?.total_cost || 0).toFixed(2)}</b>

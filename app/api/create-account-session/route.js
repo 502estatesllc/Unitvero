@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
@@ -18,10 +19,16 @@ async function getAuthenticatedUser() {
     },
   );
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { user: null, error: 'You must be signed in to start Stripe onboarding.' };
+    return {
+      user: null,
+      error: 'You must be signed in to manage Stripe payout settings.',
+    };
   }
 
   return { user };
@@ -32,7 +39,10 @@ export async function POST(request) {
     const secretKey = process.env.STRIPE_SECRET_KEY;
 
     if (!secretKey) {
-      return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Stripe is not configured.' },
+        { status: 500 },
+      );
     }
 
     const { user, error: authError } = await getAuthenticatedUser();
@@ -44,7 +54,10 @@ export async function POST(request) {
     const { accountId } = await request.json();
 
     if (!accountId) {
-      return NextResponse.json({ error: 'Stripe account ID is required.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Stripe account ID is required.' },
+        { status: 400 },
+      );
     }
 
     const cookieStore = await cookies();
@@ -61,33 +74,50 @@ export async function POST(request) {
       },
     );
 
-    const { data: accountRecord, error: ownershipError } = await supabase
+    const { data: accountRecord, error: accountError } = await supabase
       .from('landlord_payment_accounts')
       .select('id, landlord_id, stripe_account_id')
+      .eq('landlord_id', user.id)
       .eq('stripe_account_id', accountId)
       .maybeSingle();
 
-    if (ownershipError) {
-      throw new Error(ownershipError.message);
+    if (accountError) {
+      throw new Error(accountError.message);
     }
 
-    if (!accountRecord || accountRecord.landlord_id !== user.id) {
-      return NextResponse.json({ error: 'This Stripe account is not linked to your account.' }, { status: 403 });
+    if (!accountRecord) {
+      return NextResponse.json(
+        { error: 'This Stripe account is not linked to your account.' },
+        { status: 403 },
+      );
     }
 
     const stripe = new Stripe(secretKey);
-    const origin = request.nextUrl.origin;
 
-    const accountLink = await stripe.accountLinks.create({
+    const accountSession = await stripe.accountSessions.create({
       account: accountId,
-      refresh_url: `${origin}/dashboard`,
-      return_url: `${origin}/dashboard`,
-      type: 'account_onboarding',
+      components: {
+        account_onboarding: {
+          enabled: true,
+          features: {
+            external_account_collection: true,
+            disable_stripe_user_authentication: true,
+          },
+        },
+      },
     });
 
-    return NextResponse.json({ url: accountLink.url });
+    return NextResponse.json({
+      clientSecret: accountSession.client_secret,
+    });
   } catch (error) {
-    console.error('Stripe account link error:', error);
-    return NextResponse.json({ error: error?.message || 'Could not start Stripe onboarding.' }, { status: 500 });
+    console.error('Create account session error:', error);
+
+    return NextResponse.json(
+      {
+        error: error?.message || 'Could not start payout setup.',
+      },
+      { status: 500 },
+    );
   }
 }
