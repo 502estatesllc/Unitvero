@@ -2717,7 +2717,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={`app unitveroModern ${privacyMode ? "privacyOn" : ""}`}>
+    <div className={`app unitveroModern utShell ${privacyMode ? "privacyOn" : ""}`}>
       <aside className="sidebar">
         <div className="sidebarBrand">
           <b className="logo">
