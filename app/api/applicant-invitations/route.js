@@ -900,107 +900,92 @@ export async function PATCH(request) {
       return Response.json({ error: "Occupants count must be a number greater than zero." }, { status: 400 });
     }
 
-    const applicationRecord = {
-      landlord_id: invitation.landlord_id,
-      property_id: invitation.property_id,
-      unit_id: invitation.unit_id || null,
-      applicant_invitation_id: invitation.id,
-      applicant_name: applicantName,
-      applicant_email: applicantEmail,
-      applicant_phone: String(body.applicantPhone || "").trim() || null,
-      current_address: String(body.currentAddress || "").trim() || null,
-      current_city: String(body.currentCity || "").trim() || null,
-      current_state: String(body.currentState || "").trim() || null,
-      current_zip: String(body.currentZip || "").trim() || null,
-      desired_move_in_date: desiredMoveInDate,
-      employer_name: String(body.employerName || "").trim() || null,
-      job_title: String(body.jobTitle || "").trim() || null,
-      monthly_income: monthlyIncome,
-      current_landlord_name: String(body.currentLandlordName || "").trim() || null,
-      current_landlord_phone: String(body.currentLandlordPhone || "").trim() || null,
-      current_rent: currentRent,
-      references_details: String(body.referencesDetails || "").trim() || null,
-      previous_address: String(body.previousAddress || "").trim() || null,
-      additional_notes: String(body.additionalNotes || "").trim() || null,
-      occupants_count: occupantsCount,
-      occupants_details: String(body.occupantsDetails || "").trim() || null,
-      has_pets: Boolean(body.hasPets === "yes" || body.hasPets === true),
-      pets_details: body.hasPets === "yes" || body.hasPets === true ? String(body.petsDetails || "").trim() || null : null,
-      vehicles_details: String(body.vehiclesDetails || "").trim() || null,
-      applicant_consent: true,
-      applicant_consent_at: new Date().toISOString(),
-      application_status: "new",
-      screening_status: "not_started",
-    };
-
     const admin = adminClient();
 
     try {
-      const { data: application, error: insertError } = await admin
-        .from("rental_applications")
-        .insert(applicationRecord)
-        .select("id")
-        .single();
+      const { data: applicationId, error: submitError } = await admin.rpc(
+        "submit_applicant_invitation_application",
+        {
+          p_invitation_id: invitation.id,
+          p_applicant_name: applicantName,
+          p_applicant_email: applicantEmail,
+          p_applicant_phone: String(body.applicantPhone || "").trim() || null,
+          p_current_address: String(body.currentAddress || "").trim() || null,
+          p_current_city: String(body.currentCity || "").trim() || null,
+          p_current_state: String(body.currentState || "").trim() || null,
+          p_current_zip: String(body.currentZip || "").trim() || null,
+          p_desired_move_in_date: desiredMoveInDate,
+          p_employer_name: String(body.employerName || "").trim() || null,
+          p_job_title: String(body.jobTitle || "").trim() || null,
+          p_monthly_income: monthlyIncome,
+          p_current_landlord_name: String(body.currentLandlordName || "").trim() || null,
+          p_current_landlord_phone: String(body.currentLandlordPhone || "").trim() || null,
+          p_current_rent: currentRent,
+          p_references_details: String(body.referencesDetails || "").trim() || null,
+          p_previous_address: String(body.previousAddress || "").trim() || null,
+          p_additional_notes: String(body.additionalNotes || "").trim() || null,
+          p_occupants_count: occupantsCount,
+          p_occupants_details: String(body.occupantsDetails || "").trim() || null,
+          p_has_pets: Boolean(body.hasPets === "yes" || body.hasPets === true),
+          p_pets_details: body.hasPets === "yes" || body.hasPets === true ? String(body.petsDetails || "").trim() || null : null,
+          p_vehicles_details: String(body.vehiclesDetails || "").trim() || null,
+          p_applicant_consent: true,
+        },
+      );
 
-      if (insertError) {
+      if (submitError) {
+        const message = String(submitError.message || "").toLowerCase();
+
         if (
-          insertError.code === "23505" ||
-          String(insertError.message).toLowerCase().includes("duplicate") ||
-          String(insertError.message).toLowerCase().includes("applicant_invitation_id")
+          message.includes("already been used") ||
+          message.includes("no longer pending") ||
+          message.includes("revoked") ||
+          message.includes("expired") ||
+          message.includes("changed state") ||
+          message.includes("invalid") ||
+          message.includes("applicant_invitation_id") ||
+          message.includes("duplicate")
         ) {
           return Response.json(
-            { error: "This invitation has already been used to submit an application." },
+            { error: submitError.message || "This invitation is no longer valid for submission." },
             { status: 409 },
           );
         }
 
-        console.error("Applicant application insert error:", insertError);
+        console.error("Applicant application transaction error:", submitError);
         return Response.json(
           {
-            error: "Could not save your application: " + insertError.message,
+            error: "Could not save your application: " + submitError.message,
           },
           { status: 400 },
-        );
-      }
-
-      const { data: updatedInvitation, error: updateError } = await admin
-        .from("applicant_invitations")
-        .update({
-          status: "accepted",
-          used_at: new Date().toISOString(),
-        })
-        .eq("id", invitation.id)
-        .eq("status", "pending")
-        .is("used_at", null)
-        .is("revoked_at", null)
-        .select("id, status, used_at, revoked_at")
-        .maybeSingle();
-
-      if (updateError) {
-        console.error("Applicant invitation close error:", updateError);
-      }
-
-      if (!updatedInvitation) {
-        return Response.json(
-          { error: "This invitation was already used or changed state before submission completed." },
-          { status: 409 },
         );
       }
 
       return Response.json({
         success: true,
         message: "Application submitted successfully.",
-        applicationId: application?.id || null,
-        invitation: updatedInvitation,
+        applicationId: applicationId || null,
       });
     } catch (error) {
-      console.error("Applicant application insert error:", error);
-      if (String(error.message).toLowerCase().includes("duplicate") || String(error.message).toLowerCase().includes("applicant_invitation_id")) {
+      console.error("Applicant application transaction error:", error);
+      const message = String(error.message || "").toLowerCase();
+
+      if (
+        message.includes("already been used") ||
+        message.includes("no longer pending") ||
+        message.includes("revoked") ||
+        message.includes("expired") ||
+        message.includes("changed state") ||
+        message.includes("invalid") ||
+        message.includes("applicant_invitation_id") ||
+        message.includes("duplicate")
+      ) {
         return Response.json(
-          { error: "This invitation has already been used to submit an application." },
+          { error: error.message || "This invitation is no longer valid for submission." },
           { status: 409 },
         );
       }
+
       throw error;
     }
   } catch (error) {
