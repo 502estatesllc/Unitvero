@@ -593,7 +593,7 @@ export async function PATCH(request) {
         );
       }
 
-      const { error: updateError } = await admin
+      const { data: updatedInvitation, error: updateError } = await admin
         .from("applicant_invitations")
         .update({
           status: "revoked",
@@ -602,8 +602,10 @@ export async function PATCH(request) {
         .eq("id", invitation.id)
         .eq("landlord_id", auth.user.id)
         .eq("status", "pending")
-        .eq("revoked_at", null)
-        .eq("used_at", null);
+        .is("revoked_at", null)
+        .is("used_at", null)
+        .select("id, landlord_id, status, revoked_at, used_at")
+        .maybeSingle();
 
       if (updateError) {
         console.error("Applicant invitation revoke error:", updateError);
@@ -613,9 +615,17 @@ export async function PATCH(request) {
         );
       }
 
+      if (!updatedInvitation) {
+        return Response.json(
+          { error: "This invitation changed state before it could be revoked." },
+          { status: 409 },
+        );
+      }
+
       return Response.json({
         success: true,
         message: "Applicant invitation revoked.",
+        invitation: updatedInvitation,
       });
     }
 
@@ -788,7 +798,7 @@ export async function PATCH(request) {
       }
 
       const nextExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { error: updateError } = await admin
+      const { data: updatedInvitation, error: updateError } = await admin
         .from("applicant_invitations")
         .update({
           token_hash: hashToken(newInviteToken),
@@ -801,7 +811,9 @@ export async function PATCH(request) {
         .eq("landlord_id", auth.user.id)
         .eq("status", "pending")
         .is("used_at", null)
-        .is("revoked_at", null);
+        .is("revoked_at", null)
+        .select("id, landlord_id, property_id, applicant_email, applicant_name, applicant_phone, status, expires_at")
+        .maybeSingle();
 
       if (updateError) {
         console.error("Applicant invitation resend update error:", updateError);
@@ -811,9 +823,17 @@ export async function PATCH(request) {
         );
       }
 
+      if (!updatedInvitation) {
+        return Response.json(
+          { error: "This invitation changed state before it could be resent." },
+          { status: 409 },
+        );
+      }
+
       return Response.json({
         success: true,
         message: "Applicant invitation resent.",
+        invitation: updatedInvitation,
       });
     }
 
@@ -943,7 +963,7 @@ export async function PATCH(request) {
         );
       }
 
-      const { error: updateError } = await admin
+      const { data: updatedInvitation, error: updateError } = await admin
         .from("applicant_invitations")
         .update({
           status: "accepted",
@@ -952,16 +972,26 @@ export async function PATCH(request) {
         .eq("id", invitation.id)
         .eq("status", "pending")
         .is("used_at", null)
-        .is("revoked_at", null);
+        .is("revoked_at", null)
+        .select("id, status, used_at, revoked_at")
+        .maybeSingle();
 
       if (updateError) {
         console.error("Applicant invitation close error:", updateError);
+      }
+
+      if (!updatedInvitation) {
+        return Response.json(
+          { error: "This invitation was already used or changed state before submission completed." },
+          { status: 409 },
+        );
       }
 
       return Response.json({
         success: true,
         message: "Application submitted successfully.",
         applicationId: application?.id || null,
+        invitation: updatedInvitation,
       });
     } catch (error) {
       console.error("Applicant application insert error:", error);
