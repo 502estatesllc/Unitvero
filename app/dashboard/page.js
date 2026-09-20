@@ -5987,7 +5987,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {applicantInvitations.length > 0 && (
+        {view === "applications" && applicantInvitations.length > 0 && (
           <section className="panel" style={{ marginTop: 20 }}>
             <div className="dashboardHeader">
               <div>
@@ -7892,39 +7892,45 @@ export default function Dashboard() {
               </article>
             </div>
 
-            <section className="commandCard" style={{marginTop:22}}>
+            <section className="commandCard documentJurisdictionCard" style={{marginTop:22}}>
               <div className="commandCardHeader">
                 <div>
                   <span className="commandSectionIcon">◎</span>
                   <div>
-                    <h2>50-State Template Framework</h2>
+                    <h2>State / Jurisdiction</h2>
                     <p>
-                      Unitvero ties each document to the property's jurisdiction
-                      so the correct state template version can be selected.
+                      Select the document jurisdiction. Unitvero uses this for the
+                      matching state template framework whenever a property state is not explicitly set.
                     </p>
                   </div>
                 </div>
-                <span>{unitveroStates.length} jurisdictions</span>
+                <span>{documentBuilderState ? unitveroStates.find(([code]) => code === documentBuilderState)?.[1] || documentBuilderState : "Select state"}</span>
               </div>
-              <div style={{
-                display:"grid",
-                gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",
-                gap:8,
-                marginTop:14,
-              }}>
-                {unitveroStates.map(([code, name]) => (
-                  <div key={code} style={{
-                    padding:"9px 10px",
-                    border:"1px solid #e1e7ef",
-                    borderRadius:10,
-                    background:"#fff",
-                  }}>
-                    <b style={{fontSize:12}}>{code}</b>
-                    <span style={{display:"block",fontSize:11,color:"#6b778c"}}>
-                      {name}
-                    </span>
-                  </div>
-                ))}
+
+              <div className="documentJurisdictionPicker">
+                <label className="documentJurisdictionField">
+                  <span>State / Jurisdiction</span>
+                  <select
+                    value={documentBuilderState || getPropertyState(selectedProperty) || ""}
+                    onChange={(e) => setDocumentBuilderState(e.target.value)}
+                  >
+                    <option value="">Select a state...</option>
+                    {unitveroStates.map(([code, name]) => (
+                      <option key={code} value={code}>{name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="documentJurisdictionBadge">
+                  <span>Current selection</span>
+                  <strong>
+                    {documentBuilderState
+                      ? unitveroStates.find(([code]) => code === documentBuilderState)?.[1] || documentBuilderState
+                      : getPropertyState(selectedProperty)
+                        ? (unitveroStates.find(([code]) => code === getPropertyState(selectedProperty))?.[1] || getPropertyState(selectedProperty))
+                        : "No jurisdiction selected"}
+                  </strong>
+                </div>
               </div>
             </section>
 
@@ -7960,25 +7966,17 @@ export default function Dashboard() {
                   <button
                     key={type}
                     type="button"
+                    className="documentTemplateCardButton"
                     onClick={() => {
                       if (!requirePro("document_center", "Document Center")) return;
                       setDocumentBuilderType(type);
                       setDocumentBuilderOpen(true);
                     }}
-                    style={{
-                      textAlign:"left",
-                      padding:18,
-                      border:"1px solid #dbe3ef",
-                      borderRadius:16,
-                      background:"#fff",
-                      cursor:"pointer",
-                    }}
+                    aria-label={`Create ${title}`}
                   >
-                    <div style={{fontSize:26,fontWeight:900}}>{icon}</div>
-                    <b style={{display:"block",marginTop:8}}>{title}</b>
-                    <span style={{display:"block",marginTop:5,color:"#6b778c",fontSize:13}}>
-                      Auto-fill property and tenant details
-                    </span>
+                    <div className="documentTemplateCardIcon">{icon}</div>
+                    <b>{title}</b>
+                    <span>Auto-fill property and tenant details</span>
                   </button>
                 ))}
               </div>
