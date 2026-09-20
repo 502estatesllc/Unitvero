@@ -1737,10 +1737,10 @@ export default function Dashboard() {
       const expenseRows = expenseResult.data || [];
       const withReceipts = await Promise.all(
         expenseRows.map(async (expense) => {
-          if (!expense.receipt_file_path) return expense;
+          if (!expense.receipt_path) return expense;
           const { data: signedData } = await s.storage
             .from("unitvero-media")
-            .createSignedUrl(expense.receipt_file_path, 60 * 60);
+            .createSignedUrl(expense.receipt_path, 60 * 60);
           return {
             ...expense,
             receipt_signed_url: signedData?.signedUrl || null,
@@ -2284,7 +2284,7 @@ export default function Dashboard() {
       }
 
       const safeName = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const storagePath = `maintenance-receipts/${user.id}/${request.id}/${Date.now()}-${safeName}`;
+      const storagePath = `maintenance-receipts/${request.id}/${user.id}/${Date.now()}-${safeName}`;
 
       const { error: uploadError } = await s.storage
         .from("unitvero-media")
@@ -2297,13 +2297,13 @@ export default function Dashboard() {
         return alert("Could not upload receipt: " + uploadError.message);
       }
 
-      if (existing?.receipt_file_path && existing.receipt_file_path !== storagePath) {
-        await s.storage.from("unitvero-media").remove([existing.receipt_file_path]);
+      if (existing?.receipt_path && existing.receipt_path !== storagePath) {
+        await s.storage.from("unitvero-media").remove([existing.receipt_path]);
       }
 
       receiptMetadata = {
-        receipt_file_name: receiptFile.name,
-        receipt_file_path: storagePath,
+        receipt_name: receiptFile.name,
+        receipt_path: storagePath,
         receipt_content_type: receiptFile.type || "application/pdf",
         receipt_size_bytes: receiptFile.size,
         receipt_uploaded_at: new Date().toISOString(),
@@ -10645,18 +10645,18 @@ export default function Dashboard() {
                           <label style={{display:"grid",gap:6,gridColumn:"1 / -1"}}>
                             <b>Receipt Upload</b>
                             <input name="receiptFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" />
-                            {expense?.receipt_file_path && (
+                            {expense?.receipt_path && (
                               <div style={{marginTop:8,padding:12,border:"1px solid #dbe3ef",borderRadius:10,background:"#f7f9fc",display:"grid",gap:8}}>
-                                {expense.receipt_content_type?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(expense.receipt_file_name || "") ? (
+                                {expense.receipt_content_type?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(expense.receipt_name || "") ? (
                                   <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{display:"block",borderRadius:8,overflow:"hidden",border:"1px solid #dbe3ef",background:"#fff",maxWidth:220}}>
-                                    <img src={expense.receipt_signed_url || ""} alt={expense.receipt_file_name || "Receipt"} style={{display:"block",width:"100%",maxHeight:180,objectFit:"cover"}} />
+                                    <img src={expense.receipt_signed_url || ""} alt={expense.receipt_name || "Receipt"} style={{display:"block",width:"100%",maxHeight:180,objectFit:"cover"}} />
                                   </a>
                                 ) : (
                                   <a href={expense.receipt_signed_url || "#"} target="_blank" rel="noreferrer" style={{color:"#0f9f8f",fontWeight:700}}>
                                     Open current PDF receipt
                                   </a>
                                 )}
-                                <small style={{color:"#5d6878"}}>{expense.receipt_file_name || "Current receipt"}</small>
+                                <small style={{color:"#5d6878"}}>{expense.receipt_name || "Current receipt"}</small>
                               </div>
                             )}
                           </label>
