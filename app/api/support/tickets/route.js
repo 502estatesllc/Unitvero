@@ -125,8 +125,11 @@ export async function POST(request) {
 
   const userId = user.id;
   const email = user.email || '';
-  const resolvedPriority = ALLOWED_PRIORITIES.has(String(body.priority || 'normal').trim())
-    ? String(body.priority || 'normal').trim()
+
+  const isStaff = Boolean((await supabase.from('support_staff').select('id').eq('user_id', user.id).eq('active', true).maybeSingle()).data);
+  const requestedPriority = String(body.priority || 'normal').trim();
+  const resolvedPriority = isStaff && ALLOWED_PRIORITIES.has(requestedPriority)
+    ? requestedPriority
     : 'normal';
   const resolvedSource = ALLOWED_SOURCES.has(String(body.source || 'support-page').trim())
     ? String(body.source || 'support-page').trim()
@@ -134,6 +137,20 @@ export async function POST(request) {
 
   const adminSupabase = getAdminSupabase();
   const targetSupabase = adminSupabase || supabase;
+
+  const boundedAiContext = (() => {
+    const raw = body.aiContext;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+
+    const summary = typeof raw.summary === 'string' ? raw.summary.slice(0, 1200).trim() : '';
+    const page = typeof raw.page === 'string' ? raw.page.slice(0, 200).trim() : '';
+    const context = {};
+
+    if (summary) context.summary = summary;
+    if (page) context.page = page;
+
+    return Object.keys(context).length ? context : null;
+  })();
 
   const ticketPayload = {
     user_id: userId,
@@ -145,7 +162,7 @@ export async function POST(request) {
     priority: resolvedPriority,
     source: resolvedSource,
     reference_number: buildReferenceNumber(),
-    ai_context: body.aiContext ? { ...body.aiContext } : null,
+    ai_context: boundedAiContext,
     assigned_to: null,
   };
 
@@ -159,8 +176,8 @@ export async function POST(request) {
     return Response.json({ error: error?.message || 'Unable to create a support ticket.' }, { status: 400 });
   }
 
-  const initialMessage = body.aiContext && body.aiContext.summary
-    ? `Escalated from AI support:\n${body.aiContext.summary}`
+  const initialMessage = boundedAiContext && boundedAiContext.summary
+    ? `Escalated from AI support:\n${boundedAiContext.summary}`
     : description;
 
   await targetSupabase.from('support_messages').insert({

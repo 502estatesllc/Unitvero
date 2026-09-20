@@ -2,20 +2,55 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 
 const DEFAULT_SUPPORT_EMAIL = process.env.UNITVERO_SUPPORT_EMAIL || "";
 const DEFAULT_SUPPORT_MODEL = process.env.OPENAI_SUPPORT_MODEL || "gpt-4o-mini";
-const SUPPORT_EMAIL_FALLBACK_TEXT = "Your configured Unitvero support email is not set yet.";
+const MAX_MESSAGE_LENGTH = 2500;
+const MAX_AI_PROMPT_LENGTH = 12000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 8;
+const RATE_LIMIT_BUCKETS = new Map();
 
-function buildUserContext(body = {}) {
+function sanitizeText(value, maxLength = 500) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  return text.slice(0, maxLength);
+}
+
+function buildUserContext({ page } = {}) {
   const metadata = [];
 
-  if (body.page) metadata.push(`Page: ${body.page}`);
-  if (body.userRole) metadata.push(`Account role: ${body.userRole}`);
-  if (body.email) metadata.push(`Email: ${body.email}`);
-  if (body.name) metadata.push(`Name: ${body.name}`);
+  if (page) metadata.push(`Page: ${sanitizeText(page, 200)}`);
 
   return metadata.length ? `\n\nContext:\n${metadata.join("\n")}` : "";
+}
+
+function getClientIp(request) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+
+  const cf = request.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+
+  return "local-client";
+}
+
+function checkRateLimit(request, userId) {
+  const key = userId || getClientIp(request);
+  const now = Date.now();
+  const bucket = RATE_LIMIT_BUCKETS.get(key) || [];
+  const recent = bucket.filter((timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((recent[0] + RATE_LIMIT_WINDOW_MS - now) / 1000)),
+    };
+  }
+
+  recent.push(now);
+  RATE_LIMIT_BUCKETS.set(key, recent);
+  return { allowed: true, retryAfterSeconds: 0 };
 }
 
 function getAuthSupabase() {
@@ -51,7 +86,7 @@ async function persistSupportThread({ userId, email, message, assistantReply, so
       },
     });
 
-    const ticketRef = `UV-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const ticketRef = `UV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 
     const { data: ticket, error: ticketError } = await supabase
       .from("support_tickets")
@@ -110,7 +145,13 @@ async function generateSupportReply({ message, email, page, userRole }) {
   }
 
   const model = process.env.OPENAI_SUPPORT_MODEL || DEFAULT_SUPPORT_MODEL;
-  const prompt = `You are the Unitvero support assistant. Help users with rental management, payments, maintenance, applications, and account access. Keep answers concise, practical, and human. If the issue needs a human review, tell the user to open a representative ticket or contact support by the configured support email.${buildUserContext({ page, userRole, email })}\n\nUser message:\n${message}`;
+  const safePage = sanitizeText(page, 200);
+  const safeEmail = sanitizeText(email, 200);
+  const prompt = `You are the Unitvero support assistant. Help users with rental management, payments, maintenance, applications, and account access. Keep answers concise, practical, and human. If the issue needs a human review, tell the user to open a representative ticket or contact support by the configured support email.${buildUserContext({ page: safePage })}\n\nUser message:\n${message}`;
+
+  if (prompt.length > MAX_AI_PROMPT_LENGTH) {
+    throw new Error("Support request exceeds the allowed size.");
+  }
 
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -163,26 +204,39 @@ async function generateSupportReply({ message, email, page, userRole }) {
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const message = String(body.message || "").trim();
+    const rawMessage = typeof body.message === "string" ? body.message : "";
+
+    if (rawMessage.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json({ error: `Support message exceeds the ${MAX_MESSAGE_LENGTH}-character limit.` }, { status: 400 });
+    }
+
+    const message = sanitizeText(rawMessage, MAX_MESSAGE_LENGTH);
 
     if (!message) {
       return NextResponse.json({ error: "A support message is required." }, { status: 400 });
     }
 
-    const page = String(body.page || "").trim();
-    const userRole = String(body.userRole || "").trim();
-    const source = String(body.source || "dashboard").trim() || "dashboard";
+    const page = sanitizeText(body.page, 200);
+    const source = sanitizeText(body.source || "dashboard", 100) || "dashboard";
+
+    const rateLimit = checkRateLimit(request, null);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many support requests. Please wait a moment and try again." },
+        { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } }
+      );
+    }
 
     const supabase = getAuthSupabase();
     const { data: { user }, error: userError } = supabase ? await supabase.auth.getUser() : { data: { user: null }, error: null };
-    const email = (user?.email || String(body.email || "").trim()) || "";
+    const email = user?.email ? sanitizeText(user.email, 200) : "";
     const userId = user?.id || null;
 
     const supportResult = await generateSupportReply({
       message,
       email,
       page,
-      userRole,
+      userRole: "",
     });
 
     if (userId) {
