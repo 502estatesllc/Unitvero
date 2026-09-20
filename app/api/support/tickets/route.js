@@ -3,6 +3,10 @@ import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
 
+const ALLOWED_CATEGORIES = new Set(['general', 'account', 'payments', 'maintenance', 'privacy', 'technical']);
+const ALLOWED_PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
+const ALLOWED_SOURCES = new Set(['dashboard', 'support-page', 'tenant-portal']);
+
 function getServerSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -44,9 +48,9 @@ function buildReferenceNumber() {
 
 async function sendEmailIfConfigured({ to, subject, text }) {
   const apiKey = process.env.RESEND_API_KEY;
-  const fromAddress = process.env.UNITVERO_SUPPORT_EMAIL || 'support@unitvero.app';
+  const fromAddress = process.env.UNITVERO_SUPPORT_EMAIL;
 
-  if (!apiKey || !to) return;
+  if (!apiKey || !to || !fromAddress) return;
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -105,14 +109,28 @@ export async function POST(request) {
     return Response.json({ error: 'Subject and description are required.' }, { status: 400 });
   }
 
+  if (!ALLOWED_CATEGORIES.has(category)) {
+    return Response.json({ error: 'Unsupported support category.' }, { status: 400 });
+  }
+
   const supabase = getServerSupabase();
   if (!supabase) {
     return Response.json({ error: 'Support is not configured yet.' }, { status: 503 });
   }
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  const email = String(body.email || user?.email || '').trim();
-  const userId = user?.id || null;
+  if (userError || !user) {
+    return Response.json({ error: 'Please sign in to create a support ticket.' }, { status: 401 });
+  }
+
+  const userId = user.id;
+  const email = user.email || '';
+  const resolvedPriority = ALLOWED_PRIORITIES.has(String(body.priority || 'normal').trim())
+    ? String(body.priority || 'normal').trim()
+    : 'normal';
+  const resolvedSource = ALLOWED_SOURCES.has(String(body.source || 'support-page').trim())
+    ? String(body.source || 'support-page').trim()
+    : 'support-page';
 
   const adminSupabase = getAdminSupabase();
   const targetSupabase = adminSupabase || supabase;
@@ -124,10 +142,11 @@ export async function POST(request) {
     category,
     description,
     status: 'open',
-    priority: String(body.priority || 'normal').trim() || 'normal',
-    source: String(body.source || 'support-page').trim() || 'support-page',
+    priority: resolvedPriority,
+    source: resolvedSource,
     reference_number: buildReferenceNumber(),
     ai_context: body.aiContext ? { ...body.aiContext } : null,
+    assigned_to: null,
   };
 
   const { data: ticket, error } = await targetSupabase
@@ -152,9 +171,9 @@ export async function POST(request) {
     message: initialMessage,
   });
 
-  const supportAddress = process.env.UNITVERO_SUPPORT_EMAIL || 'support@unitvero.app';
+  const supportAddress = process.env.UNITVERO_SUPPORT_EMAIL;
 
-  if (process.env.RESEND_API_KEY && supportAddress) {
+  if (supportAddress && process.env.RESEND_API_KEY) {
     try {
       await sendEmailIfConfigured({
         to: supportAddress,

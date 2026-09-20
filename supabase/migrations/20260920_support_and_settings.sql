@@ -60,7 +60,8 @@ BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS user_settings_touch_updated_at ON public.user_settings;
 CREATE TRIGGER user_settings_touch_updated_at
@@ -88,33 +89,65 @@ ALTER TABLE public.support_staff ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS user_settings_own_access ON public.user_settings;
 CREATE POLICY user_settings_own_access
 ON public.user_settings
-FOR ALL
+FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+CREATE POLICY user_settings_own_insert
+ON public.user_settings
+FOR INSERT
+TO authenticated
+WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY user_settings_own_update
+ON public.user_settings
+FOR UPDATE
 TO authenticated
 USING (user_id = auth.uid())
 WITH CHECK (user_id = auth.uid());
 
-DROP POLICY IF EXISTS support_tickets_own_access ON public.support_tickets;
-CREATE POLICY support_tickets_own_access
+CREATE POLICY user_settings_no_delete
+ON public.user_settings
+FOR DELETE
+TO authenticated
+USING (false);
+
+DROP POLICY IF EXISTS support_tickets_select_own_or_staff ON public.support_tickets;
+CREATE POLICY support_tickets_select_own_or_staff
 ON public.support_tickets
-FOR ALL
+FOR SELECT
 TO authenticated
 USING (
-  user_id = auth.uid() OR assigned_to = auth.uid() OR EXISTS (
-    SELECT 1 FROM public.support_staff ss
-    WHERE ss.user_id = auth.uid() AND ss.active = true
-  )
-)
-WITH CHECK (
-  user_id = auth.uid() OR assigned_to = auth.uid() OR EXISTS (
+  user_id = auth.uid()
+  OR EXISTS (
     SELECT 1 FROM public.support_staff ss
     WHERE ss.user_id = auth.uid() AND ss.active = true
   )
 );
 
-DROP POLICY IF EXISTS support_messages_own_access ON public.support_messages;
-CREATE POLICY support_messages_own_access
+CREATE POLICY support_tickets_client_insert_restricted
+ON public.support_tickets
+FOR INSERT
+TO authenticated
+WITH CHECK (false);
+
+CREATE POLICY support_tickets_client_update_restricted
+ON public.support_tickets
+FOR UPDATE
+TO authenticated
+USING (false)
+WITH CHECK (false);
+
+CREATE POLICY support_tickets_client_delete_restricted
+ON public.support_tickets
+FOR DELETE
+TO authenticated
+USING (false);
+
+DROP POLICY IF EXISTS support_messages_select_own_or_staff ON public.support_messages;
+CREATE POLICY support_messages_select_own_or_staff
 ON public.support_messages
-FOR ALL
+FOR SELECT
 TO authenticated
 USING (
   EXISTS (
@@ -123,22 +156,6 @@ USING (
     WHERE st.id = support_messages.ticket_id
       AND (
         st.user_id = auth.uid()
-        OR st.assigned_to = auth.uid()
-        OR EXISTS (
-          SELECT 1 FROM public.support_staff ss
-          WHERE ss.user_id = auth.uid() AND ss.active = true
-        )
-      )
-  )
-)
-WITH CHECK (
-  EXISTS (
-    SELECT 1
-    FROM public.support_tickets st
-    WHERE st.id = support_messages.ticket_id
-      AND (
-        st.user_id = auth.uid()
-        OR st.assigned_to = auth.uid()
         OR EXISTS (
           SELECT 1 FROM public.support_staff ss
           WHERE ss.user_id = auth.uid() AND ss.active = true
@@ -147,14 +164,61 @@ WITH CHECK (
   )
 );
 
-DROP POLICY IF EXISTS support_staff_self_access ON public.support_staff;
-CREATE POLICY support_staff_self_access
+CREATE POLICY support_messages_user_insert
+ON public.support_messages
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  sender_role = 'user'
+  AND sender_user_id = auth.uid()
+  AND EXISTS (
+    SELECT 1
+    FROM public.support_tickets st
+    WHERE st.id = ticket_id
+      AND st.user_id = auth.uid()
+  )
+);
+
+CREATE POLICY support_messages_staff_insert
+ON public.support_messages
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  sender_role = 'staff'
+  AND sender_user_id = auth.uid()
+  AND EXISTS (
+    SELECT 1
+    FROM public.support_staff ss
+    WHERE ss.user_id = auth.uid() AND ss.active = true
+  )
+  AND EXISTS (
+    SELECT 1
+    FROM public.support_tickets st
+    WHERE st.id = ticket_id
+  )
+);
+
+CREATE POLICY support_messages_update_restricted
+ON public.support_messages
+FOR UPDATE
+TO authenticated
+USING (false)
+WITH CHECK (false);
+
+CREATE POLICY support_messages_delete_restricted
+ON public.support_messages
+FOR DELETE
+TO authenticated
+USING (false);
+
+DROP POLICY IF EXISTS support_staff_select_own ON public.support_staff;
+CREATE POLICY support_staff_select_own
 ON public.support_staff
 FOR SELECT
 TO authenticated
 USING (user_id = auth.uid() AND active = true);
 
-CREATE POLICY support_staff_no_client_mutation
+CREATE POLICY support_staff_no_client_insert
 ON public.support_staff
 FOR INSERT
 TO authenticated

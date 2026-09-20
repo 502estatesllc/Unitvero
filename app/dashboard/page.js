@@ -2423,7 +2423,7 @@ export default function Dashboard() {
       });
 
       const payload = await response.json();
-      const reply = payload?.reply || `Please email ${payload?.supportEmail || "support@unitvero.app"} for a human response.`;
+      const reply = payload?.reply || "Please use the representative ticket flow for a human response.";
 
       setHelpMessages((current) =>
         current.map((message) =>
@@ -2438,7 +2438,7 @@ export default function Dashboard() {
       setHelpMessages((current) =>
         current.map((message) =>
           message.id === `support-${sentAt}`
-            ? { ...message, text: "I’m having trouble reaching support right now. Please email support@unitvero.app for immediate assistance." }
+            ? { ...message, text: "I’m having trouble reaching support right now. Please use the representative ticket flow for immediate assistance." }
             : message
         )
       );
@@ -11596,8 +11596,8 @@ export default function Dashboard() {
             <button type="submit" disabled={supportBusy}>{supportBusy ? "…" : "Send"}</button>
           </form>
           <div className="helpFooterActions">
-            <button type="button" className="utSecondary" onClick={() => window.location.href = "mailto:support@unitvero.app?subject=Unitvero%20Support%20Request"}>
-              Talk to a Representative
+            <button type="button" className="utSecondary" onClick={() => setHelpOpen(false)}>
+              Close support
             </button>
           </div>
         </aside>

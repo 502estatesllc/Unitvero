@@ -78,9 +78,9 @@ export default function SupportPage() {
       });
 
       const payload = await response.json();
-      setReply(payload?.reply || `Please email ${payload?.supportEmail || 'support@unitvero.app'} for a human response.`);
+      setReply(payload?.reply || 'Please use the representative ticket flow for a human response.');
     } catch (error) {
-      setReply('I am having trouble reaching the support assistant right now. Please email support@unitvero.app for immediate help.');
+      setReply('I am having trouble reaching the support assistant right now. Please use the representative ticket flow for immediate help.');
     } finally {
       setBusy(false);
     }
@@ -233,7 +233,7 @@ export default function SupportPage() {
                 <button type="submit" disabled={ticketSubmitting} style={{ background: '#0f172a', color: '#fff', border: 0, borderRadius: 999, padding: '10px 18px', fontWeight: 800, cursor: ticketSubmitting ? 'not-allowed' : 'pointer' }}>
                   {ticketSubmitting ? 'Creating ticket…' : 'Create support ticket'}
                 </button>
-                <a href="mailto:support@unitvero.app?subject=Unitvero%20Support%20Request" style={{ color: '#2563eb', fontWeight: 700 }}>Talk to a Representative by email</a>
+                <span style={{ color: '#2563eb', fontWeight: 700 }}>Use the representative ticket form above for a human support request.</span>
               </div>
               {ticketNotice && (
                 <div style={{ background: '#ecfeff', border: '1px solid #a5f3fc', borderRadius: 10, padding: 10 }}>{ticketNotice}</div>
@@ -305,8 +305,7 @@ export default function SupportPage() {
 
           <section>
             <h2>Contact</h2>
-            <p>Contact support at <strong>support@unitvero.app</strong> or use your configured support channel if a different address is provided in your production environment.</p>
-            <p style={{ color: '#5d6878' }}>If no final support email is configured yet, use this placeholder and replace it with the production support address before launch.</p>
+            <p>Use the in-app support flow or submit a representative ticket below. Email notifications are only sent when your verified Unitvero support address is configured in the server environment.</p>
           </section>
 
           <section>
