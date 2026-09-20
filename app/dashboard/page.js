@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [applicantInvitations, setApplicantInvitations] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isSubmittingInvite, setIsSubmittingInvite] = useState(false);
 
   const [propertySearch, setPropertySearch] = useState("");
   const [propertyFilter, setPropertyFilter] = useState("all");
@@ -6044,6 +6045,8 @@ export default function Dashboard() {
               onSubmit={async (e) => {
                 e.preventDefault();
 
+                if (isSubmittingInvite) return;
+
                 const form = e.currentTarget;
                 const s = supabase();
 
@@ -6057,15 +6060,17 @@ export default function Dashboard() {
                   return;
                 }
 
-                const propertyId = form.propertyId.value;
-                const unitId = form.unitId.value || null;
-                const applicantName = form.applicantName.value.trim();
-                const applicantEmail = form.applicantEmail.value.trim().toLowerCase();
+                const propertyId = form.propertyId?.value || "";
+                const unitId = form.unitId?.value || null;
+                const applicantName = form.applicantName?.value?.trim() || "";
+                const applicantEmail = form.applicantEmail?.value?.trim().toLowerCase() || "";
 
                 if (!propertyId || !applicantName || !applicantEmail) {
                   alert("Select a property, enter the applicant name, and provide an email address.");
                   return;
                 }
+
+                setIsSubmittingInvite(true);
 
                 try {
                   const {
@@ -6103,12 +6108,24 @@ export default function Dashboard() {
                     throw new Error(inviteResult?.error || "Could not create the applicant invitation.");
                   }
 
+                  const createdInvitation = inviteResult?.invitation;
+
+                  if (createdInvitation?.id) {
+                    setApplicantInvitations((current) => {
+                      const existing = current.filter((item) => item.id !== createdInvitation.id);
+                      return [createdInvitation, ...existing];
+                    });
+                  }
+
                   alert(`${applicantName} was invited to apply by email.`);
                   form.reset();
+                  setSelectedProperty(null);
                   setView("applications");
                 } catch (error) {
                   console.error("Applicant invite error:", error);
                   alert(error?.message || "Something went wrong while inviting the applicant.");
+                } finally {
+                  setIsSubmittingInvite(false);
                 }
               }}
             >
@@ -6129,12 +6146,12 @@ export default function Dashboard() {
                       name="propertyId"
                       required
                       onChange={(e) => {
-                        const property = props.find((item) => item.id === e.target.value);
+                        const property = props.find((item) => item.id === e.target.value) || null;
                         const unitSelect = document.querySelector('[name="unitId"]');
                         if (unitSelect) {
                           unitSelect.value = "";
                         }
-                        if (!property) return;
+                        setSelectedProperty(property);
                       }}
                     >
                       <option value="">Select property</option>
@@ -6193,8 +6210,8 @@ export default function Dashboard() {
                   Cancel
                 </button>
 
-                <button type="submit" className="primary">
-                  Send Invite
+                <button type="submit" className="primary" disabled={isSubmittingInvite}>
+                  {isSubmittingInvite ? "Sending..." : "Send Invite"}
                 </button>
               </div>
             </form>
