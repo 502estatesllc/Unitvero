@@ -161,6 +161,91 @@ export default function SupportPage() {
     loadTickets();
   }, []);
 
+  function escapeInlineText(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;');
+  }
+
+  function renderInlineMarkdown(value) {
+    const text = String(value ?? '');
+    const matches = [...text.matchAll(/\[(.+?)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*/g)];
+
+    if (!matches.length) {
+      return <>{escapeInlineText(text)}</>;
+    }
+
+    const nodes = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const linkLabel = match[1];
+      const linkHref = match[2];
+      const inlineCode = match[3];
+      const boldText = match[4];
+      const italicText = match[5];
+      const start = match.index ?? 0;
+      const full = match[0];
+
+      if (start > lastIndex) {
+        nodes.push(<React.Fragment key={`plain-${index}`}>{escapeInlineText(text.slice(lastIndex, start))}</React.Fragment>);
+      }
+
+      if (linkHref) {
+        const safeHref = /^https?:\/\/|^mailto:|^tel:/.test(linkHref) ? linkHref : '#';
+        nodes.push(<a key={`link-${index}`} href={safeHref} target="_blank" rel="noreferrer noopener">{linkLabel}</a>);
+      } else if (inlineCode) {
+        nodes.push(<code key={`code-${index}`}>{inlineCode}</code>);
+      } else if (boldText) {
+        nodes.push(<strong key={`bold-${index}`}>{renderInlineMarkdown(boldText)}</strong>);
+      } else if (italicText) {
+        nodes.push(<em key={`italic-${index}`}>{renderInlineMarkdown(italicText)}</em>);
+      }
+
+      lastIndex = start + full.length;
+    });
+
+    if (lastIndex < text.length) {
+      nodes.push(<React.Fragment key="tail">{escapeInlineText(text.slice(lastIndex))}</React.Fragment>);
+    }
+
+    return <>{nodes}</>;
+  }
+
+  function renderSafeMarkdown(text) {
+    const source = String(text ?? '').replace(/\r\n/g, '\n').trim();
+    if (!source) return null;
+
+    const blocks = source.split(/\n{2,}/).filter(Boolean);
+
+    return (
+      <>
+        {blocks.map((block, blockIndex) => {
+          const lines = block.split('\n');
+          const isList = lines.every((line) => /^([-*]|\d+\.)\s+/.test(line.trim()));
+
+          if (isList) {
+            const ordered = lines.every((line) => /^\d+\.\s+/.test(line.trim()));
+            const ListTag = ordered ? 'ol' : 'ul';
+
+            return (
+              <ListTag key={`block-${blockIndex}`} style={{ margin: '0.7rem 0 0.7rem 1.1rem', padding: 0 }}>
+                {lines.map((line, lineIndex) => {
+                  const content = line.trim().replace(/^([-*]|\d+\.)\s+/, '');
+                  return <li key={`${blockIndex}-${lineIndex}`} style={{ marginBottom: 6 }}>{renderInlineMarkdown(content)}</li>;
+                })}
+              </ListTag>
+            );
+          }
+
+          return <p key={`block-${blockIndex}`} style={{ margin: '0 0 0.8rem', lineHeight: 1.6 }}>{renderInlineMarkdown(block)}</p>;
+        })}
+      </>
+    );
+  }
+
   return (
     <main style={{ minHeight: '100vh', background: '#edf4ff', color: '#0f172a', padding: '40px 18px 80px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', background: '#fff', borderRadius: 20, boxShadow: '0 24px 70px rgba(15, 23, 42, 0.08)', border: '1px solid #dfe8f3', overflow: 'hidden' }}>
@@ -199,8 +284,8 @@ export default function SupportPage() {
               </div>
             </form>
             {reply && (
-              <div style={{ marginTop: 16, background: '#f8fbff', border: '1px solid #dfeaf8', borderRadius: 14, padding: 14, whiteSpace: 'pre-wrap' }}>
-                {reply}
+              <div style={{ marginTop: 16, background: '#f8fbff', border: '1px solid #dfeaf8', borderRadius: 14, padding: 14, fontSize: 15, lineHeight: 1.6 }}>
+                {renderSafeMarkdown(reply)}
               </div>
             )}
           </section>

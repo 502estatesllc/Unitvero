@@ -1195,6 +1195,95 @@ export default function Dashboard() {
     return getTranslation(language, key);
   }
 
+  function escapeInlineText(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;");
+  }
+
+  function renderInlineMarkdown(value) {
+    const text = String(value ?? "");
+    const matches = [...text.matchAll(/\[(.+?)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+|tel:[^\s)]+)\)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*/g)];
+
+    if (!matches.length) {
+      return <>{escapeInlineText(text)}</>;
+    }
+
+    const nodes = [];
+    let lastIndex = 0;
+
+    matches.forEach((match, index) => {
+      const full = match[0];
+      const linkLabel = match[1];
+      const linkHref = match[2];
+      const inlineCode = match[3];
+      const boldText = match[4];
+      const italicText = match[5];
+      const start = match.index ?? 0;
+
+      if (start > lastIndex) {
+        nodes.push(<React.Fragment key={`plain-${index}`}>{escapeInlineText(text.slice(lastIndex, start))}</React.Fragment>);
+      }
+
+      if (linkHref) {
+        const safeHref = /^https?:\/\/|^mailto:|^tel:/.test(linkHref) ? linkHref : "#";
+        nodes.push(
+          <a key={`link-${index}`} href={safeHref} target="_blank" rel="noreferrer noopener">
+            {linkLabel}
+          </a>,
+        );
+      } else if (inlineCode) {
+        nodes.push(<code key={`code-${index}`}>{inlineCode}</code>);
+      } else if (boldText) {
+        nodes.push(<strong key={`bold-${index}`}>{renderInlineMarkdown(boldText)}</strong>);
+      } else if (italicText) {
+        nodes.push(<em key={`italic-${index}`}>{renderInlineMarkdown(italicText)}</em>);
+      }
+
+      lastIndex = start + full.length;
+    });
+
+    if (lastIndex < text.length) {
+      nodes.push(<React.Fragment key="tail">{escapeInlineText(text.slice(lastIndex))}</React.Fragment>);
+    }
+
+    return <>{nodes}</>;
+  }
+
+  function renderSafeMarkdown(text) {
+    const source = String(text ?? "").replace(/\r\n/g, "\n").trim();
+    if (!source) return null;
+
+    const blocks = source.split(/\n{2,}/).filter(Boolean);
+
+    return (
+      <>
+        {blocks.map((block, blockIndex) => {
+          const lines = block.split("\n");
+          const isList = lines.every((line) => /^([-*]|\d+\.)\s+/.test(line.trim()));
+
+          if (isList) {
+            const ordered = lines.every((line) => /^\d+\.\s+/.test(line.trim()));
+            const ListTag = ordered ? "ol" : "ul";
+
+            return (
+              <ListTag key={`block-${blockIndex}`} className="helpMarkdownList">
+                {lines.map((line, lineIndex) => {
+                  const content = line.trim().replace(/^([-*]|\d+\.)\s+/, "");
+                  return <li key={`${blockIndex}-${lineIndex}`}>{renderInlineMarkdown(content)}</li>;
+                })}
+              </ListTag>
+            );
+          }
+
+          return <p key={`block-${blockIndex}`}>{renderInlineMarkdown(block)}</p>;
+        })}
+      </>
+    );
+  }
+
   function calculateRentalSuggestion(rows) {
     const values = rows
       .map((row) => Number(row.rent))
@@ -11580,7 +11669,7 @@ export default function Dashboard() {
                   message.sender === "user" ? "helpMessage user" : "helpMessage"
                 }
               >
-                {message.text}
+                {renderSafeMarkdown(message.text)}
               </div>
             ))}
           </div>
@@ -11849,7 +11938,7 @@ export default function Dashboard() {
           color: #34445c;
           padding: 11px 13px;
           font-size: 14px;
-          line-height: 1.45;
+          line-height: 1.6;
           box-shadow: 0 4px 14px rgba(31, 50, 81, 0.06);
         }
         .helpMessage.user {
@@ -11857,6 +11946,45 @@ export default function Dashboard() {
           border-radius: 15px 15px 4px 15px;
           background: #2859c5;
           color: #fff;
+        }
+        .helpMessage p,
+        .helpMessage li,
+        .helpMessage a,
+        .helpMessage code {
+          font-size: inherit;
+          line-height: inherit;
+        }
+        .helpMessage p {
+          margin: 0 0 0.6rem;
+        }
+        .helpMessage p:last-child {
+          margin-bottom: 0;
+        }
+        .helpMessage ul,
+        .helpMessage ol {
+          margin: 0.55rem 0 0.7rem 1.1rem;
+          padding: 0;
+        }
+        .helpMessage li + li {
+          margin-top: 0.25rem;
+        }
+        .helpMessage a {
+          color: #1d4ed8;
+          text-decoration: underline;
+          text-underline-offset: 0.12em;
+        }
+        .helpMessage.user a {
+          color: #dbeafe;
+        }
+        .helpMessage code {
+          padding: 0.12rem 0.38rem;
+          border-radius: 6px;
+          background: rgba(148, 163, 184, 0.18);
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .helpMarkdownList {
+          margin: 0.7rem 0;
+          padding-left: 1.1rem;
         }
         .helpComposer {
           display: grid;
