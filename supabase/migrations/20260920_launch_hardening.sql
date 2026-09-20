@@ -210,7 +210,37 @@ ON public.automated_reminders
 FOR ALL
 TO authenticated
 USING (landlord_id = auth.uid())
-WITH CHECK (landlord_id = auth.uid());
+WITH CHECK (
+  landlord_id = auth.uid()
+  AND (
+    property_id IS NULL
+    OR EXISTS (
+      SELECT 1
+      FROM public.properties p
+      WHERE p.id = automated_reminders.property_id
+        AND p.landlord_id = auth.uid()
+    )
+  )
+  AND (
+    tenancy_id IS NULL
+    OR EXISTS (
+      SELECT 1
+      FROM public.tenancies t
+      JOIN public.properties p ON p.id = t.property_id
+      WHERE t.id = automated_reminders.tenancy_id
+        AND p.landlord_id = auth.uid()
+    )
+  )
+  AND (
+    property_id IS NULL OR tenancy_id IS NULL
+    OR EXISTS (
+      SELECT 1
+      FROM public.tenancies t
+      WHERE t.id = automated_reminders.tenancy_id
+        AND t.property_id = automated_reminders.property_id
+    )
+  )
+);
 
 DROP POLICY IF EXISTS vacancy_listings_landlord_access ON public.vacancy_listings;
 CREATE POLICY vacancy_listings_landlord_access
@@ -218,7 +248,30 @@ ON public.vacancy_listings
 FOR ALL
 TO authenticated
 USING (landlord_id = auth.uid())
-WITH CHECK (landlord_id = auth.uid());
+WITH CHECK (
+  landlord_id = auth.uid()
+  AND (
+    property_id IS NULL
+    OR EXISTS (
+      SELECT 1
+      FROM public.properties p
+      WHERE p.id = vacancy_listings.property_id
+        AND p.landlord_id = auth.uid()
+    )
+  )
+  AND (
+    unit_id IS NULL
+    OR (
+      property_id IS NOT NULL
+      AND EXISTS (
+        SELECT 1
+        FROM public.units u
+        WHERE u.id = vacancy_listings.unit_id
+          AND u.property_id = vacancy_listings.property_id
+      )
+    )
+  )
+);
 
 DROP POLICY IF EXISTS listing_syndications_landlord_access ON public.listing_syndications;
 CREATE POLICY listing_syndications_landlord_access
@@ -248,7 +301,17 @@ ON public.rent_credit_reporting_enrollments
 FOR ALL
 TO authenticated
 USING (landlord_id = auth.uid())
-WITH CHECK (landlord_id = auth.uid());
+WITH CHECK (
+  landlord_id = auth.uid()
+  AND EXISTS (
+    SELECT 1
+    FROM public.tenancies t
+    JOIN public.properties p ON p.id = t.property_id
+    WHERE t.id = rent_credit_reporting_enrollments.tenancy_id
+      AND p.landlord_id = auth.uid()
+      AND t.tenant_id = rent_credit_reporting_enrollments.tenant_user_id
+  )
+);
 
 DROP POLICY IF EXISTS rent_credit_reporting_enrollments_tenant_access ON public.rent_credit_reporting_enrollments;
 CREATE POLICY rent_credit_reporting_enrollments_tenant_access
@@ -299,7 +362,46 @@ ON public.property_inspections
 FOR ALL
 TO authenticated
 USING (landlord_id = auth.uid())
-WITH CHECK (landlord_id = auth.uid());
+WITH CHECK (
+  landlord_id = auth.uid()
+  AND (
+    property_id IS NULL
+    OR EXISTS (
+      SELECT 1
+      FROM public.properties p
+      WHERE p.id = property_inspections.property_id
+        AND p.landlord_id = auth.uid()
+    )
+  )
+  AND (
+    tenancy_id IS NULL
+    OR (
+      EXISTS (
+        SELECT 1
+        FROM public.tenancies t
+        JOIN public.properties p ON p.id = t.property_id
+        WHERE t.id = property_inspections.tenancy_id
+          AND p.landlord_id = auth.uid()
+          AND (
+            property_inspections.property_id IS NULL
+            OR t.property_id = property_inspections.property_id
+          )
+      )
+    )
+  )
+  AND (
+    unit_id IS NULL
+    OR (
+      property_id IS NOT NULL
+      AND EXISTS (
+        SELECT 1
+        FROM public.units u
+        WHERE u.id = property_inspections.unit_id
+          AND u.property_id = property_inspections.property_id
+      )
+    )
+  )
+);
 
 DROP POLICY IF EXISTS property_inspections_tenant_access ON public.property_inspections;
 CREATE POLICY property_inspections_tenant_access
@@ -395,7 +497,5 @@ USING (
       AND p.landlord_id = pi.landlord_id
   )
 );
-
-COMMIT;
 
 COMMIT;
