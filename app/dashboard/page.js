@@ -4,43 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import StripeOnboarding from "./StripeOnboarding";
-
-const COPY = {
-  en: {
-    overview: "Overview",
-    properties: "Properties",
-    tenants: "Tenants",
-    rent: "Rent",
-    payments: "Payments & Payouts",
-    leases: "Leases",
-    applications: "Applications",
-    messages: "Messages",
-    documents: "Documents",
-    maintenance: "Maintenance",
-    greeting: "Good to see you",
-    portfolioUpdate: "Here's what’s happening with your portfolio.",
-    addProperty: "+ Add Property",
-    help: "Help",
-    privacy: "Privacy",
-  },
-  es: {
-    overview: "Resumen",
-    properties: "Propiedades",
-    tenants: "Inquilinos",
-    rent: "Alquiler",
-    payments: "Pagos y depósitos",
-    leases: "Contratos",
-    applications: "Solicitudes",
-    messages: "Mensajes",
-    documents: "Documentos",
-    maintenance: "Mantenimiento",
-    greeting: "Qué bueno verte",
-    portfolioUpdate: "Esto es lo que está pasando con tu portafolio.",
-    addProperty: "+ Agregar propiedad",
-    help: "Ayuda",
-    privacy: "Privacidad",
-  },
-};
+import {
+  LANGUAGE_OPTIONS,
+  getLanguageDirection,
+  getTranslation,
+  normalizeLanguage,
+} from "../lib/translations";
 
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
@@ -97,7 +66,6 @@ export default function Dashboard() {
   const [signatureConsent, setSignatureConsent] = useState(false);
   const [signatureMode, setSignatureMode] = useState("draw");
   const [signatureSubmitting, setSignatureSubmitting] = useState(false);
-  const [appLanguage, setAppLanguage] = useState("en");
   const [proScreenOpen, setProScreenOpen] = useState(false);
   const [rentalValueOpen, setRentalValueOpen] = useState(false);
   const [rentalPropertyId, setRentalPropertyId] = useState("");
@@ -1189,19 +1157,6 @@ export default function Dashboard() {
   }
 
 
-  const unitveroLanguages = [
-    ["en", "English"],
-    ["es", "Español"],
-    ["fr", "Français"],
-    ["de", "Deutsch"],
-    ["pt", "Português"],
-    ["zh", "中文"],
-    ["ko", "한국어"],
-    ["vi", "Tiếng Việt"],
-    ["ar", "العربية"],
-    ["ru", "Русский"],
-  ];
-
   const unitveroProductionChecklist = [
     { id:"auth", label:"Authentication & profile setup", area:"Account", status:"built" },
     { id:"properties", label:"Properties & units", area:"Landlord", status:"built" },
@@ -1233,35 +1188,8 @@ export default function Dashboard() {
     })[status] || status;
   }
 
-  const languageLabels = {
-    en: {
-      help: "Help",
-      home: "Home",
-      payments: "Payments",
-      maintenance: "Maintenance",
-      documents: "Documents",
-      messages: "Messages",
-      bookkeeping: "Bookkeeping",
-      upgrade: "Upgrade to Pro",
-      propertyValue: "Rent Value",
-    },
-    es: {
-      help: "Ayuda",
-      home: "Inicio",
-      payments: "Pagos",
-      maintenance: "Mantenimiento",
-      documents: "Documentos",
-      messages: "Mensajes",
-      bookkeeping: "Contabilidad",
-      upgrade: "Actualizar a Pro",
-      propertyValue: "Valor de renta",
-    },
-  };
-
   function uiLabel(key) {
-    return languageLabels[appLanguage]?.[key] ||
-      languageLabels.en[key] ||
-      key;
+    return getTranslation(language, key);
   }
 
   function calculateRentalSuggestion(rows) {
@@ -1760,11 +1688,13 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const savedLanguage = window.localStorage.getItem("unitvero-language");
+    const savedLanguage = normalizeLanguage(window.localStorage.getItem("unitvero-language"));
     const savedPrivacy = window.localStorage.getItem("unitvero-privacy");
 
-    if (savedLanguage === "en" || savedLanguage === "es") {
+    if (savedLanguage) {
       setLanguage(savedLanguage);
+      document.documentElement.lang = savedLanguage;
+      document.documentElement.dir = getLanguageDirection(savedLanguage);
     }
 
     if (savedPrivacy === "true") {
@@ -1773,8 +1703,11 @@ export default function Dashboard() {
   }, []);
 
   function changeLanguage(nextLanguage) {
-    setLanguage(nextLanguage);
-    window.localStorage.setItem("unitvero-language", nextLanguage);
+    const resolved = normalizeLanguage(nextLanguage);
+    setLanguage(resolved);
+    window.localStorage.setItem("unitvero-language", resolved);
+    document.documentElement.lang = resolved;
+    document.documentElement.dir = getLanguageDirection(resolved);
   }
 
   function togglePrivacy() {
@@ -2649,7 +2582,7 @@ export default function Dashboard() {
     0,
   );
 
-  const t = (key) => COPY[language]?.[key] || COPY.en[key] || key;
+  const t = (key) => getTranslation(language, key);
 
   function propertyInsights(property) {
     if (!property) return { value: null, marketRent: null, source: null };
@@ -2715,7 +2648,7 @@ export default function Dashboard() {
           <b className="logo">
             unit<span>vero</span>
           </b>
-          <span className="brandLabel">PROPERTY MANAGEMENT</span>
+          <span className="brandLabel">{getTranslation(language, "propertyManagement")}</span>
         </div>
 
         <div style={{
@@ -2725,11 +2658,11 @@ export default function Dashboard() {
           gap:8,
         }}>
           <label style={{fontSize:11,fontWeight:800,color:"#687386"}}>
-            LANGUAGE
+            {getTranslation(language, "language")}
           </label>
           <select
-            value={appLanguage}
-            onChange={(e) => setAppLanguage(e.target.value)}
+            value={language}
+            onChange={(e) => changeLanguage(e.target.value)}
             style={{
               minHeight:38,
               border:"1px solid #dbe3ef",
@@ -2738,8 +2671,8 @@ export default function Dashboard() {
               background:"#fff",
             }}
           >
-            {unitveroLanguages.map(([code, name]) => (
-              <option key={code} value={code}>{name}</option>
+            {LANGUAGE_OPTIONS.map(({ code, label }) => (
+              <option key={code} value={code}>{label}</option>
             ))}
           </select>
         </div>
@@ -2762,7 +2695,7 @@ export default function Dashboard() {
         </button>
 
         <nav className="sidebarNav">
-          <span className="navSection">WORKSPACE</span>
+          <span className="navSection">{getTranslation(language, "workspace")}</span>
 
           <a
             className={view === "overview" ? "active" : ""}
@@ -2811,7 +2744,7 @@ export default function Dashboard() {
             <span>{t("payments")}</span>
           </a>
 
-          <span className="navSection navSectionSecond">MANAGEMENT</span>
+          <span className="navSection navSectionSecond">{getTranslation(language, "management")}</span>
 
           <a
             className={view === "leases" ? "active" : ""}
@@ -2861,7 +2794,7 @@ export default function Dashboard() {
             onClick={() => setView("qa")}
           >
             <span className="navIcon">✓</span>
-            <span>Setup & QA</span>
+            <span>{getTranslation(language, "setupAndQa")}</span>
           </a>
 
           <a
@@ -2893,7 +2826,7 @@ export default function Dashboard() {
             onClick={() => setView("bookkeeping")}
           >
             <span className="navIcon">▤</span>
-            <span>Bookkeeping</span>
+            <span>{getTranslation(language, "bookkeeping")}</span>
           </a>
         </nav>
         <div style={{
@@ -2916,7 +2849,7 @@ export default function Dashboard() {
               fontWeight:700,
             }}
           >
-            Privacy Policy
+            {getTranslation(language, "privacyPolicy")}
           </button>
           <span style={{color:"#8a95a5"}}>
             Unitvero privacy & data choices
@@ -2935,7 +2868,7 @@ export default function Dashboard() {
             <span>{profile?.role || "Landlord"}</span>
           </div>
 
-          <button type="button" onClick={out} title="Sign out">
+          <button type="button" onClick={out} title={getTranslation(language, "signOut")}>
             ↗
           </button>
         </div>
@@ -2946,13 +2879,13 @@ export default function Dashboard() {
           <div className="generatedDashboard">
             <section className="generatedWelcome">
               <div>
-                <span className="generatedEyebrow">LANDLORD DASHBOARD</span>
+                <span className="generatedEyebrow">{getTranslation(language, "landlordDashboard")}</span>
                 <h1>Hello, {profile?.full_name?.split(" ")[0] || "Ladon"}!</h1>
                 <p>Here’s what’s happening with your properties today.</p>
               </div>
               <div className="generatedWelcomeActions">
                 <select value={bookkeepingMonth} onChange={(e)=>setBookkeepingMonth(e.target.value)} aria-label="Period">
-                  <option value="all">This Month</option>
+                  <option value="all">{getTranslation(language, "thisMonth")}</option>
                   <option value="0">January</option><option value="1">February</option><option value="2">March</option>
                   <option value="3">April</option><option value="4">May</option><option value="5">June</option>
                   <option value="6">July</option><option value="7">August</option><option value="8">September</option>
@@ -2960,7 +2893,7 @@ export default function Dashboard() {
                 </select>
                 <div>
                   <button type="button" className="generatedSecondary" onClick={togglePrivacy}>◉ {privacyMode ? "Show" : "Hide"}</button>
-                  <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>+ Add Property</button>
+                  <button type="button" className="generatedPrimary" onClick={() => setView("properties")}>{getTranslation(language, "addProperty")}</button>
                 </div>
               </div>
             </section>
@@ -2990,9 +2923,9 @@ export default function Dashboard() {
             </section>
 
             <section className="generatedPanel generatedRecentPayments">
-              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>ACTIVITY</span><h2>Recent Payments</h2></div><button type="button" onClick={()=>setView("rent")}>View All ›</button></div>
+              <div className="generatedPanelTitle generatedPanelTitleRow"><div><span>ACTIVITY</span><h2>{getTranslation(language, "recentPayments")}</h2></div><button type="button" onClick={()=>setView("rent")}>{getTranslation(language, "viewAll")} ›</button></div>
               <div className="generatedPaymentList">
-                {rentPayments.length === 0 ? <div className="generatedEmptyPayment">No payments recorded yet.</div> : rentPayments.slice(0,5).map((payment)=>{
+                {rentPayments.length === 0 ? <div className="generatedEmptyPayment">{getTranslation(language, "noPaymentsRecorded")}</div> : rentPayments.slice(0,5).map((payment)=>{
                   const paymentProperty=props.find((item)=>item.id===payment.property_id);
                   return <article key={payment.id}><span className="generatedPaymentThumb">⌂</span><div><b>{paymentProperty?.address || "Rental payment"}</b><small>{payment.payment_date ? new Date(`${payment.payment_date}T00:00:00`).toLocaleDateString() : "Recent"}</small></div><strong className="privacyValue">${Number(payment.amount||0).toLocaleString()}</strong></article>;
                 })}
@@ -3000,11 +2933,11 @@ export default function Dashboard() {
             </section>
 
             <section className="generatedQuickActions">
-              <h2>Quick Actions</h2>
+              <h2>{getTranslation(language, "quickActions")}</h2>
               <div>
                 {[
-                  ["⌂","Add Property","properties"],["♙","Add Tenant","tenants"],["▤","Create Lease","leases"],
-                  ["◎","Record Payment","rent"],["⚒","Maintenance","maintenance"],["▥","Generate Report","bookkeeping"],
+                  ["⌂",getTranslation(language, "addProperty"),"properties"],["♙",getTranslation(language, "addTenant"),"tenants"],["▤",getTranslation(language, "createLease"),"leases"],
+                  ["◎",getTranslation(language, "recordPayment"),"rent"],["⚒",getTranslation(language, "maintenance"),"maintenance"],["▥",getTranslation(language, "generateReport"),"bookkeeping"],
                 ].map(([icon,label,target])=><button type="button" key={label} onClick={()=>setView(target)}><span>{icon}</span><b>{label}</b></button>)}
               </div>
             </section>
@@ -3014,7 +2947,7 @@ export default function Dashboard() {
               <article><span>Portfolio</span><strong>{props.length} properties</strong><small>{dashboardTotalUnits} total units</small></article>
             </section>
 
-            <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>Privacy Policy</button><button type="button">Terms of Service</button></div></footer>
+            <footer className="generatedFooter"><span>© {new Date().getFullYear()} Unitvero. All rights reserved.</span><div><button type="button" onClick={()=>setPrivacyOpen(true)}>{getTranslation(language, "privacyPolicy")}</button><button type="button">{getTranslation(language, "termsOfService")}</button></div></footer>
           </div>
         )}
 
@@ -3022,8 +2955,8 @@ export default function Dashboard() {
           <section className="portfolioPage">
             <div className="portfolioPageHeader">
               <div>
-                <small>PROPERTY PORTFOLIO</small>
-                <h1>Properties</h1>
+                <small>{getTranslation(language, "propertyPortfolio")}</small>
+                <h1>{getTranslation(language, "properties")}</h1>
 
                 <p>Manage your rental portfolio, occupancy and monthly rent.</p>
               </div>
@@ -3040,7 +2973,7 @@ export default function Dashboard() {
                     });
                 }}
               >
-                + Add Property
+                {getTranslation(language, "addProperty")}
               </button>
             </div>
 
@@ -11934,50 +11867,9 @@ function TenantPortal({
   const [landlordEntitlements, setLandlordEntitlements] = useState({});
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [notice, setNotice] = useState("");
-  const [appLanguage, setAppLanguage] = useState(language);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const unitveroLanguages = [["en", "English"], ["es", "Español"]];
 
-  const words = {
-    en: {
-      home: "Home", payments: "Payments", lease: "Lease", messages: "Messages",
-      maintenance: "Maintenance", documents: "Documents", settings: "Settings",
-      welcome: "Welcome back", subtitle: "Manage your rental, payments, messages, and documents.",
-      monthlyRent: "Monthly rent", leaseStatus: "Lease status", leaseTerm: "Lease term",
-      active: "Active", property: "Property", payRent: "Pay rent", messageLandlord: "Message landlord",
-      recentActivity: "Recent activity", propertyUpdates: "Property updates", noUpdates: "You're all caught up. No new property updates.",
-      paymentCenter: "Payment center", paymentHistory: "Payment history", paymentSoon: "Online rent payments will be available here once checkout is connected.",
-      leaseDetails: "Lease details", startDate: "Start date", endDate: "End date", unit: "Unit",
-      inbox: "Messages", noMessages: "No messages yet. Start a conversation with your landlord below.",
-      typeMessage: "Write a message…", send: "Send",
-      maintenanceTitle: "Maintenance requests", maintenanceText: "Submit and track repair requests from this page.",
-      documentsTitle: "Documents", documentsText: "Your lease and shared rental documents will appear here.",
-      account: "Account settings", privacy: "Privacy mode", privacyText: "Hide financial amounts while using Unitvero in public.",
-      language: "Language", notifications: "Notifications", notificationText: "In-app alerts are active. Phone push notifications are being connected next.",
-      signOut: "Sign out", noRental: "No active rental is connected to this account yet.", refresh: "Refresh",
-      connected: "Connected", unread: "unread", month: "month"
-    },
-    es: {
-      home: "Inicio", payments: "Pagos", lease: "Contrato", messages: "Mensajes",
-      maintenance: "Mantenimiento", documents: "Documentos", settings: "Ajustes",
-      welcome: "Bienvenido", subtitle: "Administra tu alquiler, pagos, mensajes y documentos.",
-      monthlyRent: "Renta mensual", leaseStatus: "Estado del contrato", leaseTerm: "Duración del contrato",
-      active: "Activo", property: "Propiedad", payRent: "Pagar renta", messageLandlord: "Enviar mensaje",
-      recentActivity: "Actividad reciente", propertyUpdates: "Actualizaciones", noUpdates: "Todo está al día. No hay nuevas actualizaciones.",
-      paymentCenter: "Centro de pagos", paymentHistory: "Historial de pagos", paymentSoon: "Los pagos de renta en línea aparecerán aquí cuando se conecte el pago.",
-      leaseDetails: "Detalles del contrato", startDate: "Fecha de inicio", endDate: "Fecha final", unit: "Unidad",
-      inbox: "Mensajes", noMessages: "Aún no hay mensajes. Inicia una conversación con tu propietario abajo.",
-      typeMessage: "Escribe un mensaje…", send: "Enviar",
-      maintenanceTitle: "Solicitudes de mantenimiento", maintenanceText: "Envía y revisa solicitudes de reparación desde esta página.",
-      documentsTitle: "Documentos", documentsText: "Tu contrato y documentos compartidos aparecerán aquí.",
-      account: "Ajustes de cuenta", privacy: "Modo privado", privacyText: "Oculta cantidades financieras mientras usas Unitvero en público.",
-      language: "Idioma", notifications: "Notificaciones", notificationText: "Las alertas dentro de la app están activas. Las notificaciones del teléfono se conectarán después.",
-      signOut: "Cerrar sesión", noRental: "Aún no hay un alquiler activo conectado a esta cuenta.", refresh: "Actualizar",
-      connected: "Conectado", unread: "sin leer", month: "mes"
-    }
-  };
-
-  const t = (key) => words[language]?.[key] || words.en[key] || key;
+  const t = (key) => getTranslation(language, key);
 
   async function loadTenant() {
     setLoading(true);
@@ -12274,7 +12166,7 @@ function TenantPortal({
 
       <aside className="utSidebar">
         <div className="utLogo">unit<span>vero</span></div>
-        <div className="utPortalLabel">TENANT PORTAL</div>
+        <div className="utPortalLabel">{getTranslation(language, "tenantPortal")}</div>
 
         <nav className="utNav">
           {nav.map(([key, icon, label]) => (
@@ -12299,14 +12191,15 @@ function TenantPortal({
       <main className="utMain">
         <header className="utHeader">
           <div>
-            <div className="utEyebrow">TENANT DASHBOARD</div>
+            <div className="utEyebrow">{getTranslation(language, "tenantDashboard")}</div>
             <h1>{t("welcome")}, {firstName}.</h1>
             <p>{t("subtitle")}</p>
           </div>
           <div className="utHeaderActions">
             <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
-              <option value="en">English</option>
-              <option value="es">Español</option>
+              {LANGUAGE_OPTIONS.map(({ code, label }) => (
+                <option key={code} value={code}>{label}</option>
+              ))}
             </select>
             <button type="button" onClick={togglePrivacy}>{privacyMode ? "Show amounts" : "Hide amounts"}</button>
             <button type="button" className="utIconButton" onClick={() => setView("messages")} aria-label="Notifications">
@@ -12322,7 +12215,7 @@ function TenantPortal({
           <section className="utEmptyCard">
             <div className="utEmptyIcon">⌂</div>
             <h2>{t("noRental")}</h2>
-            <p>If you recently accepted an invitation, refresh your account.</p>
+            <p>{getTranslation(language, "refreshInvite") || "If you recently accepted an invitation, refresh your account."}</p>
             <button type="button" className="utPrimary" onClick={loadTenant}>{t("refresh")}</button>
           </section>
         ) : (
@@ -12469,7 +12362,7 @@ function TenantPortal({
                 <section className="utCard utChat">
                   <div className="utChatHead">
                     <div className="utAvatar landlord">L</div>
-                    <div><strong>Property management</strong><span>{property?.address || "Your rental"}</span></div>
+                    <div><strong>{getTranslation(language, "propertyManagement")}</strong><span>{property?.address || "Your rental"}</span></div>
                     <span className="utStatus">● Active</span>
                   </div>
                   <div className="utMessageHistory">
@@ -12542,8 +12435,12 @@ function TenantPortal({
                   </div>
                   <div className="utSettingRow">
                     <div className="utSettingIcon">文</div>
-                    <div><strong>{t("language")}</strong><p>Choose the language used throughout your tenant portal.</p></div>
-                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}><option value="en">English</option><option value="es">Español</option></select>
+                    <div><strong>{t("language")}</strong><p>{getTranslation(language, "choosePortalLanguage")}</p></div>
+                    <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+                      {LANGUAGE_OPTIONS.map(({ code, label }) => (
+                        <option key={code} value={code}>{label}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="utSettingRow">
                     <div className="utSettingIcon">♢</div>
@@ -12574,11 +12471,8 @@ function TenantPortal({
       }}>
         <select
           aria-label="Choose language"
-          value={appLanguage}
-          onChange={(e) => {
-            setAppLanguage(e.target.value);
-            changeLanguage(e.target.value);
-          }}
+          value={language}
+          onChange={(e) => changeLanguage(e.target.value)}
           style={{
             border:0,
             outline:"none",
@@ -12587,8 +12481,8 @@ function TenantPortal({
             color:"#263247",
           }}
         >
-          {unitveroLanguages.map(([code, name]) => (
-            <option key={code} value={code}>{name}</option>
+          {LANGUAGE_OPTIONS.map(({ code, label }) => (
+            <option key={code} value={code}>{label}</option>
           ))}
         </select>
       </div>
@@ -12624,7 +12518,7 @@ function TenantPortal({
             }}>
               <div>
                 <small>UNITVERO</small>
-                <h2 style={{margin:"4px 0 6px"}}>Privacy Policy</h2>
+                <h2 style={{margin:"4px 0 6px"}}>{getTranslation(language, "privacyPolicy")}</h2>
                 <p style={{margin:0,color:"#667386"}}>
                   Privacy information and data choices.
                 </p>
